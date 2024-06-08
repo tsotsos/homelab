@@ -4,3 +4,4 @@ namespace: argocd
 resources:
     - core
     - home
+    - argo-projects.yaml
