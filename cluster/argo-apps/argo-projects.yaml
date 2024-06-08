@@ -13,9 +13,11 @@ spec:
   description: Core Applications
   destinations:
     - namespace: argocd
-      server: 'https://kubernetes.default.svc'
-    - namespace: 'kube-system'
-      server: 'https://kubernetes.default.svc'
+      server: https://kubernetes.default.svc
+    - namespace: kube-system
+      server: https://kubernetes.default.svc
+    - namespace: default
+      server: https://kubernetes.default.svc
   sourceRepos:
     - https://github.com/tsotsos/homelab.git
 status: {}

@@ -3,20 +3,19 @@ kind: Application
 metadata:
   name: nfs-provisioner
   namespace: argocd
-  annotations:
-     argocd.argoproj.io/sync-wave: "-5"
 spec:
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: kube-system
   project: core
   source:
-    path: cluster/apps/core/nfs-provisioner
-    repoURL: https://github.com/tsotsos/homelab
-    targetRevision: main
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+    chart: sealed-secrets
+    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+    targetRevision: 4.0.18
+    helm:
+      releaseName: nfs-subdir-external-provisioner
+      parameters:
+        - name: "nfs.server"
+          value: "10.0.1.10"
+        - name: "nfs.path"
+          value: "/Volume1/k8s"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system

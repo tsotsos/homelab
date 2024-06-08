@@ -1,9 +1,0 @@
-apiVersion: v2
-name: argocd
-description: Meta-chart for ArgoCD
-type: application
-version: 1.1.30
-dependencies:
-  - name: nfs-subdir-external-provisioner
-    version: 4.0.18
-    repository: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
