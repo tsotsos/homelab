@@ -65,4 +65,4 @@ ingress:
             pathType: Prefix
         tls:
           - hosts:
-              - *host
+              - d.kng.house
