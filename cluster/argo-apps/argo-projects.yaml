@@ -11,6 +11,8 @@ spec:
   - group: '*'
     kind: '*'
   description: Core Applications
+  sourceRepos:
+    - '*' # Allow all repositories, or be more specific
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -18,6 +20,4 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: default
       server: https://kubernetes.default.svc
-  sourceRepos:
-    - https://github.com/tsotsos/homelab.git
 status: {}
