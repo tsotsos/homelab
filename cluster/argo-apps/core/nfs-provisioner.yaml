@@ -6,7 +6,7 @@ metadata:
 spec:
   project: core
   source:
-    chart: sealed-secrets
+    chart: nfs-subdir-external-provisioner
     repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
     targetRevision: 4.0.18
     helm:
