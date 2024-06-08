@@ -2,6 +2,8 @@ enableRbac: true
 
 serviceAccount:
   create: true
+  name: default
+
 ingress:
   main:
     enabled: true
