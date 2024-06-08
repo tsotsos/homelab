@@ -5,3 +5,4 @@ namespace: argocd
 resources:
 - nfs-provisioner.yaml
 - sealed-secrets.yaml
+- ingress-nginx.yaml
