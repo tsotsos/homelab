@@ -8,7 +8,7 @@ metadata:
 spec:
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: homepage
   project: default
   source:
     path: cluster/apps/home/homepage
