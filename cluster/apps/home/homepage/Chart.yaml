@@ -5,4 +5,5 @@ type: application
 version: 1.1.30
 dependencies:
   - name: homepage
+    version: homepage-1.2.3
     repository: https://jameswynn.github.io/helm-charts
