@@ -1,0 +1,23 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: default
+  name: rancher
+spec:
+  chart: rancher
+  repo: https://releases.rancher.com/server-charts/latest
+  targetNamespace: cattle-system
+  createNamespace: true
+  set:
+    hostname: {{ rancher.domain }}
+    replicas: 3
+  valuesContent: |-
+    hostname: {{ rancher.domain }}
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+    tls:
+      source: rancher-secret
+    extraAnnotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/hostname: {{ rancher.domain }}

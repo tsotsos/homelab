@@ -1,0 +1,85 @@
+- name: K8s all hosts
+  hosts: all
+  become: true
+  vars:
+    k3s_become: true
+    kube_vip:
+      svc_enable: true
+      election_enable: true
+      metrics_port: 2112
+      image: "ghcr.io/kube-vip/kube-vip:v0.8.0"
+      cloud_image: "ghcr.io/kube-vip/kube-vip-cloud-provider:v0.0.9"
+      ip: "{{ lookup('ansible.builtin.env', 'kube_vip_ip') }}"
+      range: "{{ lookup('ansible.builtin.env', 'kube_vip_range') }}"
+      args: []
+    cert_manager:
+      version: v1.14.5
+      cloudflare_key: "{{ lookup('ansible.builtin.env', 'cloudflare') }}"
+      email: "{{ lookup('ansible.builtin.env', 'email') }}"
+    ingress_nginx:
+      version: v4.10.1
+    pihole:
+      server: "{{ lookup('ansible.builtin.env', 'pihole_server') }}"
+      password: "{{ lookup('ansible.builtin.env', 'pihole_webpassword') }}"
+    external_dns:
+      version: v0.14.2
+    argocd:
+      domain: "{{ lookup('ansible.builtin.env', 'argocd_domain') }}"
+    k3s_registration_address: "{{ lookup('ansible.builtin.env', 'kube_vip_ip') }}"
+    k3s_release_version: "v1.28.9+k3s1"
+    k3s_etcd_datastore: true
+    k3s_server_manifests_templates:
+      - ./manifests/kube-vip/kube-vip-rbac.yaml.j2
+      - ./manifests/kube-vip/kube-vip-cloud-controller.yaml.j2
+      - ./manifests/kube-vip/kube-vip.yaml.j2
+      - ./manifests/external-dns.yaml.j2
+      - ./manifests/cert-manager/cert-manager-crds.yaml
+      - ./manifests/cert-manager/cert-manager.yaml.j2
+      - ./manifests/argo-cd.yaml.j2
+      - ./manifests/sealed-secrets.yaml.j2
+      - ./manifests/ingress-nginx.yaml.j2
+    k3s_server:
+      secrets-encryption: true
+      tls-san: "{{k3s_registration_address}}"
+      disable:
+        - traefik
+        - servicelb
+    k3s_agent:
+      snapshotter: native
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        upgrade: dist
+    - name: Autoremove unused dependencies
+      ansible.builtin.apt:
+        autoremove: true
+    - name: Install unattended-upgrades package
+      ansible.builtin.apt:
+        name: unattended-upgrades
+        state: present
+    - name: Enable automatic updates
+      ansible.builtin.debconf:
+        name: unattended-upgrades
+        question: unattended-upgrades/enable_auto_updates
+        value: true
+        vtype: boolean
+    - name: Configure unattended-upgrades
+      ansible.builtin.copy:
+        content: |
+          "${distro_id}:${distro_codename}-updates";
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Unconditionally reboot the machine with all defaults
+      ansible.builtin.reboot:
+    - name: Set each node to be a control node
+      ansible.builtin.set_fact:
+        k3s_control_node: true
+        k3s_etcd_datastore: true
+      when: inventory_hostname in ["k3s-master-01", "k3s-master-02", "k3s-master-03"]
+  roles:
+    - role: ansible-role-k3s
