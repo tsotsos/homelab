@@ -4,8 +4,9 @@
 *.terraform
 *.asc
 *.key
-hosts.ini
-hosts.yaml
+**/hosts.ini
+**/hosts.yaml
+**/hosts.yml
 .terraform
 .vscode
 ansible/nomad-cluster/keys/
