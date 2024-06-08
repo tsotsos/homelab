@@ -1,3 +1,31 @@
+enableRbac: true
+
+serviceAccount:
+  create: true
+  name: homepage
+
+ingress:
+  main:
+    enabled: true
+    annotations:
+      # Example annotations to add Homepage to your Homepage!
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Homepage"
+      gethomepage.dev/description: "Dynamically Detected Homepage"
+      gethomepage.dev/group: "Dynamic"
+      gethomepage.dev/icon: "homepage.png"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/hostname: d.kng.house
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    hosts:
+      - host: d.kng.house
+        paths:
+          - path: /
+            pathType: Prefix
+        tls:
+          - hosts:
+              - d.kng.house
 config:
   bookmarks:
     - Developer:
@@ -38,31 +66,3 @@ config:
   kubernetes:
     mode: cluster
   settings:
-serviceAccount:
-  create: true
-  name: homepage
-
-enableRbac: true
-
-ingress:
-  main:
-    enabled: true
-    annotations:
-      # Example annotations to add Homepage to your Homepage!
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Homepage"
-      gethomepage.dev/description: "Dynamically Detected Homepage"
-      gethomepage.dev/group: "Dynamic"
-      gethomepage.dev/icon: "homepage.png"
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      external-dns.alpha.kubernetes.io/hostname: d.kng.house
-      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-    hosts:
-      - host: d.kng.house
-        paths:
-          - path: /
-            pathType: Prefix
-        tls:
-          - hosts:
-              - d.kng.house
