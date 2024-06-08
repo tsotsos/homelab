@@ -41,7 +41,7 @@ spec:
         - name: nfs-client-root
           nfs:
             server: 10.0.1.10
-            path: /volume1/k8s
+            path: /Volume1/k8s
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
