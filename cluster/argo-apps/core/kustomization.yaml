@@ -4,3 +4,4 @@ namespace: argocd
 
 resources:
 - nfs-provisioner.yaml
+- *.yaml
