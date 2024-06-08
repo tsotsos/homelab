@@ -1,21 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ingress-nginx
+  name: homepage
   namespace: argocd
   annotations:
-     argocd.argoproj.io/sync-wave: "-5"
+     argocd.argoproj.io/sync-wave: "-4"
 spec:
-  project: core
-  source:
-    chart: ingress-nginx
-    repoURL: https://kubernetes.github.io/ingress-nginx
-    targetRevision: v4.10.1
-    helm:
-      releaseName: ingress-nginx
   destination:
     server: https://kubernetes.default.svc
     namespace: default
+  project: core
+  source:
+    path: cluster/apps/core/external-dns
+    repoURL: https://github.com/tsotsos/homelab
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true
