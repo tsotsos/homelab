@@ -38,13 +38,10 @@ config:
   kubernetes:
     mode: cluster
   settings:
-
-# The service account is necessary to allow discovery of other services
 serviceAccount:
   create: true
   name: homepage
 
-# This enables the service account to access the necessary resources
 enableRbac: true
 
 ingress:
@@ -57,8 +54,15 @@ ingress:
       gethomepage.dev/description: "Dynamically Detected Homepage"
       gethomepage.dev/group: "Dynamic"
       gethomepage.dev/icon: "homepage.png"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/hostname: d.kng.house
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
     hosts:
-      - host: homepage.example.com
+      - host: d.kng.house
         paths:
           - path: /
             pathType: Prefix
+        tls:
+          - hosts:
+              - *host
