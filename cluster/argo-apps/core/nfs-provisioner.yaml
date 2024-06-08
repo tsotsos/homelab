@@ -15,7 +15,7 @@ spec:
         - name: "nfs.server"
           value: "10.0.1.10"
         - name: "nfs.path"
-          value: "/Volume1/k8s"
+          value: "/volume1/k8s"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: kube-system
