@@ -1,0 +1,3 @@
+nfs:
+  server: 10.0.1.10
+  path: /Volume1/k8s

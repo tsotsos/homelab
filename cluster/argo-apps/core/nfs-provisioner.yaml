@@ -9,7 +9,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
-  project: core-apps
+  project: core
   source:
     path: cluster/apps/core/nfs-provisioner
     repoURL: https://github.com/tsotsos/homelab
