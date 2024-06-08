@@ -4,14 +4,14 @@ metadata:
   name: homepage
   namespace: argocd
   annotations:
-     argocd.argoproj.io/sync-wave: "-2"
+     argocd.argoproj.io/sync-wave: "-5"
 spec:
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: kube-system
   project: default
   source:
-    path: cluster/apps/home/homepage
+    path: cluster/apps/core/nfs-provisioner
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:
