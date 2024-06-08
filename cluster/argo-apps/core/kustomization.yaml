@@ -4,4 +4,4 @@ namespace: argocd
 
 resources:
 - nfs-provisioner.yaml
-- *.yaml
+- sealed-secrets.yaml
