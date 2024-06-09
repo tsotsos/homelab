@@ -7,4 +7,4 @@ resources:
 - ingress-nginx.yaml
 - external-dns.yaml
 - cert-manager.yaml
-- cert-manager-issuer.yaml
+- letsencrypt-prod.yaml

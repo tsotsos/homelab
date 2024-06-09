@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cert-manager-issuer
+  name: letsencrypt-prod
   namespace: argocd
   annotations:
      argocd.argoproj.io/sync-wave: "-4"
@@ -11,7 +11,7 @@ spec:
     namespace: cert-manager
   project: core
   source:
-    path: cluster/apps/core/cert-manager-issuer
+    path: cluster/apps/core/letsencrypt-prod
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:
