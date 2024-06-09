@@ -5,11 +5,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email:
-      valueFrom:
-        secretKeyRef:
-          name: cloudflare-api-token-secret
-          key: email
+    email: admin@kng.house
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
