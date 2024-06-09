@@ -6,14 +6,24 @@ metadata:
   annotations:
      argocd.argoproj.io/sync-wave: "-4"
 spec:
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: cert-manager
   project: core
   source:
-    path: cluster/apps/core/cert-manager
-    repoURL: https://github.com/tsotsos/homelab
-    targetRevision: main
+    chart: cert-manager
+    repoURL: https://charts.jetstack.io
+    targetRevision: v1.15.0
+    helm:
+      releaseName: cert-manager
+      valuesObject:
+        cert-manager:
+        installCRDs: true
+        cainjector:
+          enabled: true
+        extraArgs: 
+          - --dns01-recursive-nameservers-only
+          - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
   syncPolicy:
     automated:
       prune: true
