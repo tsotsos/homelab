@@ -9,13 +9,9 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
-      - dns01:
-          cloudflare:
-          email:
-            valueFrom:
-              secretKeyRef:
-                name: cloudflare-api-token-secret
-                key: email
+    - dns01:
+        cloudflare:
+          email: tsotsos@gmail.com
           apiTokenSecretRef:
             name: cloudflare-api-token-secret
             key: api-token
