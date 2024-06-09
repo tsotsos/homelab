@@ -8,3 +8,5 @@ resources:
 - external-dns.yaml
 - cert-manager.yaml
 - letsencrypt-prod.yaml
+- kube-vip-cloud-controller.yaml
+- kube-vip.yaml
