@@ -4,7 +4,7 @@ metadata:
   name: cert-manager
   namespace: argocd
   annotations:
-     argocd.argoproj.io/sync-wave: "-4"
+     argocd.argoproj.io/sync-wave: "-6"
 spec:
   project: core
   source:
@@ -23,7 +23,7 @@ spec:
           - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: cert-manager
   syncPolicy:
     automated:
       prune: true

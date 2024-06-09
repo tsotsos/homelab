@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+     argocd.argoproj.io/sync-wave: "-4"
+spec:
+  project: core
+  source:
+    chart: argo-cd
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 2.11.3
+    helm:
+      releaseName: argo-cd
+      valuesObject:
+        server:
+          ingress:
+            hostname: argocd.kng.house
+            enabled: true
+            ingressClassName: nginx
+            tls: true
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              external-dns.alpha.kubernetes.io/hostname: argocd.kng.house
+              nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+              nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
