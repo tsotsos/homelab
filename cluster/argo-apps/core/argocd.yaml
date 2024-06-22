@@ -10,6 +10,7 @@ spec:
   source:
     chart: argo-cd
     repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 2.11.3
     helm:
       releaseName: argo-cd
       valuesObject:
@@ -20,6 +21,7 @@ spec:
             ingressClassName: nginx
             tls: true
             annotations:
+              kubernetes.io/ingress.class: public
               cert-manager.io/cluster-issuer: letsencrypt-prod
               external-dns.alpha.kubernetes.io/hostname: argocd.kng.house
               nginx.ingress.kubernetes.io/ssl-passthrough: "true"
