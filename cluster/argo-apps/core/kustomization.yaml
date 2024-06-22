@@ -10,4 +10,4 @@ resources:
 - letsencrypt-prod.yaml
 - kube-vip-cloud-controller.yaml
 - kube-vip.yaml
-#- argocd.yaml
+- argocd.yaml
