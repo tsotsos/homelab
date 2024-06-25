@@ -11,14 +11,15 @@ spec:
     chart: argo-cd
     repoURL: https://argoproj.github.io/argo-helm
     targetRevision: 2.11.3
+    parameters:
+      - name: "apiVersionOverrides"
+        value:
+          ingress: networking.k8s.io/v1
     helm:
       releaseName: argo-cd
       valuesObject:
-        apiVersionOverrides:
-          ingress: networking.k8s.io/v1
         server:
           ingress:
-            apiVersion: networking.k8s.io/v1
             hostname: argocd.kng.house
             enabled: true
             ingressClassName: nginx
