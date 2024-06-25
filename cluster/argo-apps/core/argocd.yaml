@@ -14,7 +14,20 @@ spec:
     helm:
       releaseName: argo-cd
       valuesObject:
+        redis-ha:
+          enabled: true
+        controller:
+          replicas: 1
+        repoServer:
+          autoscaling:
+            enabled: true
+            minReplicas: 2
+        applicationSet:
+          replicas: 2
         server:
+          autoscaling:
+            enabled: true
+            minReplicas: 2
           ingress:
             hostname: argocd.kng.house
             enabled: true
