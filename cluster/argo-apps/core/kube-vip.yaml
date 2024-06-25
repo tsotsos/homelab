@@ -17,7 +17,7 @@ spec:
         config:
           address: "10.0.10.30"
         env:
-          vip_interface: "eth0"
+          vip_interface: "ens18"
           vip_arp: "true"
           lb_enable: "true"
           lb_port: "6443"
