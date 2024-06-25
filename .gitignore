@@ -16,5 +16,5 @@ gitops_key
 gitops_key.pub
 secrets.env
 network.puml
-kube.config
 rke2.yaml
+un.yaml
