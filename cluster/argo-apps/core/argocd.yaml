@@ -13,9 +13,10 @@ spec:
     targetRevision: 2.11.3
     helm:
       releaseName: argo-cd
-      values:
+      valuesObject:
         apiVersionOverrides:
           ingress: networking.k8s.io/v1
+          server: networking.k8s.io/v1
         server:
           ingress:
             hostname: argocd.kng.house
