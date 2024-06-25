@@ -17,3 +17,4 @@ gitops_key.pub
 secrets.env
 network.puml
 kube.config
+rke2.yaml
