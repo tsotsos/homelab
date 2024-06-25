@@ -3,7 +3,7 @@ if [ ! -f "ignition.tpl" ]; then
   echo "Error: ignition.tpl file not found!"
   exit 1
 fi
-ip_list=(10.0.10.21/24 10.0.10.22/24 10.0.10.23/24 10.0.10.24/24 10.0.10.25/24 10.0.10.26/24 10.0.10.27/24 10.0.10.27/24 10.0.10.28/24 10.0.10.29/24)
+ip_list=(10.0.10.21/24 10.0.10.22/24 10.0.10.23/24 10.0.10.24/24 10.0.10.25/24 10.0.10.26/24 10.0.10.27/24 10.0.10.28/24 10.0.10.29/24)
 hostname_list=(rke-master-01 rke-master-02 rke-master-03 rke-worker-01 rke-worker-02 rke-worker-03 rke-worker-04 rke-worker-05 rke-worker-06)
 
 for (( i=0; i<${#ip_list[@]}; i++ )); do
