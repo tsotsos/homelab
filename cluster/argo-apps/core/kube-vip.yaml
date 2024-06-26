@@ -27,7 +27,7 @@ spec:
           svc_enable: "true"
           svc_election: "true"
           vip_leaderelection: "true"
-          prometheus_server: ":2112"
+          prometheus_server: ":2113"
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
