@@ -1,0 +1,11 @@
+- name: Deps
+  hosts: all
+  gather_facts: false
+  vars:
+    ansible_connection: ssh
+    ansible_user: root
+  tasks:
+    - name: Install Python
+      ansible.builtin.raw: transactional-update -n pkg install python3 nfs-client
+    - name: Restart
+      ansible.builtin.raw: reboot

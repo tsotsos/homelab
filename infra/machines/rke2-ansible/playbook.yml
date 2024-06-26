@@ -1,0 +1,22 @@
+- name: Deploy RKE2
+  hosts: all
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_user: root
+    ansible_port: 22
+    ansible_python_interpreter: /usr/bin/python3
+    rke2_version: v1.28.10+rke2r1
+    rke2_server_taint: true
+    rke2_disable: rke2-ingress-nginx
+    rke2_ha_mode: true
+    rke2_ha_mode_keepalived: false
+    rke2_ha_mode_kubevip: true
+    rke2_kubevip_image: ghcr.io/kube-vip/kube-vip:v0.8.0
+    rke2_kubevip_cloud_provider_image: ghcr.io/kube-vip/kube-vip-cloud-provider:v0.0.9
+    rke2_kubevip_cloud_provider_enable: true
+    rke2_kubevip_svc_enable: true
+    rke2_api_ip: "{{ lookup('ansible.builtin.env', 'kube_vip_ip') }}"
+    rke2_loadbalancer_ip_range:
+      range-global: "{{ lookup('ansible.builtin.env', 'kube_vip_range') }}"
+  roles:
+    - role: lablabs.rke2
