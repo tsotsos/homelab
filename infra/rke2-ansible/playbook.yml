@@ -18,5 +18,12 @@
     rke2_api_ip: "{{ lookup('ansible.builtin.env', 'kube_vip_ip') }}"
     rke2_loadbalancer_ip_range:
       range-global: "{{ lookup('ansible.builtin.env', 'kube_vip_range') }}"
+  post_tasks:
+    - name: Install Python
+      ansible.builtin.raw: transactional-update -n pkg remove python3
+      changed_when: false
+    - name: Restart
+      ansible.builtin.raw: reboot
+      changed_when: false
   roles:
     - role: lablabs.rke2
