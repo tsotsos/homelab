@@ -7,5 +7,7 @@
   tasks:
     - name: Install Python
       ansible.builtin.raw: transactional-update -n pkg install nfs-client && transactional-update -n pkg uninstall nfs-client
+      changed_when: false
     - name: Restart
       ansible.builtin.raw: reboot
+      changed_when: false
