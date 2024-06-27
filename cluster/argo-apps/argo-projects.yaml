@@ -43,4 +43,6 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: home-assistant
       server: https://kubernetes.default.svc
+    - namespace: default
+      server: https://kubernetes.default.svc
 status: {}
