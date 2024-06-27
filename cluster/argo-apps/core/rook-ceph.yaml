@@ -20,5 +20,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    kustomize:
-      buildOptions: --enable-helm
