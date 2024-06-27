@@ -18,7 +18,7 @@ spec:
           cm:
             kustomize.buildOptions: --enable-helm
         redis-ha:
-          enabled: true
+          enabled: false
         controller:
           replicas: 1
         repoServer:
