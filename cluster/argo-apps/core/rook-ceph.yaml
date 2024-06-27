@@ -8,7 +8,7 @@ metadata:
 spec:
   destination:
     server: https://kubernetes.default.svc
-    namespace: rook-ceph
+    namespace: kube-system
   project: core
   source:
     path: cluster/apps/core/rook-ceph

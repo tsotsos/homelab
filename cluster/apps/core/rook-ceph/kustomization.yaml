@@ -1,6 +1,6 @@
-namespace: cert-manager
+namespace: kube-system
 resources:
   - Chart.yaml
   - Secret.yaml
   - StorageClass.yaml
-  
+
