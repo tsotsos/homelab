@@ -15,7 +15,7 @@ spec:
       releaseName: argo-cd
       valuesObject:
         redis-ha:
-          enabled: true
+          enabled: false
         controller:
           replicas: 1
         repoServer:
