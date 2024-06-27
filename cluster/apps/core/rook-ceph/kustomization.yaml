@@ -10,7 +10,6 @@ helmCharts:
   valuesFile: values.yaml
 
 resources:
-  - Chart.yaml
   - Secret.yaml
   - StorageClass.yaml
 
