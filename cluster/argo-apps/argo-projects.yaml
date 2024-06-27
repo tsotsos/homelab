@@ -20,8 +20,27 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: cert-manager
       server: https://kubernetes.default.svc
+    - namespace: default
+      server: https://kubernetes.default.svc
+status: {}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: home
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  description: Home Applications
+  sourceRepos:
+    - '*' # Allow all repositories, or be more specific
+  destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
-    - namespace: default
+    - namespace: home-assistant
       server: https://kubernetes.default.svc
 status: {}
