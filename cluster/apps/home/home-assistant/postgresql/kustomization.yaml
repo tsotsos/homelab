@@ -6,7 +6,7 @@ resources:
 helmCharts:
 - name: postgresql
   repo: https://charts.bitnami.com/bitnami
-  version: HEAD
+  version: 15.5.11
   releaseName: postgresql
   namespace: home-assistant
   valuesFile: values.yaml
