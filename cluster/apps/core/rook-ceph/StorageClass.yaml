@@ -1,0 +1,12 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rook-ceph-block
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph 
+  pool: proxmox-ceph
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+mountOptions:
+  - discard

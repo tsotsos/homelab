@@ -1,0 +1,6 @@
+namespace: cert-manager
+resources:
+  - Chart.yaml
+  - Secret.yaml
+  - StorageClass.yaml
+  
