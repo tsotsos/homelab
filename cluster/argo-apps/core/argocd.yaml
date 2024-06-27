@@ -14,11 +14,8 @@ spec:
     helm:
       releaseName: argo-cd
       valuesObject:
-        configs:
-          cm:
-            kustomize.buildOptions: --enable-helm
         redis-ha:
-          enabled: false
+          enabled: true
         controller:
           replicas: 1
         repoServer:
