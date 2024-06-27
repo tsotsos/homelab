@@ -4,6 +4,6 @@ namespace: default
 
 resources:
   - roles.yaml
-  - Secret.yaml
+  - secret.yaml
   - ingress.yaml
-  - ConfigMap.yaml
+  - configMap.yaml

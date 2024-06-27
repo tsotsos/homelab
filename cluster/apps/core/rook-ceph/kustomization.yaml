@@ -10,5 +10,5 @@ helmCharts:
   valuesFile: values.yaml
 
 resources:
-  - Secret.yaml
-  - StorageClass.yaml
+  - secret.yaml
+  - storageClass.yaml
