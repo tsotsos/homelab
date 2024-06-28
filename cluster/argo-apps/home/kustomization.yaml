@@ -3,4 +3,4 @@ kind: Kustomization
 namespace: argocd
 resources:
 - homepage.yaml
-- home-assistant.yaml
+#- home-assistant.yaml
