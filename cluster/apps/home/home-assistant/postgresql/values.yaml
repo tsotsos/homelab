@@ -1,4 +1,4 @@
-existingSecret: postgresql-secret
+existingSecret: postgresql
 storageClass: "rook-ceph-block"
 primary:
   persistence:
