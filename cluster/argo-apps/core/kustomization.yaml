@@ -11,4 +11,5 @@ resources:
 - kube-vip.yaml
 - rook-ceph.yaml
 - argocd.yaml
+- postgresql.yaml
 
