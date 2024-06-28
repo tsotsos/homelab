@@ -8,3 +8,5 @@ helmCharts:
   releaseName: postgresql
   namespace: kube-system
   valuesFile: values.yaml
+resources:
+  - secret.yaml
