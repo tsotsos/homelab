@@ -1,0 +1,7 @@
+global:
+  storageClass: "rook-ceph-block"
+  auth:
+    existingSecret: postgresql-secret
+  primary:
+    persistence:
+      storageClass: "rook-ceph-block"

@@ -1,5 +1,0 @@
-existingSecret: postgresql
-storageClass: "rook-ceph-block"
-primary:
-  persistence:
-    storageClass: "rook-ceph-block"
