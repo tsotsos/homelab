@@ -3,7 +3,7 @@ kind: Kustomization
 namespace: kube-system
 helmCharts:
 - name: postgresql
-  repo: oci://registry-1.docker.io/bitnamicharts/postgresql
+  repo: https://charts.bitnami.com/bitnami
   version: 15.5.11
   releaseName: postgresql
   namespace: kube-system

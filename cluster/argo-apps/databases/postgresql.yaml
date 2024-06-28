@@ -9,9 +9,9 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
-  project: core
+  project: databases
   source:
-    path: cluster/apps/core/postgresql
+    path: cluster/apps/databases/postgresql
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:
