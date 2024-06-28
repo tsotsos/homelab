@@ -6,7 +6,7 @@ metadata:
     sealedsecrets.bitnami.com/cluster-wide: "true"
   creationTimestamp: null
   name: postgresql-secrets
-  namespace: kube-system
+  namespace: default
 spec:
   encryptedData:
     postgresql-password: AgBfZOzwkWBt1V0Ml8eHmfHyLD2o3gFDLWdYXXT8PW73Lh1GkqSbazEOCU3PGHUXW+cZxVPK6QBQkPtlokWo/r0GYE+yPsytq+SKajYrKdQLenLhQVrMG+pp+UfmZqLgjI9CqgFjPbl9V+kyWQCfULZa3I3V0Z2SJMY04QMkEy2v9R2tYJMvR/jyLC0ZFGSq2z7aphuiysjIQ17QcVDxGsRkM2eJWDZVUNLkMB1IC+1eaL0Oo7HrpFMSB//8h4weGf04v2nm7TW7zqBkvmrcMELu8KrI0gYv0aBm49g38yHx9QR5Dhyiwj1TaC67DGvJwZtS2EAhWuID/DCblDaEX7EKJtLMUAYcC26yQARvWPmzORxWsw14eQq2ezSM3SF0GlnjhY8U3W13oJdcxGGnqlgZVLFUnYU44zOcuQLpUCzEYOFV0/wr1DWqSO2agCsQr542G/8sX9kZ30J84EqH70f39pM+RycoUE8LIRNw3Dv8UGaQ+9Z4XU2ZCM1hXN3llsyrvv5MeL52rpRhIDA1KQXcsbHjoGGQb27bVh3rCwIEQoEEa397xyZ/amnpSbXyoPP/nie0xEaGCYJuce+bMOSkZWni3d8QT+ygQJnIcmsGwc0hee8z4GIqWYswBHt+v0OLWzg82beY+bDHv4+c9hsDjI0Uc3VDRCVwya1hZ4qT7k2tZE+2mLiu1xlKrb4HyxDgMr1auX4b
@@ -17,5 +17,5 @@ spec:
         sealedsecrets.bitnami.com/cluster-wide: "true"
       creationTimestamp: null
       name: postgresql-secrets
-      namespace: kube-system
+      namespace: default
     type: Opaque
