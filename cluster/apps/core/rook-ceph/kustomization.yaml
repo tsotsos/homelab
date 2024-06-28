@@ -4,10 +4,11 @@ namespace: kube-system
 helmCharts:
 - name: rook-ceph
   repo: https://charts.rook.io/release
-  version: 1.14.7
-  releaseName: rook-ceph
+  version: HEAD
+  releaseName: rook-release/rook-ceph
   namespace: kube-system
   valuesFile: values.yaml
+
 
 resources:
   - secret.yaml
