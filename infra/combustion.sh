@@ -32,6 +32,7 @@ exec > >(exec tee -a /dev/tty0) 2>&1
 systemd-firstboot --force --keymap=us-intl # Keyboard layout
 zypper --non-interactive install python3
 zypper --non-interactive install nfs-client
+zypper --non-interactive install open-iscsi
 # Leave a marker
 echo "Configured with combustion" > /etc/issue.d/combustion
 # Close outputs and wait for tee to finish.

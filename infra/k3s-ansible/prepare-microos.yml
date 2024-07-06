@@ -6,7 +6,7 @@
     ansible_user: root
   tasks:
     - name: Python
-      ansible.builtin.raw: transactional-update -n pkg install nfs-client python3
+      ansible.builtin.raw: transactional-update -n pkg install open-iscsi
       changed_when: false
     - name: Restart
       ansible.builtin.raw: reboot
