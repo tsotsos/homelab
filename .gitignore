@@ -17,5 +17,6 @@ gitops_key.pub
 secrets.env
 network.puml
 rke2.yaml
+k3s.yaml
 un.yaml
 secrets-un/
