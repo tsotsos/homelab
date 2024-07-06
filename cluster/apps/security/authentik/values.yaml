@@ -1,0 +1,24 @@
+authentik:
+    log_level: warn
+    error_reporting:
+        enabled: false
+server:
+    ingress:
+        ingressClassName: nginx
+        enabled: true
+        hosts:
+            - authentik.kng.house
+        annotations:
+          #nginx.ingress.kubernetes.io/service-upstream: "true"
+          cert-manager.io/common-name: authentik.kng.house
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          external-dns.alpha.kubernetes.io/hostname: authentik.kng.house
+        tls:
+          - secretName: authentik-tls
+            hosts:
+              - authentik.kng.house
+        https: true
+postgresql:
+    enabled: true
+redis:
+    enabled: true
