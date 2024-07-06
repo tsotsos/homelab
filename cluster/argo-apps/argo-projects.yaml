@@ -22,6 +22,8 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: default
       server: https://kubernetes.default.svc
+    - namespace: longhorn-system
+      server: https://kubernetes.default.svc
 status: {}
 ---
 apiVersion: argoproj.io/v1alpha1
