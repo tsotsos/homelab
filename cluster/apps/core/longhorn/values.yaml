@@ -2,6 +2,7 @@ preUpgradeChecker:
   jobEnabled: false
 ingress:
   hostname: longhorn.kng.house
+  host: longhorn.kng.house
   enabled: true
   ingressClassName: nginx
   tls: true
