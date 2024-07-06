@@ -14,6 +14,16 @@ spec:
     helm:
       releaseName: argo-cd
       valuesObject:
+        redis-ha:
+          enabled: true
+        controller:
+          replicas: 1
+        repoServer:
+          autoscaling:
+            enabled: true
+            minReplicas: 2
+        applicationSet:
+          replicas: 2
         configs:
           cm:
             kustomize.buildOptions: --enable-helm
@@ -30,6 +40,7 @@ spec:
               cert-manager.io/cluster-issuer: letsencrypt-prod
               external-dns.alpha.kubernetes.io/hostname: argocd.kng.house
               nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
               nginx.ingress.kubernetes.io/backend-protocol: HTTPS
   destination:
     server: https://kubernetes.default.svc
