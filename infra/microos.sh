@@ -2,11 +2,11 @@
 # VM ID variable (easily change this if needed)
 VM_ID=10000
 VM_NAME="OpenSuSE-microOs"
-STORAGE="ceph"   # Adjust if you use different storage
+STORAGE="local-lvm"   # Adjust if you use different storage
 BRIDGE="vmbr1"         # Replace with your actual bridge interface
 # Suse MicroOS image
-MICRO_OS="https://ftp.cc.uoc.gr/mirrors/linux/opensuse/opensuse/tumbleweed/appliances/openSUSE-MicroOS.x86_64-16.0.0-ContainerHost-kvm-and-xen-Snapshot20240621.qcow2"
-IMAGE_FILE="openSUSE-MicroOS.x86_64-16.0.0-ContainerHost-kvm-and-xen-Snapshot20240621.qcow2"
+MICRO_OS="https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-16.0.0-ContainerHost-kvm-and-xen-Snapshot20240629.qcow2"
+IMAGE_FILE="openSUSE-MicroOS.x86_64-16.0.0-ContainerHost-kvm-and-xen-Snapshot20240629.qcow2"
 
 # Check if image exists, download if not
 if [ ! -f "$IMAGE_FILE" ]; then

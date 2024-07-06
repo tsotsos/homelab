@@ -1,0 +1,45 @@
+- name: K8s all hosts
+  hosts: all
+  become: true
+  vars:
+    k3s_become: true
+    kube_vip:
+      svc_enable: true
+      election_enable: true
+      metrics_port: 2112
+      image: "ghcr.io/kube-vip/kube-vip:v0.8.0"
+      cloud_image: "ghcr.io/kube-vip/kube-vip-cloud-provider:v0.0.9"
+      ip: "{{ lookup('ansible.builtin.env', 'kube_vip_ip') }}"
+      range: "{{ lookup('ansible.builtin.env', 'kube_vip_range') }}"
+      args: []
+    argocd:
+      domain: "{{ lookup('ansible.builtin.env', 'argocd_domain') }}"
+    k3s_registration_address: "{{ lookup('ansible.builtin.env', 'kube_vip_ip') }}"
+    k3s_release_version: "v1.28.9+k3s1"
+    k3s_etcd_datastore: true
+    k3s_server_manifests_templates:
+      - ./manifests/kube-vip/kube-vip-rbac.yaml.j2
+      - ./manifests/kube-vip/kube-vip-cloud-controller.yaml.j2
+      - ./manifests/kube-vip/kube-vip.yaml.j2
+      # - ./manifests/external-dns.yaml.j2
+      # - ./manifests/cert-manager/cert-manager-crds.yaml
+      # - ./manifests/cert-manager/cert-manager.yaml.j2
+      - ./manifests/argo-cd.yaml.j2
+      # - ./manifests/sealed-secrets.yaml.j2
+      # - ./manifests/ingress-nginx.yaml.j2
+    k3s_server:
+      secrets-encryption: true
+      tls-san: "{{k3s_registration_address}}"
+      disable:
+        - traefik
+        - servicelb
+    k3s_agent:
+      snapshotter: native
+  pre_tasks:
+    - name: Set each node to be a control node
+      ansible.builtin.set_fact:
+        k3s_control_node: true
+        k3s_etcd_datastore: true
+      when: inventory_hostname in ["k3s-master-01", "k3s-master-02", "k3s-master-03", "k3s-master-04", "k3s-master-05"]
+  roles:
+    - role: ansible-role-k3s

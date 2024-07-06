@@ -7,8 +7,9 @@ terraform {
   }
   cloud {
     organization = "kng"
+
     workspaces {
-      name = var.dns_workspace
+      name = "dns-cluster"
     }
   }
 }

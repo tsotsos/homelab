@@ -5,7 +5,7 @@
     ansible_connection: ssh
     ansible_user: root
   tasks:
-    - name: Install Python and Nfs Client
+    - name: Python
       ansible.builtin.raw: transactional-update -n pkg install nfs-client python3
       changed_when: false
     - name: Restart

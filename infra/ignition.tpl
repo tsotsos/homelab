@@ -1,6 +1,6 @@
 {
   "ignition": {
-    "version": "3.1.0"
+    "version": "3.2.0"
   },
   "passwd": {
     "users": [
@@ -14,15 +14,6 @@
       }
     ]
   },
-  "systemd": {
-    "units": [
-      {
-        "name": "set-static-ip.service",
-        "enabled": true,
-        "contents": "[Unit]\nDescription=Set Static IP\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/nmcli connection modify 'Wired connection 1' ipv4.addresses 'VM_IP' ipv4.gateway '10.0.10.1' ipv4.dns '10.0.10.1' connection.autoconnect yes \nExecStart=/usr/bin/nmcli connection up 'Wired connection 1'\n\n[Install]\nWantedBy=multi-user.target"
-      }
-    ]
-  },
   "storage": {
     "files": [
       {
@@ -32,6 +23,15 @@
         "overwrite": true,
         "contents": {
           "source": "data:,HOST"
+        }
+      },
+      {
+        "path": "/etc/NetworkManager/conf.d/noauto.conf",
+        "mode": 420,
+        "overwrite": true,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,W21haW5dCiMgRG8gbm90IGRvIGF1dG9tYXRpYyAoREhDUC9TTEFBQykgY29uZmlndXJhdGlvbiBvbiBldGhlcm5ldCBkZXZpY2VzCiMgd2l0aCBubyBvdGhlciBtYXRjaGluZyBjb25uZWN0aW9ucy4Kbm8tYXV0by1kZWZhdWx0PSoK",
+          "human_read": "[main]\n# Do not do automatic (DHCP/SLAAC) configuration on ethernet devices\n# with no other matching connections.\nno-auto-default=*\n"
         }
       }
     ]
