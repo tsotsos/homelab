@@ -1,3 +1,7 @@
+global:
+  envFrom:
+    - secretRef:
+        name: authentik-secret
 authentik:
     log_level: warn
     error_reporting:
