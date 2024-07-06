@@ -8,6 +8,3 @@ helmCharts:
   releaseName: longhorn
   namespace: longhorn-system
   valuesFile: values.yaml
-
-resources:
-  - ingress.yaml
