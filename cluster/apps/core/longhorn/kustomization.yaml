@@ -9,5 +9,3 @@ helmCharts:
   namespace: longhorn-system
   valuesFile: values.yaml
 
-resources:
-  - storage-class.yaml
