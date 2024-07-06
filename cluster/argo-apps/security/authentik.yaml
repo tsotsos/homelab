@@ -8,7 +8,7 @@ metadata:
 spec:
   destination:
     server: https://kubernetes.default.svc
-    namespace: authentik
+    namespace: kube-system
   project: core
   source:
     path: cluster/apps/security/authentik
