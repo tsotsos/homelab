@@ -11,4 +11,4 @@ resources:
 - kube-vip.yaml
 - argocd.yaml
 - cert-issuer.yaml
-- longhorn.yaml
+#- longhorn.yaml
