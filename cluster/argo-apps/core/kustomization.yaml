@@ -10,3 +10,4 @@ resources:
 - kube-vip-cloud-controller.yaml
 - kube-vip.yaml
 - argocd.yaml
+- cert-issuer.yaml
