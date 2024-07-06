@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: longhorn-ingress
   namespace: longhorn-system
+  labels:
+    app.kubernetes.io/name: longhorn
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/hostname: longhorn.kng.house
@@ -11,15 +13,16 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: longhorn-frontend
-            port:
-              number: 80
+    - host: "d.kng.house"
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+                service:
+                  name: longhorn-frontend
+                  port:
+                    number: 80
   tls:
     - hosts:
         - longhorn.kng.house
