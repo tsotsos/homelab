@@ -13,7 +13,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: "d.kng.house"
+    - host: longhorn.kng.house
       http:
         paths:
           - path: "/"
