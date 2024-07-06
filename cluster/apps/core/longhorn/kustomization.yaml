@@ -9,3 +9,5 @@ helmCharts:
   namespace: longhorn-system
   valuesFile: values.yaml
 
+resources:
+  - ingress.yaml
