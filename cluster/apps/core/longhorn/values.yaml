@@ -1,2 +1,32 @@
 preUpgradeChecker:
   jobEnabled: false
+
+# Backup S3 backend URL
+# backup:
+#   minioUrl: "https://s3.ricsanfre.com:9091"
+
+# Prometheus servicemonitor configuration
+# serviceMonitor:
+#   enable: true
+#   release: monitoring
+
+defaultSettings:
+  # backupTarget: "s3://k3s-longhorn@eu-west-1/"
+  # backupTargetCredentialSecret: longhorn-backup-secret
+# Ingress Resource. Longhorn dashboard.
+ingress:
+  ## Enable creation of ingress resource
+  enabled: true
+  ## Add ingressClassName to the Ingress
+  ingressClassName: nginx
+  
+  # ingress host
+  host: longhorn.kng.house
+  tls: true
+  tlsSecret: longhorn-tls
+  path: /
+  annotations:
+    #nginx.ingress.kubernetes.io/service-upstream: "true"
+    cert-manager.io/common-name: longhorn.kng.house
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: longhorn.kng.house
