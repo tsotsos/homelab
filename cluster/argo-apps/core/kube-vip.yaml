@@ -15,7 +15,7 @@ spec:
       releaseName: kube-vip
       valuesObject:
         config:
-          address: "10.0.10.30"
+          address: "10.0.2.40"
         env:
           vip_interface: "ens18"
           vip_arp: "true"
