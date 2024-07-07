@@ -4,6 +4,6 @@ namespace: argocd
 resources:
     - argo-projects.yaml
     - core
-    #- databases
+    - databases
     - home
     #- security
