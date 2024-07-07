@@ -8,3 +8,6 @@ helmCharts:
   releaseName: longhorn
   namespace: longhorn-system
   valuesFile: values.yaml
+
+resources:
+  - storageclass-postgres.yaml
