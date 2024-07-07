@@ -14,6 +14,11 @@ preUpgradeChecker:
 #   backupTarget: "s3://k3s-longhorn@eu-west-1/"
 #   backupTargetCredentialSecret: longhorn-backup-secret
 # # Ingress Resource. Longhorn dashboard.
+defaultSettings:
+  orphanAutoDeletion: false
+  autoDeletePodWhenVolumeDetachedUnexpectedly: true
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+  nodeDrainPolicy: always-allow
 ingress:
   ## Enable creation of ingress resource
   enabled: true
