@@ -11,7 +11,7 @@ spec:
     namespace: cnpg-system
   project: databases
   source:
-    path: cluster/apps/databases/cnpg
+    path: cluster/apps/databases/cloudnative-pg
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:
