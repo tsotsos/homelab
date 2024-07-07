@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: postgresql
+  name: pg-clusters
   namespace: argocd
   annotations:
-     argocd.argoproj.io/sync-wave: "-8"
+     argocd.argoproj.io/sync-wave: "-1"
 spec:
   destination:
     server: https://kubernetes.default.svc
-    namespace: kube-system
+    namespace: cnpg-system
   project: databases
   source:
-    path: cluster/apps/databases/postgresql
+    path: cluster/apps/databases/pg-clusters
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:

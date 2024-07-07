@@ -1,0 +1,58 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  annotations:
+    sealedsecrets.bitnami.com/cluster-wide: "true"
+  creationTimestamp: null
+  name: db-authentik-credentials
+  namespace: cnpg-system
+spec:
+  encryptedData:
+    password: AgAtY27QusIF6Ir9zY4gSHm5JNG9grY3m2X+OQT/ePEF+vOcurhxNWlPwH3kQM9w9ViooafruvLC3Azu744YWAU1Kc6D/FSaZecYKK0s9VEE0otT/b3UnWlzdS5NyeAcvBCXRw+7LMSh9iQ369nFiAvzIPPE162stWGPg0SCNjgjUODfRs1vmHpxrtdgylkWkGErZNK6FmMWkkQ24kaJgnlqLvU3i5YoQF7tPYbcS49bhET87tcIrwmC2qRyItPqo3eT9wTMhy0S8XLCofpAoNrr9+AdhlGx3EGMvHW4QXvtGUdGi9akbkmLaeAxm4gurVg1GzImtgGXxag0Sy4uK8TNdXNEVql0KUBPxvBgALEsHwvDQolg3ZBFQfO/w+8LLabIy5RG4Je15Mlqdopr+tfgMhm/WU4FsUT7zrb3k3tTQ7NEHGzq77OCCsUs9Q9yyD9elihc+jXijl5+tHsBbnoGZ/xCZJ55+yfsOjfUu2Jn44oHIxmDZr0dyDz4K6ulnWeDfA0F6qY0DXdZYkEO+BJ5OZV0g3tHfNYBUhJ7QzM4viiuAT/Ghu5fK6epBCxDE1FfYSo1eySPSg2dcqU339CFFqltoXpd4j2WUgFmE2OGaBHSV22on7eMEMPpMBv7O/wbZwnZGmR1uVqcYvokzUZrI0kXnOTiukIXS/Yx36vNO4feZlS7AqmBQCmNrzSyH1VWFLTDJYuufAQ9rPF7c9lP
+    username: AgB1JDPQi6JX/siPAgvgvZN6oMfpZyyuV4ZgTAmojcA3hygevMbBp0SARXsNdrcDaETYy/pYmrBhUMCS9HY3GsfN4kcrfgFYQJr6Oyhl9+SotsEBsTjX35XI7P6OfMebnjGE76a/Ch2heJaAKDsTbPjQqveMds3YYpcAPO2UDtHWedVj5JBCZ4Sj6GDhVBKvZ2jvxyGlPNY2374I2K9ZcO3WjAV8u9PssarX2EeeeyjYqVFQdlFv5Czud0eCBOSKea4WwkH4xRT7uOJq2kzbqYuHW/YixKlVH9yfBG2ro2hCVan3PLQzHqjsga3AKkhTnfkhbRrXmt5yRQnR+JdpQoD6SsSRhmlg74s0Zv68/YFpCU1Hzhhl9DhpMlN9LfWdBrisTOas8Wl3F3ZYjlLMjG7AH5FU5pw/DHbS2ZITWO08MGjBGpUI+Mv65XepBpiI13OV6q7+0qeqJvnlLgqKRm4uobwL7PdktN5Dj++50JSCc5X+G8aF5SZ8O4sqWTXghzeP6o+/UuHyh2qiFfzTefGWcoTZ2Rz9+gX33LgGXEKcwk7jnyKosotOlDaL/5jG1KufQEv0+3yp2GL5RyiLw1dWEzwyN/6xYzLTm9OuKdCjQuXm3pLs5uP9idFgevaRN3ZRIm+wpNQGKIX3LAe/SiggLjE+VAF3Wf1e1KOarDUf/9srESl27ArhR+3swLOsFmqoDTLHnY5VXVs=
+  template:
+    metadata:
+      annotations:
+        sealedsecrets.bitnami.com/cluster-wide: "true"
+      creationTimestamp: null
+      name: db-authentik-credentials
+      namespace: cnpg-system
+    type: Opaque
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: authentik
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: 16.3-bullseye
+spec:
+  instances: 3
+  description: "Authentik database cluster"
+  imageName: "ghcr.io/cloudnative-pg/postgresql:16.3-bullseye"
+
+  primaryUpdateStrategy: unsupervised
+
+  bootstrap:
+    initdb:
+      database: authentik
+      owner: authentik
+      secret:
+        name: db-authentik-credentials
+
+  # configure storage types used
+  storage:
+    storageClass: longhorn-postgres-replica-storage
+    size: 2Gi
+  walStorage:
+    storageClass: longhorn-postgres-replica-storage
+    size: 2Gi
+
+  # prometheus
+  monitoring:
+    enablePodMonitor: true
+
+  # see https://cloudnative-pg.io/documentation/1.22/kubernetes_upgrade/
+  nodeMaintenanceWindow:
+    reusePVC: false # rebuild from other replica instead
