@@ -1,0 +1,81 @@
+kubeProxy:
+  enabled: true
+
+kube-state-metrics:
+  metricLabelsAllowlist:
+    - "persistentvolumeclaims=[*]"
+  prometheus:
+    monitor:
+      enabled: true
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          targetLabel: kubernetes_node
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+
+grafana:
+  enabled: true
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      certmanager.k8s.io/acme-challenge-type: dns01
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    hosts:
+      - grafana.kng.house
+    tls:
+      - secretName: grafana-cert
+        hosts:
+          - grafana.kng.house
+alertmanager:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      certmanager.k8s.io/acme-challenge-type: dns01
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    hosts:
+      - alertmanager.kng.house
+    tls:
+      - secretName: alertmanager-cert
+        hosts:
+          - alertmanager.kng.house
+prometheus:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      certmanager.k8s.io/acme-challenge-type: dns01
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    hosts:
+      - prometheus.kng.house
+    tls:
+      - secretName: prometheus-cert
+        hosts:
+          - prometheus.kng.house
+  prometheusSpec:
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    retention: 10d
+    retentionSize: "10GB"
+    walCompression: true
+    resources:
+      requests:
+        memory: 400Mi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          resources:
+            requests:
+              storage: 50Gi
