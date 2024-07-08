@@ -9,7 +9,6 @@ ingress:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     certmanager.k8s.io/acme-challenge-type: dns01
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-    kubernetes.io/ingress.class: "nginx"
   hostname: influxdb.kng.house
   path: /
   tls: true
