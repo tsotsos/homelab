@@ -28,8 +28,7 @@ ingress:
 existingSecret: pgadmin-secret
 secretKeys:
   pgadminPasswordKey: password
-env:
-  email: tsotsos
-  password: defaultPass
+envVarsFromSecrets:
+  - pgadmin-envs-secret
 VolumePermissions:
   enabled: true
