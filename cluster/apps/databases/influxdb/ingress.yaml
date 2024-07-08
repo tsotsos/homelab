@@ -6,6 +6,7 @@ metadata:
   namespace: kube-system
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    certmanager.k8s.io/acme-challenge-type: dns01
     external-dns.alpha.kubernetes.io/hostname: influxdb.kng.house
 spec:
   ingressClassName: nginx
@@ -19,7 +20,7 @@ spec:
               service:
                 name: influxdb2
                 port:
-                  number: 3000
+                  number: 80
   tls:
     - hosts:
         - influxdb.kng.house
