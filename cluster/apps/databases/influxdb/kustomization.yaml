@@ -7,5 +7,6 @@ helmCharts:
 - name: influxdb2
   repo: https://helm.influxdata.com/
   version: 2.1.2
+  releaseName: influxdb2
   namespace: kube-system
   valuesFile: values.yaml

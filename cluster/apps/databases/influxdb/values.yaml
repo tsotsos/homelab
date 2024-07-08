@@ -4,10 +4,10 @@ persistence:
   storageClass: longhorn
 ingress:
   enabled: true
+  ingressClassName: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     certmanager.k8s.io/acme-challenge-type: dns01
-    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
   hostname: influxdb.kng.house
   path: /
   tls: true
