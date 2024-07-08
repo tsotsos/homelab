@@ -1,6 +1,5 @@
-kubeProxy:
+crds:
   enabled: true
-
 kube-state-metrics:
   metricLabelsAllowlist:
     - "persistentvolumeclaims=[*]"
