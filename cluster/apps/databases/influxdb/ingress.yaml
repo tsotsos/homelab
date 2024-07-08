@@ -15,9 +15,11 @@ spec:
         paths:
           - path: "/"
             pathType: Prefix
-          - backend:
-              serviceName: influxdb2
-              servicePort: http
+            backend:
+              service:
+                name: influxdb2
+                port:
+                  number: 3000
   tls:
     - hosts:
         - influxdb.kng.house
