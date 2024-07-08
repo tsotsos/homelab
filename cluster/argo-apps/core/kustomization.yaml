@@ -12,3 +12,4 @@ resources:
 - argocd.yaml
 - cert-issuer.yaml
 - longhorn.yaml
+- kube-prometheus-stack.yaml
