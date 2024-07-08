@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: influxdb
+  namespace: argocd
+  annotations:
+     argocd.argoproj.io/sync-wave: "-1"
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  project: databases
+  source:
+    path: cluster/apps/databases/influxdb
+    repoURL: https://github.com/tsotsos/homelab
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

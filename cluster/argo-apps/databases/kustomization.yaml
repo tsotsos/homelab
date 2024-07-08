@@ -5,3 +5,4 @@ resources:
 - cloudnative-pg.yaml
 - pg-clusters.yaml
 - pgadmin.yaml
+- influxdb.yaml
