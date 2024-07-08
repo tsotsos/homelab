@@ -1,4 +1,4 @@
-existingSecret: influxdb-credentials
+existingSecret: influxdb-auth
 persistence:
   enabled: true
   storageClass: longhorn
