@@ -4,3 +4,4 @@ namespace: argocd
 resources:
 - cloudnative-pg.yaml
 - pg-clusters.yaml
+- pgadmin.yaml
