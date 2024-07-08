@@ -15,6 +15,7 @@ spec:
               serviceName: influxdb2
               servicePort: http
             path: /
+            pathType: Prefix
   tls:
     - hosts:
         - influxdb.kng.house
