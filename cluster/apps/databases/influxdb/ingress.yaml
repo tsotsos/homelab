@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    certmanager.k8s.io/acme-challenge-type: dns01
+  name: influxdb2
+  namespace: kube-system
+spec:
+  rules:
+    - host: influxdb.kng.house
+      http:
+        paths:
+          - backend:
+              serviceName: influxdb2
+              servicePort: http
+            path: /
+  tls:
+    - hosts:
+        - influxdb.kng.house

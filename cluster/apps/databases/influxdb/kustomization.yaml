@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: kube-system
 resources:
   - secret.yaml
+  - ingress.yaml
 helmCharts:
 - name: influxdb2
   repo: https://helm.influxdata.com/

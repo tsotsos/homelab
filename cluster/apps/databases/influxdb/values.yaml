@@ -2,12 +2,3 @@ existingSecret: influxdb-credentials
 persistence:
   enabled: true
   storageClass: longhorn
-ingress:
-  enabled: true
-  ingressClassName: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    certmanager.k8s.io/acme-challenge-type: dns01
-  hostname: influxdb.kng.house
-  path: /
-  tls: true
