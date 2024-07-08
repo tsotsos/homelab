@@ -4,9 +4,9 @@ namespace: kube-system
 resources:
   - secret.yaml
 helmCharts:
-- name: influxdata/influxdb2
+- name: influxdb2
   repo: https://helm.influxdata.com/
   version: 2.1.2
-  releaseName: influxdata/influxdb2
+  releaseName: influxdb2
   namespace: kube-system
   valuesFile: values.yaml
