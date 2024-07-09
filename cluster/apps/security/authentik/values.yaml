@@ -15,10 +15,13 @@ server:
         hosts:
             - auth.kng.house
         annotations:
-          #nginx.ingress.kubernetes.io/service-upstream: "true"
+          nginx.ingress.kubernetes.io/service-upstream: "true"
           cert-manager.io/common-name: auth.kng.house
           cert-manager.io/cluster-issuer: letsencrypt-prod
           external-dns.alpha.kubernetes.io/hostname: auth.kng.house
+          nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/backend-protocol: HTTPS
         tls:
           - secretName: authentik-tls
             hosts:
