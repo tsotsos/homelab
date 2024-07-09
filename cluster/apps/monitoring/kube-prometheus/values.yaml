@@ -16,6 +16,8 @@ kube-state-metrics:
 
 grafana:
   enabled: true
+  admin:
+    existingSecret: grafana-secret
   ingress:
     enabled: true
     ingressClassName: nginx
