@@ -27,11 +27,11 @@ grafana:
       certmanager.k8s.io/acme-challenge-type: dns01
       nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     hosts:
-      - grafana.kng.house
+      - mon.kng.house
     tls:
       - secretName: grafana-cert
         hosts:
-          - grafana.kng.house
+          - mon.kng.house
 alertmanager:
   ingress:
     enabled: true
