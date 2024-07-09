@@ -9,9 +9,9 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
-  project: core
+  project: monitoring
   source:
-    path: cluster/apps/core/kube-prometheus
+    path: cluster/apps/monitoring/kube-prometheus
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:
