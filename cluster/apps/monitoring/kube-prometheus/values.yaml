@@ -83,5 +83,3 @@ prometheusOperator:
     patch:
       enabled: true
       ttlSecondsAfterFinished: 30
-      podAnnotations:
-        sidecar.istio.io/inject: "false"
