@@ -6,23 +6,25 @@ authentik:
     log_level: warn
     error_reporting:
         enabled: false
+    postgresql:
+      password: "ThisIsNotASecurePassword"
 server:
     ingress:
         ingressClassName: nginx
         enabled: true
         hosts:
-            - authentik.kng.house
+            - auth.kng.house
         annotations:
           #nginx.ingress.kubernetes.io/service-upstream: "true"
-          cert-manager.io/common-name: authentik.kng.house
+          cert-manager.io/common-name: auth.kng.house
           cert-manager.io/cluster-issuer: letsencrypt-prod
-          external-dns.alpha.kubernetes.io/hostname: authentik.kng.house
+          external-dns.alpha.kubernetes.io/hostname: auth.kng.house
         tls:
           - secretName: authentik-tls
             hosts:
-              - authentik.kng.house
+              - auth.kng.house
         https: true
 postgresql:
-    enabled: true
+    enabled: false
 redis:
     enabled: true
