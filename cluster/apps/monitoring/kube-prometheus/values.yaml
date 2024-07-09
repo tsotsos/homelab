@@ -63,10 +63,6 @@ prometheus:
         hosts:
           - prometheus.kng.house
   prometheusSpec:
-    ruleSelectorNilUsesHelmValues: false
-    serviceMonitorSelectorNilUsesHelmValues: false
-    podMonitorSelectorNilUsesHelmValues: false
-    probeSelectorNilUsesHelmValues: false
     retention: 10d
     retentionSize: "10GB"
     walCompression: true
@@ -87,3 +83,5 @@ prometheusOperator:
     patch:
       enabled: true
       ttlSecondsAfterFinished: 30
+      podAnnotations:
+        sidecar.istio.io/inject: "false"
