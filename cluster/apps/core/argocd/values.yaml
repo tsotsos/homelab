@@ -4,7 +4,7 @@ configs:
   dex.config: |
       connectors:
       - config:
-          issuer: https://authentik.kng.house/application/o/argocd/
+          issuer: https://auth.kng.house/application/o/argocd/
           clientID: VVkdBRxDPMXgc2sZXQpND3rAJhNU42dADpsNfjVa
           clientSecret: $dex.authentik.clientSecret
           insecureEnableGroups: true
