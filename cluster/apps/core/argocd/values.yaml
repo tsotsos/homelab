@@ -7,7 +7,7 @@ configs:
       - config:
           issuer: https://auth.kng.house/application/o/argocd/
           clientID: VVkdBRxDPMXgc2sZXQpND3rAJhNU42dADpsNfjVa
-          clientSecret: $dex.authentik.clientSecret
+          clientSecret: $argocd-sso-secret:dex.authentik.clientSecret
           insecureEnableGroups: true
           scopes:
             - openid
