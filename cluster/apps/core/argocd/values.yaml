@@ -1,4 +1,5 @@
 configs:
+  url: https://argocd.kng.house
   cm:
     kustomize.buildOptions: --enable-helm
   dex.config: |
