@@ -1,10 +1,26 @@
 configs:
   cm:
     kustomize.buildOptions: --enable-helm
+  dex.config: |
+      connectors:
+      - config:
+          issuer: https://authentik.kng.house/application/o/argocd/
+          clientID: VVkdBRxDPMXgc2sZXQpND3rAJhNU42dADpsNfjVa
+          clientSecret: $dex.authentik.clientSecret
+          insecureEnableGroups: true
+          scopes:
+            - openid
+            - profile
+            - email
+        name: authentik
+        type: oidc
+        id: authentik
+rbac:
+    policy.csv: |
+        g, ArgoCD Admins, role:admin
+        g, ArgoCD Viewers, role:readonly
+
 server:
-  autoscaling:
-    enabled: true
-    minReplicas: 2
   ingress:
     hostname: argocd.kng.house
     enabled: true

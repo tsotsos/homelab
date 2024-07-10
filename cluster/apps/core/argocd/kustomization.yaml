@@ -9,3 +9,6 @@ helmCharts:
   repo: https://argoproj.github.io/argo-helm
   version: 7.3.4
   valuesFile: values.yaml
+
+resources:
+  - argocd-sso-secret.yaml
