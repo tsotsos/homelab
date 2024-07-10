@@ -1,0 +1,28 @@
+redis-ha:
+  enabled: true
+controller:
+  replicas: 1
+repoServer:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+applicationSet:
+  replicas: 2
+configs:
+  cm:
+    kustomize.buildOptions: --enable-helm
+server:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+  ingress:
+    hostname: argocd.kng.house
+    enabled: true
+    ingressClassName: nginx
+    tls: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/hostname: argocd.kng.house
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
