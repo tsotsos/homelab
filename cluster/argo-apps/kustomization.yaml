@@ -6,5 +6,5 @@ resources:
     - core
     - databases
     - home
-    - monitoring
+    #- monitoring
     - security
