@@ -20,7 +20,6 @@ rbac:
     policy.csv: |
         g, ArgoCD Admins, role:admin
         g, ArgoCD Viewers, role:readonly
-
 server:
   ingress:
     hostname: argocd.kng.house

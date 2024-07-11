@@ -9,7 +9,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
-  project: core
+  project: security
   source:
     path: cluster/apps/security/authentik
     repoURL: https://github.com/tsotsos/homelab

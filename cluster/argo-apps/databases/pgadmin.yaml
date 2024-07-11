@@ -6,14 +6,14 @@ metadata:
   annotations:
      argocd.argoproj.io/sync-wave: "-1"
 spec:
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: cnpg-system
   project: databases
   source:
     path: cluster/apps/databases/pgadmin
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cnpg-system
   syncPolicy:
     automated:
       prune: true

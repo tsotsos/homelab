@@ -11,7 +11,7 @@ spec:
     namespace: argocd
   project: default
   source:
-    path: cluster/argo-apps/
+    path: cluster/argo-apps/groups
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:

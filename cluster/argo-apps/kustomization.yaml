@@ -4,7 +4,9 @@ namespace: argocd
 resources:
     - argo-projects.yaml
     - core
-    - databases
-    - home
-    - monitoring
+    - networking
+    - storage
     - security
+    - databases
+    - monitoring
+    - home
