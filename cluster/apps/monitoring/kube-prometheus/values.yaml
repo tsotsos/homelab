@@ -1,3 +1,6 @@
+global:
+  rbac:
+    create: false
 crds:
   enabled: true
 kube-state-metrics:
