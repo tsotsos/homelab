@@ -7,7 +7,7 @@ configs:
         connectors:
         - config:
             issuer: https://auth.kng.house/application/o/argocd/
-            clientID: $argocd-sso-secret:dex.authentik.clidentID
+            clientID: xUkNpgciXf54uRTVkLhzSsLyPN3ltpwtScEp9K3R
             clientSecret: $argocd-sso-secret:dex.authentik.clientSecret
             redirectURI: https://argocd.kng.house/api/dex/callback
             insecureEnableGroups: true
