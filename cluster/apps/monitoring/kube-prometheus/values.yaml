@@ -109,10 +109,10 @@ prometheus:
           resources:
             requests:
               storage: 50Gi
-
 prometheusOperator:
-  enabled: true
   admissionWebhooks:
-    patch:
+    certManager:
       enabled: true
+    patch:
+      enabled: false
       ttlSecondsAfterFinished: 30
