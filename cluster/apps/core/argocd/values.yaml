@@ -16,6 +16,12 @@ configs:
           name: authentik
           type: oidc
           id: authentik
+  params:
+    controller.repo.server.plaintext: "true"
+    dexserver.disable.tls: "true"
+    server.dex.server.plaintext: "true"
+    server.insecure: "true"
+    server.repo.server.plaintext: "true"
 rbac:
     policy.csv: |
         g, ArgoCD Admins, role:admin
