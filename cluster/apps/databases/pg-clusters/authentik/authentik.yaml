@@ -1,0 +1,36 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: authentik
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: 16.3-bullseye
+spec:
+  instances: 3
+  description: "Authentik database cluster"
+  imageName: "ghcr.io/cloudnative-pg/postgresql:16.3-bullseye"
+
+  primaryUpdateStrategy: unsupervised
+
+  bootstrap:
+    initdb:
+      database: authentik
+      owner: authentik
+      secret:
+        name: db-authentik-credentials
+
+  # configure storage types used
+  storage:
+    storageClass: longhorn-postgres-replica-storage
+    size: 2Gi
+  walStorage:
+    storageClass: longhorn-postgres-replica-storage
+    size: 2Gi
+
+  # prometheus
+  monitoring:
+    enablePodMonitor: true
+
+  # see https://cloudnative-pg.io/documentation/1.22/kubernetes_upgrade/
+  nodeMaintenanceWindow:
+    reusePVC: false # rebuild from other replica instead

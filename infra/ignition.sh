@@ -4,7 +4,8 @@ if [ ! -f "ignition.tpl" ]; then
   exit 1
 fi
 ip_list=(10.0.2.21/24 10.0.2.22/24 10.0.2.23/24 10.0.2.24/24 10.0.2.25/24 10.0.2.26/24 10.0.2.27/24 10.0.2.28/24 10.0.2.29/24 10.0.2.30/24 10.0.2.31/24 10.0.2.32/24 10.0.2.33/24 10.0.2.34/24)
-hostname_list=(k3s-master-01 k3s-master-02 k3s-master-03 k3s-master-04 k3s-master-05 k3s-worker-01 k3s-worker-02 k3s-worker-03 k3s-worker-04 k3s-worker-05 k3s-worker-06 k3s-worker-07 k3s-worker-08 k3s-worker-09)
+hostname_list=(k3s-master-01 k3s-master-02 k3s-master-03 k3s-worker-01 k3s-worker-02 k3s-worker-03 k3s-worker-04 k3s-worker-05 k3s-worker-06 k3s-worker-07 k3s-worker-08 k3s-worker-09 k3s-worker-10 k3s-worker-11)
+
 
 for (( i=0; i<${#ip_list[@]}; i++ )); do
     ip_address="${ip_list[i]}"

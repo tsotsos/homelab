@@ -3,7 +3,6 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - ns.yaml
   - argocd-sso-secret.yaml
 
 helmCharts:
