@@ -6,7 +6,7 @@ metadata:
   annotations:
      argocd.argoproj.io/sync-wave: "-9"
 spec:
-  project: core
+  project: networking
   source:
     path: cluster/apps/core/kube-vip
     repoURL: https://github.com/tsotsos/homelab

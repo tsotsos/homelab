@@ -5,4 +5,4 @@ resources:
   - kube-vip.yaml
   - cert-manager.yaml
   - external-dns.yaml
-  - nginx-ingress.yaml
+  - ingress-nginx.yaml
