@@ -2,20 +2,20 @@ configs:
   cm:
     url: https://argocd.kng.house
     kustomize.buildOptions: --enable-helm
-  dex.config: |
-      connectors:
-      - config:
-          issuer: $argocd-sso-secret:dex.authentik.issuer
-          clientID: $argocd-sso-secret:dex.authentik.clidentID
-          clientSecret: $argocd-sso-secret:dex.authentik.clientSecret
-          insecureEnableGroups: true
-          scopes:
-            - openid
-            - profile
-            - email
-        name: authentik
-        type: oidc
-        id: authentik
+    dex.config: |
+        connectors:
+        - config:
+            issuer: $argocd-sso-secret:dex.authentik.issuer
+            clientID: $argocd-sso-secret:dex.authentik.clidentID
+            clientSecret: $argocd-sso-secret:dex.authentik.clientSecret
+            insecureEnableGroups: true
+            scopes:
+              - openid
+              - profile
+              - email
+          name: authentik
+          type: oidc
+          id: authentik
 rbac:
     policy.csv: |
         g, ArgoCD Admins, role:admin
