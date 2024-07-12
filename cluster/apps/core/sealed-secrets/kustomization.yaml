@@ -7,3 +7,4 @@ helmCharts:
   version: 2.15.4
   releaseName: sealed-secrets
   namespace: kube-system
+  includeCRDs: true
