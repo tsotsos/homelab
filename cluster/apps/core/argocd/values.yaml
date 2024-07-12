@@ -1,6 +1,7 @@
 configs:
   cm:
     url: https://argocd.kng.house
+    redirectURL: https://argocd.kng.house/api/dex/callback
     kustomize.buildOptions: --enable-helm
     dex.config: |
         connectors:
