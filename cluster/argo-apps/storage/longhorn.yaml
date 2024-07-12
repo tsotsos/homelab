@@ -11,7 +11,7 @@ spec:
     namespace: longhorn-system
   project: storage
   source:
-    path: cluster/apps/core/longhorn
+    path: cluster/apps/storage/longhorn
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:

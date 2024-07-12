@@ -8,7 +8,7 @@ metadata:
 spec:
   project: storage
   source:
-    path: cluster/apps/core/nfs-provisioner
+    path: cluster/apps/storage/nfs-provisioner
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   destination:
