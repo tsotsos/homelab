@@ -6,7 +6,7 @@ configs:
     dex.config: |
         connectors:
         - config:
-            issuer: $argocd-sso-secret:dex.authentik.issuer
+            issuer: https://auth.kng.house/application/o/argocd/
             clientID: $argocd-sso-secret:dex.authentik.clidentID
             clientSecret: $argocd-sso-secret:dex.authentik.clientSecret
             redirectURI: https://argocd.kng.house/api/dex/callback
