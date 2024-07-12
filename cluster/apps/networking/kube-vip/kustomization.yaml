@@ -10,6 +10,4 @@ helmCharts:
   valuesFile: values.yaml
 
 resources:
-  - secret.yaml
-  - issuer.yaml
   - cloud-controller/
