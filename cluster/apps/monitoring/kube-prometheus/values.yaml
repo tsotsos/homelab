@@ -16,6 +16,12 @@ kube-state-metrics:
 
 grafana:
   enabled: true
+  extraSecretMounts:
+    - name: grafana-sso-secret-mount
+      secretName: grafana-sso-secret
+      defaultMode: 0440
+      mountPath: /etc/secrets/grafana_sso_secret
+      readOnly: true
   grafana.ini:
     auth:
         signout_redirect_url: "https://authentik.company/application/o/grafana/end-session/"
@@ -23,8 +29,8 @@ grafana:
     auth.generic_oauth:
         name: authentik
         enabled: true
-        client_id: $__file{/etc/secrets/grafana_secret/clientID}
-        client_secret: $__file{/etc/secrets/grafana_secret/clientSecret}
+        client_id: $__file{/etc/secrets/grafana_sso_secret/clientID}
+        client_secret: $__file{/etc/secrets/grafana_sso_secret/clientSecret}
         scopes: "openid profile email"
         auth_url: "https://auth.kng.house/application/o/authorize/"
         token_url: "https://auth.kng.house/application/o/token/"
