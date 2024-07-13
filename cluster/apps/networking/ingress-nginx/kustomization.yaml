@@ -7,3 +7,4 @@ helmCharts:
   version: v4.10.1
   releaseName: ingress-nginx
   namespace: kube-system
+  valuesFile: values.yaml
