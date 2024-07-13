@@ -15,4 +15,3 @@ components:
 
 resources:
   - grafana-secret.yaml
-  - grafana-sso-secret.yaml
