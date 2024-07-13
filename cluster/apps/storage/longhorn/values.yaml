@@ -36,7 +36,7 @@ ingress:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/hostname: longhorn.kng.house
     nginx.ingress.kubernetes.io/auth-url: |-
-        http://ak-outpost-generic-sso.kube-system.svc.cluster.local:9000/outpost.goauthentik.io/auth/nginx
+        http://ak-outpost-generic-sso.kube-system.svc.cluster.local/outpost.goauthentik.io/auth/nginx
     # If you're using domain-level auth, use the authentication URL instead of the application URL
     nginx.ingress.kubernetes.io/auth-signin: |-
         https://sso.kng.house/outpost.goauthentik.io/start?rd=$escaped_request_uri
