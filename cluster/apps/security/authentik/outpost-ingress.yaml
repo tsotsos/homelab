@@ -2,10 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
     name: authentik-outpost
-annotations:
-    cert-manager.io/common-name: generic-sso.kng.house
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    external-dns.alpha.kubernetes.io/hostname: generic-sso.kng.house
+    annotations:
+        cert-manager.io/common-name: generic-sso.kng.house
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        external-dns.alpha.kubernetes.io/hostname: generic-sso.kng.house
 spec:
     rules:
         - host: generic-sso.kng.house
