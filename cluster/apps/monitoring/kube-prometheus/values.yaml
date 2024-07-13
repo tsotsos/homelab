@@ -13,9 +13,10 @@ kube-state-metrics:
           targetLabel: kubernetes_node
           sourceLabels:
             - __meta_kubernetes_pod_node_name
-
 grafana:
   enabled: true
+  env:
+    GF_SERVER_ROOT_URL: https://mon.kng.house
   extraSecretMounts:
     - name: grafana-sso-secret-mount
       secretName: grafana-sso-secret
