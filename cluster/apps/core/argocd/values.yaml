@@ -1,6 +1,7 @@
 configs:
   cm:
     url: https://argocd.kng.house
+    redirectURL: https://argocd.kng.house/api/dex/callback
     kustomize.buildOptions: --enable-helm
     dex.config: |
         connectors:
@@ -8,6 +9,7 @@ configs:
             issuer: https://auth.kng.house/application/o/argocd/
             clientID: xUkNpgciXf54uRTVkLhzSsLyPN3ltpwtScEp9K3R
             clientSecret: $argocd-sso-secret:dex.authentik.clientSecret
+            redirectURI: https://argocd.kng.house/api/dex/callback
             insecureEnableGroups: true
             scopes:
               - openid
@@ -19,6 +21,7 @@ configs:
   rbac:
       policy.csv: |
           g, ArgoCD Admins, role:admin
+          g, ArgoCD Viewers, role:readonly
 server:
   ingress:
     hostname: argocd.kng.house
