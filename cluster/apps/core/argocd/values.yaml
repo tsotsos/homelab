@@ -19,9 +19,10 @@ configs:
           type: oidc
           id: authentik
   rbac:
-      policy.csv: |
-          g, ArgoCD Admins, role:admin
-          g, ArgoCD Viewers, role:readonly
+    scopes: "[groups]"
+    policy.csv: |
+        g, ArgoCD Admins, role:admin
+        g, ArgoCD Viewers, role:readonly
 server:
   ingress:
     hostname: argocd.kng.house
