@@ -23,8 +23,8 @@ grafana:
     auth.generic_oauth:
         name: authentik
         enabled: true
-        client_id: $__file{/etc/secrets/grafana_secret/client_id}
-        client_secret: $__file{/etc/secrets/grafana_secret/client_secret}
+        client_id: $__file{/etc/secrets/grafana_secret/clientID}
+        client_secret: $__file{/etc/secrets/grafana_secret/clientSecret}
         scopes: "openid profile email"
         auth_url: "https://auth.kng.house/application/o/authorize/"
         token_url: "https://auth.kng.house/application/o/token/"
