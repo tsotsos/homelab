@@ -11,4 +11,3 @@ helmCharts:
 
 resources:
   - secret.yaml
-  - outpost-ingress.yaml
