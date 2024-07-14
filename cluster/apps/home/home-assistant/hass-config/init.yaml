@@ -1,4 +1,5 @@
 default_config:
+
 {{- if .Values.ingress.enabled }}
 http:
   use_x_forwarded_for: true

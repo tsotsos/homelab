@@ -42,7 +42,7 @@ configuration:
     - 10.0.2.0/24
     - ::1
   templateConfig: |-
-    {{- tpl (.Files.Get "hass-config/init.yaml") . | nindent 4 }}
+    {{- include "hass-config/init.yaml" . }}
     recorder:
       purge_keep_days: 90
       commit_interval: 3
