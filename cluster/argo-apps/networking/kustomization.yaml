@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: argocd
 resources:
   - kube-vip.yaml
+  - multus.yaml
   - cert-manager.yaml
   - external-dns.yaml
   - ingress-nginx.yaml
