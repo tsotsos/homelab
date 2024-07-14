@@ -2,9 +2,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: kube-system
 helmCharts:
-- name: multus-cni
-  repo: https://charts.bitnami.com/bitnami
+- name: rke2-multus
+  repo: https://rke2-charts.rancher.io
   version: 2.1.7
-  releaseName: multus-cni
+  releaseName: rke2-multus
   namespace: kube-system
   valuesFile: values.yaml
