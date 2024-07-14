@@ -51,7 +51,11 @@ configuration:
           - {{ . }}
           {{- end }}
       {{- end}}
-      {{ .Files.Get "./hass_config/init.yaml" . }}
+      frontend:
+        themes: !include_dir_merge_named themes
+      automation: !include automations.yaml
+      script: !include scripts.yaml
+      scene: !include scenes.yaml
       recorder:
         purge_keep_days: 90
         commit_interval: 3
