@@ -4,7 +4,6 @@ namespace: kube-system
 helmCharts:
 - name: rke2-multus
   repo: https://rke2-charts.rancher.io
-  version: v4.0.2
   releaseName: rke2-multus
   namespace: kube-system
   valuesFile: values.yaml
