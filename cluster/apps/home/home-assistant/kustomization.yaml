@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: home
 resources:
   - ns.yaml
+  - secret.yaml
 
 helmCharts:
 - name: home-assistant

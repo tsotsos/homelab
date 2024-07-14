@@ -23,10 +23,9 @@ ingress:
     - secretName: homeassistant-cert
       hosts:
         - home.kng.house
-env:
-  - name: TZ
-    value: Europe/Athens
-
+envFrom:
+   - secretRef:
+       name: homeassistant-secret
 configuration:
   enabled: true
   forceInit: true
@@ -54,11 +53,10 @@ configuration:
       automation: !include automations.yaml
       script: !include scripts.yaml
       scene: !include scenes.yaml
-      binary_sensor:
-      - platform: workday
-        country: GRC
-        workdays: [mon, tue, wed, thu, fri]
-        excludes: [sat, sun,holiday]
+      recorder:
+        purge_keep_days: 90
+        commit_interval: 3
+        db_url: !env_var DB_CONNECTION
 addons:
   codeserver:
     enabled: true
