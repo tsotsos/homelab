@@ -23,6 +23,9 @@ ingress:
     - secretName: homeassistant-cert
       hosts:
         - home.kng.house
+env:
+  - name: TZ
+    value: Europe/Athens
 
 configuration:
   enabled: true
