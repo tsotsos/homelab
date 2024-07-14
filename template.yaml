@@ -1,0 +1,354 @@
+---
+# Source: home-assistant/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-home-assistant
+  labels:
+    helm.sh/chart: home-assistant-0.2.69
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "2024.7.2"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: home-assistant/templates/configmap-hass-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hass-configuration
+  namespace: home
+data:
+  configuration.yaml: |
+    default_config:
+    http:
+      use_x_forwarded_for: true
+      trusted_proxies:
+        - 10.43.0.0/16
+        - 10.42.0.0/16
+        - 10.0.2.0/24
+        - ::1
+    frontend:
+      themes: !include_dir_merge_named themes
+    automation: !include automations.yaml
+    script: !include scripts.yaml
+    scene: !include scenes.yaml
+    recorder:
+      purge_keep_days: 90
+      commit_interval: 3
+      db_url: !env_var DB_CONNECTION
+---
+# Source: home-assistant/templates/configmap-init-script.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: init-script
+  namespace: home
+data:
+  init.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Check if the configuration file exists
+    if [ ! -f /config/configuration.yaml ]; then
+      echo "Configuration file not found, creating a new one"
+      cp /config-templates/configuration.yaml /config/configuration.yaml
+    fi
+    
+    # Check if the force init is enabled
+    forceInit="true"
+    if [ "$forceInit" = "true" ]; then
+      echo "Force init is enabled, overwriting the configuration file"
+      current_time=$(date +%Y%m%d_%H%M%S)
+      echo "Backup the current configuration file to configuration.yaml.$current_time"
+      cp /config/configuration.yaml /config/configuration.yaml.$current_time
+      echo "The current configuration file will be merged with the default configuration file with this content:"
+      cat /config-templates/configuration.yaml
+      if [[ ! -s /config/configuration.yaml ]]; then
+        # If /config/configuration.yaml is empty, use the content of /config-templates/configuration.yaml
+        cat /config-templates/configuration.yaml > /config/configuration.yaml
+      else
+        # Perform the merge operation if /config/configuration.yaml is not empty
+        yq eval-all --inplace 'select(fileIndex == 0) *d select(fileIndex == 1)' /config/configuration.yaml /config-templates/configuration.yaml
+      fi
+    fi
+    
+    # Check if the automations file exists
+    if [ ! -f /config/automations.yaml ]; then
+      echo "Automations file not found, creating a new one"
+      touch /config/automations.yaml
+      echo "[]" >> /config/automations.yaml
+    fi
+    
+    # Check if the scripts file exists
+    if [ ! -f /config/scripts.yaml ]; then
+      echo "Scripts file not found, creating a new one"
+      touch /config/scripts.yaml
+    fi
+    
+    # Check if the scenes file exists
+    if [ ! -f /config/scenes.yaml ]; then
+      echo "Scenes file not found, creating a new one"
+      touch /config/scenes.yaml
+    fi
+---
+# Source: home-assistant/templates/service-codeserver.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-home-assistant-codeserver
+  labels:
+    helm.sh/chart: home-assistant-0.2.69
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "2024.7.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 12321
+      targetPort: codeserver
+      protocol: TCP
+      name: codeserver
+  selector:
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+---
+# Source: home-assistant/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-home-assistant
+  labels:
+    helm.sh/chart: home-assistant-0.2.69
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "2024.7.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+---
+# Source: home-assistant/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: release-name-home-assistant
+  labels:
+    helm.sh/chart: home-assistant-0.2.69
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "2024.7.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  serviceName: release-name-home-assistant
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: home-assistant
+      app.kubernetes.io/instance: release-name
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: home-assistant
+        app.kubernetes.io/instance: release-name
+      annotations:
+        checksum/init-script: 65ae9265a489f52a08483a47c1033b28c915241d2668db9e65731c89806659d2
+        checksum/hass-configuration: 05c880ddcb1feaaf0812c0356ea9ac2d4ee32903cce8846923db17891c67a196
+    spec:
+      hostNetwork: true
+      securityContext:
+        {}
+      dnsConfig:
+        nameservers:
+        - 10.43.0.10
+        - 10.0.1.7
+        options:
+        - name: ndots
+          value: "5"
+        - name: edns0
+      containers:
+        - name: home-assistant
+          securityContext:
+            {}
+          image: "ghcr.io/home-assistant/home-assistant:2024.7.2"
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: homeassistant-secret
+          ports:
+            - name: http
+              containerPort: 8123
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 2
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          volumeMounts:
+          - mountPath: /config
+            name: release-name-home-assistant
+        - name: codeserver
+          securityContext:
+            {}
+          args:
+          - --auth
+          - none
+          - --user-data-dir
+          - "/config/.vscode"
+          - --extensions-dir
+          - "/config/.vscode"
+          - --port
+          - "12321"
+          - "/config"
+          image: "ghcr.io/coder/code-server:4.90.3"
+          imagePullPolicy: "IfNotPresent"
+          ports:
+          - containerPort: 12321
+            name: codeserver
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /config
+            name: release-name-home-assistant
+      initContainers:
+        - name: setup-config
+          image: mikefarah/yq:4
+          securityContext:
+            runAsUser: 0
+          command: 
+            - /bin/sh
+            - -c
+          args: 
+            - /bin/sh /mnt/init/init.sh
+          volumeMounts:
+            - name: init-volume
+              mountPath: /mnt/init/init.sh
+              subPath: init.sh
+              
+            - name: config-volume
+              mountPath: /config-templates
+            - mountPath: /config
+              name: release-name-home-assistant
+      volumes:
+      - name: init-volume
+        configMap:
+          name: init-script
+      - name: config-volume
+        configMap:
+          name: hass-configuration
+  volumeClaimTemplates:
+  - metadata:
+      name: release-name-home-assistant
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: longhorn
+---
+# Source: home-assistant/templates/ingress-codeserver.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: release-name-home-assistant-codeserver
+  labels:
+    helm.sh/chart: home-assistant-0.2.69
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "2024.7.2"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/common-name: home-code.kng.house
+    external-dns.alpha.kubernetes.io/hostname: home-code.kng.house
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "home-code.kng.house"
+      secretName: home-code-cert
+  rules:
+    - host: "home-code.kng.house"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: release-name-home-assistant-codeserver
+                port:
+                  number: 12321
+---
+# Source: home-assistant/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: release-name-home-assistant
+  labels:
+    helm.sh/chart: home-assistant-0.2.69
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "2024.7.2"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/common-name: home.kng.house
+    external-dns.alpha.kubernetes.io/hostname: home.kng.house
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "home.kng.house"
+      secretName: homeassistant-cert
+  rules:
+    - host: "home.kng.house"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: release-name-home-assistant
+                port:
+                  number: 8080
+---
+# Source: home-assistant/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "release-name-home-assistant-test-connection"
+  labels:
+    helm.sh/chart: home-assistant-0.2.69
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "2024.7.2"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['release-name-home-assistant:8080']
+  restartPolicy: Never

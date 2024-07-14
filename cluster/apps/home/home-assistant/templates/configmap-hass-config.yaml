@@ -1,0 +1,15 @@
+{{- if .Values.configuration.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hass-configuration
+  namespace: {{ .Release.Namespace }}
+data:
+  configuration.yaml: |
+    {{- tpl .Values.configuration.templateConfig . | nindent 4 }}
+    # this is a test comment
+    recorder:
+        purge_keep_days: 90
+        commit_interval: 3
+        db_url: !env_var DB_CONNECTION
+{{- end -}}
