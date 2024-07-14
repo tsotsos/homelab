@@ -7,6 +7,7 @@ http:
     - {{ . }}
     {{- end }}
 {{- end}}
+
 frontend:
   themes: !include_dir_merge_named themes
 
