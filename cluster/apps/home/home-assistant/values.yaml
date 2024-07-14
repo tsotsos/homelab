@@ -4,6 +4,8 @@ persistence:
   size: 10Gi
   storageClass: longhorn
 
+hostNetwork: true
+
 ingress:
   enabled: true
   className: nginx
