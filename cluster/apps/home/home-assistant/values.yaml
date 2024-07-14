@@ -35,8 +35,12 @@ configuration:
     - 10.42.0.0/16
     - 10.0.2.0/24
     - ::1
-  additionalFiles:
-    - custom_config.yaml 
+  templateConfig: |-
+      binary_sensor:
+      - platform: workday
+        country: GRC
+        workdays: [mon, tue, wed, thu, fri]
+        excludes: [sat, sun,holiday]
 addons:
   codeserver:
     enabled: true
