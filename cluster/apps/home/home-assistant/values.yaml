@@ -3,3 +3,48 @@ persistence:
   accessMode: ReadWriteOnce
   size: 10Gi
   storageClass: longhorn
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    #nginx.ingress.kubernetes.io/service-upstream: "true"
+    cert-manager.io/common-name: home.kng.house
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: home.kng.house
+  hosts:
+    - host: home.kng.house
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: homeassistant-cert
+      hosts:
+        - home.kng.house
+
+configuration:
+  enabled: true
+  forceInit: true
+  trusted_proxies:
+    - 10.43.0.0/16
+addon:
+  codeserver:
+    enabled: true
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      #nginx.ingress.kubernetes.io/service-upstream: "true"
+      cert-manager.io/common-name: home-code.kng.house
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/hostname: home-code.kng.house
+    hosts:
+      - host: home-code.kng.house
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: home-code-cert
+        hosts:
+          - home-code.kng.house
+#wget -O - https://get.hacs.xyz | bash -
