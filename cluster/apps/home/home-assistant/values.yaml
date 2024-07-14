@@ -51,8 +51,7 @@ configuration:
           - {{ . }}
           {{- end }}
       {{- end}}
-
-      {{ .Files.Get "hass_config/init.yaml" | nindent 4 }}
+      {{ .Files.Get "hass_config/init.yaml" . | nindent 4 }}
       recorder:
         purge_keep_days: 90
         commit_interval: 3
