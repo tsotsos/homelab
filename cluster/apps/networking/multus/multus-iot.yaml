@@ -6,30 +6,24 @@ metadata:
   namespace: default
 spec:
   config: |-
-      {
-        "cniVersion": "0.3.1",
-        "name": "macvlan-1129",
-        "plugins": [
-          {
-            "type": "macvlan",
-            "master": "ens18",
-            "mode": "bridge",
-            "ipam": {
-              "type": "host-local",
-              "subnet": "10.0.5.0/24",
-              "rangeStart": "10.0.5.160",
-              "rangeEnd": "10.0.5.207",
-              "routes": [
-                {
-                  "dst": "0.0.0.0/0"
-                }
-              ],
-              "gateway": "10.0.5.1"
-            }
+    {
+      "cniVersion": "0.3.1",
+      "name": "multus-iot",
+      "plugins": [
+        {
+          "type": "macvlan",
+          "master": "ens18",
+          "mode": "bridge",
+          "capabilities": {
+            "ips": true
           },
-          {
-            "type": "route-override",
-            "flushgateway": true
+          "ipam": {
+            "type": "static",
+            "routes": [{
+              "dst": "10.0.5.0/16",
+              "gw": "10.0.5.1"
+            }]
           }
-        ]
-      }
+        }
+      ]
+    }
