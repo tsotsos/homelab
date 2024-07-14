@@ -27,7 +27,7 @@ configuration:
   forceInit: true
   trusted_proxies:
     - 10.43.0.0/16
-addon:
+addons:
   codeserver:
     enabled: true
   ingress:
