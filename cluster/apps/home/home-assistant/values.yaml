@@ -42,7 +42,7 @@ configuration:
     - 10.0.2.0/24
     - ::1
   templateConfig: |-
-      {{ include "hass_config/init.yaml" . }}
+      {{ readFile "hass_config/init.yaml" . }}
       recorder:
         purge_keep_days: 90
         commit_interval: 3
