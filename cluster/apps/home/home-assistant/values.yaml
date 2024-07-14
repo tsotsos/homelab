@@ -31,7 +31,6 @@ configuration:
   trusted_proxies:
     - 10.43.0.0/16
     - 10.42.0.0/16
-    - 10.0.0.1/12
     - ::1
 addons:
   codeserver:
