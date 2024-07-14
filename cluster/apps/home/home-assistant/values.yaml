@@ -42,7 +42,17 @@ configuration:
     - 10.0.2.0/24
     - ::1
   templateConfig: |-
-      {{ readFile "hass_config/init.yaml" . }}
+      default_config:
+      {{- if .Values.ingress.enabled }}
+      http:
+        use_x_forwarded_for: true
+        trusted_proxies:
+          {{- range .Values.configuration.trusted_proxies }}
+          - {{ . }}
+          {{- end }}
+      {{- end}}
+
+      {{ .Files.Get "hass_config/init.yaml" | nindent 4 }}
       recorder:
         purge_keep_days: 90
         commit_interval: 3
