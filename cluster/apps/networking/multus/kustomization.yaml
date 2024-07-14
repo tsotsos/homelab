@@ -5,6 +5,6 @@ helmCharts:
 - name: multus-cni
   repo: https://charts.bitnami.com/bitnami
   version: 2.1.7
-  releaseName: bitnami/multus-cni
+  releaseName: multus-cni
   namespace: kube-system
   valuesFile: values.yaml
