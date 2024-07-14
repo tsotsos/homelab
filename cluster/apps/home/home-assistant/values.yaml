@@ -5,7 +5,14 @@ persistence:
   storageClass: longhorn
 
 hostNetwork: false
-
+dnsConfig:
+  nameservers:
+    - 10.43.0.10
+    - 10.0.1.7
+  options:
+    - name: ndots
+      value: "5"
+    - name: edns0
 ingress:
   enabled: true
   className: nginx
