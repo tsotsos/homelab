@@ -4,11 +4,8 @@ persistence:
   size: 10Gi
   storageClass: longhorn
 
-hostNetwork: true
-dnsConfig:
-  options:
-    - name: ndots
-      value: "5"
+hostNetwork: false
+
 ingress:
   enabled: true
   className: nginx
