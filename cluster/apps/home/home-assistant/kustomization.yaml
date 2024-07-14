@@ -19,5 +19,6 @@ patches:
       name: 'hass-configuration'
     patch: |-
       - op: add
-        path: "/data/configuration.yaml"
-        value: "# this is a test"
+        path: "/data/configuration\.yaml"  
+        value: |-
+          # this is a test 
