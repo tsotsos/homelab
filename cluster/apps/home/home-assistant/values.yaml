@@ -35,7 +35,7 @@ envFrom:
        name: homeassistant-secret
 configuration:
   enabled: true
-  forceInit: true
+  forceInit: false
   trusted_proxies:
     - 10.43.0.0/16
     - 10.42.0.0/16
@@ -43,6 +43,7 @@ configuration:
     - ::1
   templateConfig: |-
       # Loads default set of integrations. Do not remove.
+      # test record
       default_config:
 
       {{- if .Values.ingress.enabled }}
