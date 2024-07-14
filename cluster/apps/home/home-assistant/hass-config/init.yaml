@@ -1,0 +1,15 @@
+default_config:
+{{- if .Values.ingress.enabled }}
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    {{- range .Values.configuration.trusted_proxies }}
+    - {{ . }}
+    {{- end }}
+{{- end}}
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
