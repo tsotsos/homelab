@@ -4,7 +4,7 @@ persistence:
   size: 10Gi
   storageClass: longhorn
 
-hostNetwork: false
+hostNetwork: true
 dnsConfig:
   nameservers:
     - 10.43.0.10
