@@ -1,6 +1,6 @@
 persistence:
   enabled: true
-  accessMode: ReadWriteOnce
+  accessMode: ReadWriteMany
   size: 10Gi
   storageClass: longhorn
 

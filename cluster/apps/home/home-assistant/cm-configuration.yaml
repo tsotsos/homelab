@@ -13,7 +13,7 @@ data:
       trusted_proxies:
         - 10.43.0.0/16
         - 10.42.0.0/16
-        - 10.0.2.0/24
+        - 10.0.0.0/8
         - ::1
     frontend:
       themes: !include_dir_merge_named themes
