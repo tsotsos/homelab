@@ -3,15 +3,15 @@ persistence:
   accessMode: ReadWriteMany
   size: 10Gi
   storageClass: longhorn
-  
+
 additionalVolumes:
     - configMap:
         defaultMode: 0755
-        name: extra
+        name: extra-config
       name: extra-config
 additionalMounts:
     - mountPath: /config/extra
-      name: extra
+      name: extra-config
 hostNetwork: true
 dnsConfig:
   nameservers:
