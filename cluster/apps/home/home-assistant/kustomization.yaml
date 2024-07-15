@@ -4,6 +4,7 @@ namespace: home
 resources:
 - ns.yaml
 - secret.yaml
+- cm-configuration.yaml
 - home-assistant-additional-config.yaml
 
 helmCharts:
@@ -15,5 +16,5 @@ helmCharts:
   version: 0.2.69
   
 #workaround for not so kustomize friendly helm chart
-patches:
- - path: cm-configuration.yaml
+#patches:
+# - path: cm-configuration.yaml
