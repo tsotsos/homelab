@@ -2,16 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: home
 resources:
-  - ns.yaml
-  - secret.yaml
+- ns.yaml
+- secret.yaml
 
 helmCharts:
 - name: home-assistant
-  repo: http://pajikos.github.io/home-assistant-helm-chart/
-  version: 0.2.69
-  releaseName: home-assistant
   namespace: home
+  releaseName: home-assistant
+  repo: http://pajikos.github.io/home-assistant-helm-chart/
   valuesFile: values.yaml
+  version: 0.2.69
 
-patchesStrategicMerge:
-    - cm-config-patch.yaml
+patches:
+- path: cm-config-patch.yaml
