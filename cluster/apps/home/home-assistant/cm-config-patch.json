@@ -1,7 +1,0 @@
-[
-  {
-    "op": "add",
-    "path": "/data/configuration\.yaml",  // Escaping is essential!
-    "value": "\n\n# Appended configuration\nrecorder:\n  purge_keep_days: 90\n  commit_interval: 3\n  db_url: !env_var DB_CONNECTION\n"
-  }
-]

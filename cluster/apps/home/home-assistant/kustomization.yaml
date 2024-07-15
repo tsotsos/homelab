@@ -13,9 +13,5 @@ helmCharts:
   valuesFile: values.yaml
   version: 0.2.69
 
-patchesJson6902:
-  - target:
-      kind: ConfigMap
-      name: hass-configuration
-      namespace: home
-    path: cm-config-patch.json 
+# patches:
+# - path: cm-config-patch.yaml
