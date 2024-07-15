@@ -12,6 +12,7 @@ helmCharts:
   repo: http://pajikos.github.io/home-assistant-helm-chart/
   valuesFile: values.yaml
   version: 0.2.69
-
-# patches:
-# - path: cm-config-patch.yaml
+  
+#workaround for not so kustomize friendly helm chart
+patches:
+ - path: cm-configuration.yaml
