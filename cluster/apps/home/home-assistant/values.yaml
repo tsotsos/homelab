@@ -44,7 +44,6 @@ envFrom:
 configuration:
   enabled: true
   forceInit: true
-  hacs: true
   trusted_proxies:
     - 10.43.0.0/16
     - 10.42.0.0/16
@@ -67,9 +66,7 @@ configuration:
       scene: !include scenes.yaml
 
   initScript: |-
-    {{- if .Values.configuration.hacs -}}
-      wget -O - https://get.hacs.xyz | bash -
-    {{- end -}
+    wget -O - https://get.hacs.xyz | bash -
     #!/bin/sh
     set -e
     # Check if the configuration file exists
