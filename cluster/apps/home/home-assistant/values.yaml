@@ -9,7 +9,7 @@ additionalVolumes:
         name: home-assistant-additional-config
       name: home-assistant-additional-config
 additionalMounts:
-    - mountPath: /config/example.yaml
+    - mountPath: /config
       name: home-assistant-additional-config
 hostNetwork: true
 dnsConfig:
