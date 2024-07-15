@@ -67,13 +67,13 @@ configuration:
       scene: !include scenes.yaml
 
   initScript: |-
-    #!/bin/bash
+    #!/bin/sh
     set -e
     hacs="{{ .Values.configuration.hacs }}"
     if [ "$hacs" = "true" ]; then
       wget -O install.sh https://get.hacs.xyz
       chmod +x install.sh
-      bash install.sh
+      sh install.sh
     fi
     # Check if the configuration file exists
     if [ ! -f /config/configuration.yaml ]; then
