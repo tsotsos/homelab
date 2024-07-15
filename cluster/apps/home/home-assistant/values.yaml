@@ -41,6 +41,22 @@ configuration:
     - 10.42.0.0/16
     - 10.0.2.0/24
     - ::1
+  templateConfig: |-
+      default_config:
+      {{- if .Values.ingress.enabled }}
+      http:
+        use_x_forwarded_for: true
+        trusted_proxies:
+          {{- range .Values.configuration.trusted_proxies }}
+          - {{ . }}
+          {{- end }}
+      {{- end}}
+      frontend:
+        themes: !include_dir_merge_named themes
+      automation: !include automations.yaml
+      script: !include scripts.yaml
+      scene: !include scenes.yaml
+
 addons:
   codeserver:
     enabled: true
