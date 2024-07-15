@@ -4,7 +4,7 @@ metadata:
   name: extra-config
   namespace: home
 data:
-  example.yaml: |
+  example.yaml: |-
     test: true
-  example2.yaml: |
+  example2.yaml: |-
     test: true

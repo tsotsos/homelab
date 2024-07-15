@@ -3,6 +3,7 @@ persistence:
   accessMode: ReadWriteMany
   size: 10Gi
   storageClass: longhorn
+  
 additionalVolumes:
     - configMap:
         defaultMode: 0755
