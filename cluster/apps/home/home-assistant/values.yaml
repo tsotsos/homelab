@@ -68,7 +68,7 @@ configuration:
 
   initScript: |-
     {{- if .Values.configuration.hacs -}}
-    wget -O - https://get.hacs.xyz | bash -
+      wget -O - https://get.hacs.xyz | bash -
     {{- end -}
     #!/bin/sh
     set -e
