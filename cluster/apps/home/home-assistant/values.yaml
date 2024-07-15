@@ -3,14 +3,14 @@ persistence:
   accessMode: ReadWriteMany
   size: 10Gi
   storageClass: longhorn
-additionalVolumes:
-    - configMap:
-        defaultMode: 0755
-        name: home-assistant-additional-config
-      name: home-assistant-additional-config
-additionalMounts:
-    - mountPath: /config
-      name: home-assistant-additional-config
+# additionalVolumes:
+#     - configMap:
+#         defaultMode: 0755
+#         name: home-assistant-additional-config
+#       name: home-assistant-additional-config
+# additionalMounts:
+#     - mountPath: /config
+#       name: home-assistant-additional-config
 hostNetwork: true
 dnsConfig:
   nameservers:
@@ -41,7 +41,7 @@ envFrom:
    - secretRef:
        name: homeassistant-secret
 configuration:
-  enabled: false
+  enabled: true
   forceInit: true
   trusted_proxies:
     - 10.43.0.0/16
