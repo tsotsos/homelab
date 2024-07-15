@@ -16,3 +16,4 @@ helmCharts:
 #workaround for not so kustomize friendly helm chart
 patches:
  - path: cm-configuration.yaml
+ - path: home-assistant-additional-config.yaml
