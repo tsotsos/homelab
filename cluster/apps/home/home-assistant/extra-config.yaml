@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: home-assistant-additional-config
+  name: extra-config
   namespace: home
 data:
   example.yaml: |
