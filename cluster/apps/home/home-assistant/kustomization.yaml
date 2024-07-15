@@ -13,12 +13,5 @@ helmCharts:
   namespace: home
   valuesFile: values.yaml
 
-patches:
-  - target:
-      kind: 'ConfigMap'
-      name: 'hass-configuration'
-    patch: |-
-      - op: add
-        path: "/data/configuration.yaml"  
-        value: |-
-            # this is a test 
+patchesStrategicMerge:
+    - cm-config-patch.yaml
