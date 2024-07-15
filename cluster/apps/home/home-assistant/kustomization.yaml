@@ -4,7 +4,7 @@ namespace: home
 resources:
 - ns.yaml
 - secret.yaml
-- home-assistant-additional-config.yaml
+- extra-config.yaml
 
 helmCharts:
 - name: home-assistant

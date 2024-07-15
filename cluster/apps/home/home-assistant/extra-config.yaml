@@ -6,3 +6,5 @@ metadata:
 data:
   example.yaml: |
     test: true
+  example2.yaml: |
+    test: true

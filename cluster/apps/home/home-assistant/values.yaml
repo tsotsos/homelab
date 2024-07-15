@@ -3,14 +3,14 @@ persistence:
   accessMode: ReadWriteMany
   size: 10Gi
   storageClass: longhorn
-# additionalVolumes:
-#     - configMap:
-#         defaultMode: 0755
-#         name: home-assistant-additional-config
-#       name: home-assistant-additional-config
-# additionalMounts:
-#     - mountPath: /config
-#       name: home-assistant-additional-config
+additionalVolumes:
+    - configMap:
+        defaultMode: 0755
+        name: extra
+      name: extra-config
+additionalMounts:
+    - mountPath: /config/extra
+      name: extra
 hostNetwork: true
 dnsConfig:
   nameservers:
