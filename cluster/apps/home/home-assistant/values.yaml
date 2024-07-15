@@ -41,7 +41,7 @@ envFrom:
    - secretRef:
        name: homeassistant-secret
 configuration:
-  enabled: true
+  enabled: false
   forceInit: true
   trusted_proxies:
     - 10.43.0.0/16
