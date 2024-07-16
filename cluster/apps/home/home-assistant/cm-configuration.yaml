@@ -26,5 +26,3 @@ data:
       db_url: !env_var DB_CONNECTION
   file2.txt: |-
     <contents of file2.txt>
-  subdir/file3.txt: |-
-    <contents of file3.txt>
