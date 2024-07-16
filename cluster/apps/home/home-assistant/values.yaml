@@ -3,7 +3,9 @@ persistence:
   accessMode: ReadWriteMany
   size: 10Gi
   storageClass: longhorn
-
+podSecurityContext:
+  fsGroup: 997
+  fsGroupChangePolicy: OnRootMismatch
 additionalVolumes:
     - configMap:
         defaultMode: 0755
