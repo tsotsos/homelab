@@ -10,15 +10,6 @@ spec:
           configMap:
             defaultMode: 0755
       containers:
-        - args:
-            - '--user 0:0'
-            - '--auth'
-            - none
-            - '--user-data-dir'
-            - /config/.vscode
-            - '--extensions-dir'
-            - /config/.vscode
-            - '--port'
-            - '12321'
-            - /config
-          name: codeserver
+        - name: codeserver
+          securityContext:
+            runAsUser: 0
