@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: home-assistant
+spec:
+  template:
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            defaultMode: 493
