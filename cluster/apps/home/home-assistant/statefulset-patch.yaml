@@ -8,4 +8,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            defaultMode: 493
+            defaultMode: 0755
