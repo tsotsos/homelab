@@ -5,7 +5,13 @@ metadata:
 spec:
   template:
     spec:
+    - name: codeserver
+      securityContext:
+        capabilities:
+          add:
+            - CHOWN
       volumes:
         - name: config-volume
           configMap:
             defaultMode: 0755
+            

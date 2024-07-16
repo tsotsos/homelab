@@ -17,3 +17,4 @@ helmCharts:
 #workaround for not so kustomize friendly helm chart
 patches:
 - path: cm-configuration.yaml
+- path: statefulset-patch.yaml
