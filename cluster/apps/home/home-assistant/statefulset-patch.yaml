@@ -8,10 +8,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            defaultMode: 0755
-      containers:
-        - name: codeserver
-          securityContext:
-            capabilities:
-              add:
-                - CHOWN
+            defaultMode: 0777
