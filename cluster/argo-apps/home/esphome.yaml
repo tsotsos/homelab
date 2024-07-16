@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: esphome
+  namespace: argocd
+  annotations:
+     argocd.argoproj.io/sync-wave: "-2"
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: home
+  project: home
+  source:
+    path: cluster/apps/home/esphome
+    repoURL: https://github.com/tsotsos/homelab
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

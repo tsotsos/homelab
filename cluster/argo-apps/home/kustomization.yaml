@@ -4,3 +4,4 @@ namespace: argocd
 resources:
 - homepage.yaml
 - home-assistant.yaml
+- esphome.yaml
