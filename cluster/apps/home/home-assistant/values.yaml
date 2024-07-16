@@ -109,8 +109,6 @@ configuration:
       echo "Scenes file not found, creating a new one"
       touch /config/scenes.yaml
     fi
-    # make all files writeable from vscode - this is a workaround for the vscode addon.
-    chmod 755 /config/*
 addons:
   codeserver:
     enabled: true
