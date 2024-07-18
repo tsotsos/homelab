@@ -46,21 +46,21 @@ spec:
         name: zigbee2mqtt
         env:
         - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
-          value: mqtt://mosquitto
+          value: "mqtt://mosquitto"
         - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
-          value: zigbee2mqtt
+          value: "zigbee2mqtt"
         - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
           value: "true"
         - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
           value: "true"
         - name: ZIGBEE2MQTT_DATA
-          value: /data
+          value: "/data"
         - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY
-          value: GENERATE
+          value: "GENERATE"
         - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT
-          value: ZIGBEE_IP
+          value: "ZIGBEE_IP"
         - name: TZ
-          value: Europe/Athens
+          value: "Europe/Athens"
         volumeMounts:
         - name: data
           mountPath: /data
