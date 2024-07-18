@@ -1,0 +1,93 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zigbee2mqtt
+  namespace: home
+  labels:
+    app: zigbee2mqtt
+spec:
+  ports:
+  - port: 8080
+    targetPort: http
+  selector:
+    app: zigbee2mqtt
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zigbee2mqtt-data
+  namespace: home
+spec:
+  storageClassName: longhorn
+  resources:
+      requests:
+        storage: 10Gi
+  accessModes:
+  - ReadWriteOnce
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zigbee2mqtt
+  namespace: home
+spec:
+  containers:
+  - image: ghcr.io/koenkk/zigbee2mqtt
+    name: zigbee2mqtt
+    env:
+    - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
+      value: mqtt://mosquitto
+    - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
+      value: zigbee2mqtt
+    - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
+      value: true
+    - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
+      value: true
+    - name: ZIGBEE2MQTT_DATA
+      value: /data
+    - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY
+      value: GENERATE
+    - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT
+      value: ZIGBEE_IP
+    - name: TZ
+      value: Europe/Athens
+    volumeMounts:
+    - name: data
+      mountPath: /data
+    - name: config
+      mountPath: /app/zigbee2mqtt/data/configuration.yaml
+      subPath: configuration.yaml
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: zigbee2mqtt-data
+  - name: config
+    configMap:
+      name: z2m-config
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zigbee2mqtt
+  namespace: home
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: z2m.kng.house
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: z2m.kng.house
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: zigbee2mqtt
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - z2m.kng.house
+      secretName: z2m-tls
