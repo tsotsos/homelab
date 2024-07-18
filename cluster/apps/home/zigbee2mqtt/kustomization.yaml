@@ -41,7 +41,7 @@ patches:
       path: /metadata/name
       value: z2m-0
     - op: replace
-      path: /spec/selector/matchLabels/app # Update app label for selector
+      path: /spec/selector/matchLabels/app
       value: z2m-0
     - op: replace
       path: /spec/containers/0/name
