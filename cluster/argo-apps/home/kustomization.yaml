@@ -5,4 +5,4 @@ resources:
 - homepage.yaml
 - home-assistant.yaml
 - esphome.yaml
-- zigbee2mqtt.yaml
+#- zigbee2mqtt.yaml

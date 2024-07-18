@@ -51,7 +51,7 @@ patches:
       value: z2m-0
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
-      value: tcp://10.0.5.12:6638
+      value: tcp://10.0.5.10:6638
     - op: replace
       path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName 
       value: z2m-0-data
