@@ -44,7 +44,7 @@ patches:
       path: /spec/selector/matchLabels/app
       value: z2m-0
     - op: replace
-      path: /spec/temaplte/metadata/lables/app
+      path: /spec/template/metadata/labels/app
       value: z2m-0
     - op: replace
       path: /spec/template/spec/containers/0/name
