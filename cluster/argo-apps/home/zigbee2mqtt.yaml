@@ -11,7 +11,7 @@ spec:
     namespace: home
   project: home
   source:
-    path: cluster/apps/home/zigbee2mqt
+    path: cluster/apps/home/zigbee2mqtt
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:
