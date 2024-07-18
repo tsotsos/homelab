@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: home-assistant
+  name: zigbee2mqt
   namespace: argocd
   annotations:
      argocd.argoproj.io/sync-wave: "-2"
 spec:
   destination:
     server: https://kubernetes.default.svc
-    namespace: home-assistant
+    namespace: home
   project: home
   source:
-    path: cluster/apps/home/home-assistant
+    path: cluster/apps/home/zigbee2mqt
     repoURL: https://github.com/tsotsos/homelab
     targetRevision: main
   syncPolicy:
