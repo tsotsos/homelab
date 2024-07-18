@@ -50,9 +50,9 @@ spec:
         - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
           value: zigbee2mqtt
         - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
-          value: true
+          value: "true"
         - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
-          value: true
+          value: "true"
         - name: ZIGBEE2MQTT_DATA
           value: /data
         - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY
