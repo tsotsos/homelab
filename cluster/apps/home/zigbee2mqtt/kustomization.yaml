@@ -41,16 +41,16 @@ patches:
       path: /metadata/name
       value: z2m-0
     - op: replace
-      path: /spec/containers/0/name
+      path: /spec/template/spec/containers/0/name
       value: z2m-0
     - op: replace
-      path: /spec/containers/0/env/6/value
+      path: /spec/template/spec/containers/0/env/6/value
       value: tpc://10.0.5.11:6638
     - op: replace
-      path: /spec/volumes/0/persistentVolumeClaim/claimName 
+      path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName 
       value: z2m-0-data
     - op: replace
-      path: /spec/volumes/1/configMap/name
+      path: /spec/template/spec/volumes/1/configMap/name
       value: z2m-0-config
 - target:
     kind: Ingress
