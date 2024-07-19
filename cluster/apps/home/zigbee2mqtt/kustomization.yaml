@@ -2,15 +2,4 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: home
 resources:
-  - z2m-0-pvc.yaml
-#workaround for not so kustomize friendly helm chart
-patches:
-- path: z2m-0-cm.yaml
-
-helmCharts:
-- releaseName: z2m-0
-  name: zigbee2mqtt
-  repo: https://geek-cookbook.github.io/charts/
-  version: 9.4.2
-  namespace: home
-  valuesFile: z2m-0.yaml
+  - basement
