@@ -5,17 +5,13 @@ metadata:
   name: zigbee2mqtt
   namespace: home
   labels:
-    app:
-      kubernetes.io:
-        name: zigbee2mqtt
+    app.kubernetes.io/name: zigbee2mqtt
 spec:
   ports:
   - port: 8080
     targetPort: http
   selector:
-    app:
-      kubernetes.io:
-        name: zigbee2mqtt
+    app.kubernetes.io/name: zigbee2mqtt
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -37,17 +33,13 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app:
-        kubernetes.io:
-          name: zigbee2mqtt
+      app.kubernetes.io/name: zigbee2mqtt
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app:
-          kubernetes.io:
-              name: zigbee2mqtt
+        app.kubernetes.io/name: zigbee2mqtt
     spec:
       containers:
       - image: ghcr.io/koenkk/zigbee2mqtt
