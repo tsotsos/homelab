@@ -83,8 +83,6 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/hostname: z2m.kng.house
-    nginx.org/websocket-services: zigbee2mqtt
-    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
 spec:
   ingressClassName: nginx
   rules:
