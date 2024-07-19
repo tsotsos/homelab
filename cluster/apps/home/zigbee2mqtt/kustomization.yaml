@@ -3,6 +3,10 @@ kind: Kustomization
 namespace: home
 resources:
   - z2m-0-pvc.yaml
+#workaround for not so kustomize friendly helm chart
+patches:
+- path: z2m-0-cm.yaml
+
 helmCharts:
 - releaseName: z2m-0
   name: zigbee2mqtt
