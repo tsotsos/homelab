@@ -71,9 +71,6 @@ patches:
     - op: replace
       path: /spec/rules/0/host
       value: z2m-0.kng.house
-    - op: replace 
-      path: /spec/rules/0/http/paths/0/backend/service/name
-      value: z2m-0
     - op: replace
       path: /spec/tls/0/hosts/0
       value: z2m-0.kng.house
