@@ -93,6 +93,11 @@ spec:
         paths:
           - path: /
             pathType: Prefix
+            backend:
+              service:
+                name: zigbee2mqtt
+                port:
+                  number: 8080
   tls:
     - hosts:
         - z2m.kng.house
