@@ -5,4 +5,5 @@ resources:
 - homepage.yaml
 - home-assistant.yaml
 - esphome.yaml
+- mosquitto.yaml
 - zigbee2mqtt.yaml

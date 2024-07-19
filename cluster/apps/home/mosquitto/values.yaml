@@ -1,0 +1,8 @@
+image:
+  repository: eclipse-mosquitto
+  tag: latest
+env:
+  TZ: Europe/Athens
+persistence:
+  config:
+    existingClaim: mosquitto
