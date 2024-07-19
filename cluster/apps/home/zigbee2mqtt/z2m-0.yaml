@@ -3,7 +3,7 @@ image:
   tag: latest
 env:
   TZ: Europe/Athens
-
+  ZIGBEE2MQTT_CONFIG_SERIAL_PORT: tcp://10.0.5.10:6638
 config:
   homeassistant: true
   permit_join: true
