@@ -5,7 +5,7 @@ resources:
   - ../base
 
 configMapGenerator:
-- name: z2m0-config
+- name: z2m-0-config
   files:
   - configuration.yaml
 
@@ -22,64 +22,64 @@ patches:
   patch: |-
     - op: replace
       path: /metadata/name
-      value: z2m0-data
+      value: z2m-0-data
 - target:
     kind: Service
     name: zigbee2mqtt
   patch: |-
     - op: replace
       path: /metadata/name
-      value: z2m0
+      value: z2m-0
     - op: replace
       path: /metadata/labels/app/kubernetes.io/name
-      value: z2m0
+      value: "z2m-0"
     - op: replace
       path: /spec/selector/app/kubernetes.io/name
-      value: z2m0
+      value: "z2m-0"
 - target:
     kind: Deployment
     name: zigbee2mqtt
   patch: |-
     - op: replace
       path: /metadata/name
-      value: z2m0
+      value: z2m-0
     - op: replace
       path: /spec/selector/matchLabels/app/kubernetes.io/name
-      value: z2m0
+      value: "z2m-0"
     - op: replace
       path: /spec/template/metadata/labels/app/kubernetes.io/name
-      value: z2m0
+      value: "z2m-0"
     - op: replace
       path: /spec/template/spec/containers/0/name
-      value: z2m0
+      value: z2m-0
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
       value: tcp://10.0.5.10:6638
     - op: replace
       path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName 
-      value: z2m0-data
+      value: z2m-0-data
     - op: replace
       path: /spec/template/spec/volumes/1/configMap/name
-      value: z2m0-config
+      value: z2m-0-config
 - target:
     kind: Ingress
     name: zigbee2mqtt
   patch: |-
     - op: replace
       path: /metadata/name
-      value: z2m0
+      value: z2m-0
     - op: replace
       path: /metadata/annotations/external-dns.alpha.kubernetes.io~1hostname
-      value: z2m0.kng.house
+      value: z2m-0.kng.house
     - op: replace
       path: /spec/rules/0/host
-      value: z2m0.kng.house
+      value: z2m-0.kng.house
     - op: replace 
       path: /spec/rules/0/http/paths/0/backend/service/name
-      value: z2m0
+      value: z2m-0
     - op: replace
       path: /spec/tls/0/hosts/0
-      value: z2m0.kng.house
+      value: z2m-0.kng.house
     - op: replace
       path: /spec/tls/0/secretName
-      value: z2m0-tls-secret
+      value: z2m-0-tls-secret
