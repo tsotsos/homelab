@@ -31,6 +31,9 @@ patches:
       path: /metadata/name
       value: z2m-0
     - op: replace
+      path: /metadata/labels/app
+      value: z2m-0
+    - op: replace
       path: /spec/selector/app
       value: z2m-0
 - target:
