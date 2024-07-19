@@ -46,7 +46,7 @@ spec:
         name: zigbee2mqtt
         env:
         - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
-          value: "mqtt://mosquitto"
+          value: "mqtt://mosquitto.home.svc.cluster.local"
         - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
           value: "zigbee2mqtt"
         - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
