@@ -47,7 +47,7 @@ spec:
       labels:
         app:
           kubernetes.io:
-            name: zigbee2mqtt
+              name: zigbee2mqtt
     spec:
       containers:
       - image: ghcr.io/koenkk/zigbee2mqtt
