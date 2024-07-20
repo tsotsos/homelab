@@ -48,6 +48,10 @@ spec:
       containers:
       - image: ghcr.io/koenkk/zigbee2mqtt
         name: zigbee2mqtt
+        ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
         env:
         - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
           value: "mqtt://mosquitto.home.svc.cluster.local"
