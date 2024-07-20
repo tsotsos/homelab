@@ -49,6 +49,12 @@ resource "proxmox_vm_qemu" "k3s" {
           storage = each.value.storage
         }
       }
+      scsi1 {
+        disk {
+          size    = 256
+          storage = "zfs-pool"
+        }
+      }
     }
   }
 

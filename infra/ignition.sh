@@ -11,12 +11,13 @@ for (( i=0; i<${#ip_list[@]}; i++ )); do
     ip_address="${ip_list[i]}"
     hostname="${hostname_list[i]}"
     host_ip="10.0.2.1"
+    dns_server="10.0.1.7"
     rm -rf ./iso
     mkdir -p iso/ignition
     mkdir -p iso/combustion
     # combustion
     combustion_content=$(cat combustion.sh)
-    modified_combustion_content=$(echo "$combustion_content" | awk '{ gsub(/VM_IP/, "'"$ip_address"'"); gsub(/HOST/, "'"$host_ip"'"); print }')
+    modified_combustion_content=$(echo "$combustion_content" | awk '{ gsub(/VM_IP/, "'"$ip_address"'"); gsub(/HOST/, "'"$host_ip"'"); gsub(/DNS_SERVER/, "'"$dns_server"'"); print}')
     echo "$modified_combustion_content" > iso/combustion/script
     echo "Successfully copied the contents of combustion script"
     # ignition

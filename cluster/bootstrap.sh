@@ -9,6 +9,7 @@ create_secrets() {
   kubeseal --scope cluster-wide --controller-name sealed-secrets --controller-namespace kube-system --format yaml --secret-file ../secrets-un/grafana-secret.yaml > apps/monitoring/kube-prometheus/grafana-secret.yaml
   kubeseal --scope cluster-wide --controller-name sealed-secrets --controller-namespace kube-system --format yaml --secret-file ../secrets-un/authentik-secret.yaml > apps/security/authentik/secret.yaml
   kubeseal --scope cluster-wide --controller-name sealed-secrets --controller-namespace kube-system --format yaml --secret-file ../secrets-un/db-authentik-credentials.yaml > apps/databases/pg-clusters/authentik/secret.yaml
+  kubeseal --scope cluster-wide --controller-name sealed-secrets --controller-namespace kube-system --format yaml --secret-file ../secrets-un/db-homeassistant-credentials.yaml > apps/databases/pg-clusters/home-assistant/secret.yaml
   kubeseal --scope cluster-wide --controller-name sealed-secrets --controller-namespace kube-system --format yaml --secret-file ../secrets-un/influxdb-credentials.yaml > apps/databases/influxdb/secret.yaml
   kubeseal --scope cluster-wide --controller-name sealed-secrets --controller-namespace kube-system --format yaml --secret-file ../secrets-un/pgadmin-envs-secret.yaml > apps/databases/pgadmin/pgadmin-envs-secret.yaml
   kubeseal --scope cluster-wide --controller-name sealed-secrets --controller-namespace kube-system --format yaml --secret-file ../secrets-un/pgadmin-secret.yaml > apps/databases/pgadmin/pgadmin-secret.yaml
@@ -37,6 +38,9 @@ if [[ $# -eq 0 ]]; then
 fi
 
 if [[ $1 == "--secrets-only" ]]; then
+  show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/core/sealed-secrets/ | kubectl apply -f -"
+  show_progress "sleep 120"
+  show_progress "rm -rf apps/core/sealed-secrets/charts"
   create_secrets
 elif [[ $1 == "--no-secrets" ]]; then
   show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/networking/ingress-nginx/ | kubectl apply -f -"
@@ -44,7 +48,7 @@ elif [[ $1 == "--no-secrets" ]]; then
   show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/networking/external-dns/ | kubectl apply -f -"
   show_progress "sleep 60"
   show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/core/argocd/ | kubectl apply -f -"
-  show_progress "sleep 60"
+  show_progress "sleep 120"
   show_progress "kustomize build --enable-alpha-plugins --enable-helm argo-apps/ | kubectl apply -f -"
   show_progress "kubectl apply -f argo-apps/argo-projects.yaml"
   show_progress "kubectl apply -f argo-apps/root.yaml"
@@ -52,22 +56,4 @@ elif [[ $1 == "--no-secrets" ]]; then
   show_progress "rm -rf apps/networking/cert-manager/charts"
   show_progress "rm -rf apps/networking/external-dns/charts"
   show_progress "rm -rf apps/core/argocd/charts"
-else
-  show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/core/sealed-secrets/ | kubectl apply -f -"
-  create_secrets
-  show_progress "sleep 60"
-  show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/networking/ingress-nginx/ | kubectl apply -f -"
-  show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/networking/cert-manager/ | kubectl apply -f -"
-  show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/networking/external-dns/ | kubectl apply -f -"
-  show_progress "sleep 60"
-  show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/core/argocd/ | kubectl apply -f -"
-  show_progress "sleep 60"
-  show_progress "kubectl apply -f argo-apps/argo-projects.yaml"
-  show_progress "kubectl apply -f argo-apps/root.yaml"
-  show_progress "rm -rf apps/networking/ingress-nginx/charts"
-  show_progress "rm -rf apps/networking/cert-manager/charts"
-  show_progress "rm -rf apps/networking/external-dns/charts"
-  show_progress "rm -rf apps/core/argocd/charts"
-  show_progress "rm -rf apps/core/sealed-secrets/charts"
-  kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 fi
