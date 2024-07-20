@@ -44,6 +44,9 @@ patches:
       path: /metadata/name
       value: z2m-0
     - op: replace
+      path: /metadata/labels/app.kubernetes.io~1name
+      value: z2m-0
+    - op: replace
       path: /spec/selector/matchLabels/app.kubernetes.io~1name
       value: z2m-0
     - op: replace
