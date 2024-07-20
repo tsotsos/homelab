@@ -1,0 +1,22 @@
+homeassistant: true
+permit_join: true
+mqtt:
+  base_topic: zigbee2mqtt
+  server: mqtt://mosquitto.home.svc.cluster.local
+  include_device_information: true
+serial:
+  port: tcp://10.0.5.12:6638
+advanced:
+  log_level: debug
+  log_output:
+    - console
+    - file
+  pan_id: GENERATE
+  ext_pan_id: [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]
+  network_key: GENERATE
+  homeassistant_discovery_topic: 'homeassistant'
+  homeassistant_status_topic: 'homeassistant/status'
+frontend:
+  port: 8080
+experimental:
+  new_api: true
