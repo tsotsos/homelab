@@ -76,11 +76,9 @@ spec:
           - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT 
             value: "tcp://10.0.5.10:6638" 
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL 
-            value: "debug"
+            value: "error"
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__0 
             value: "console"
-          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__1
-            value: "file"
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID 
             value: "GENERATE"
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY 
@@ -105,10 +103,6 @@ spec:
             value: "homeassistant"
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC 
             value: "homeassistant/status"
-          - name: ZIGBEE2MQTT_FRONTEND_PORT 
-            value: "8080"
-          - name: ZIGBEE2MQTT_EXPERIMENTAL_NEW_API
-            value: "true" 
         volumeMounts:
         - name: data
           mountPath: /data
