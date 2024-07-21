@@ -77,7 +77,6 @@ spec:
           subPath: configuration.yaml
       volumes:
       - name: data
-        defaultMode: 0755
         persistentVolumeClaim:
           claimName: zigbee2mqtt-data
       - name: config
