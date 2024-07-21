@@ -93,7 +93,7 @@ spec:
           value: "Europe/Athens"
         volumeMounts:
         - name: data
-          mountPath: /data
+          mountPath: /app/data
       volumes:
       - name: data
         persistentVolumeClaim:
