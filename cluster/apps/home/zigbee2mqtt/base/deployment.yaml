@@ -63,20 +63,18 @@ spec:
         env:
           - name: TZ
             value: Europe/Athens
+          - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT 
+            value: "" 
+          - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
+            value: ""
           - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
-            value: "true"
-          - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
             value: "true"
           - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
             value: "zigbee2mqtt"
-          - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
-            value: "mqtt://mosquitto.home.svc.cluster.local"
           - name: ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION 
             value: "true"
-          - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT 
-            value: "tcp://10.0.5.10:6638" 
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL 
-            value: "error"
+            value: "warning"
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__0 
             value: "console"
           - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID 
