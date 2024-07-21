@@ -78,6 +78,7 @@ spec:
       volumes:
       - name: data
         persistentVolumeClaim:
+          defaultMode: 0755
           claimName: zigbee2mqtt-data
       - name: config
         configMap:
