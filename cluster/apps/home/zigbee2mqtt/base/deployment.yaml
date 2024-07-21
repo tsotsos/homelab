@@ -63,20 +63,10 @@ spec:
             #!/bin/sh
             existing_config=$(cat /data/configuration.yaml)
             new_config=$(cat /app/zigbee2mqtt/data/configuration.yaml)
-            # Extract values to keep from existing_config
-            pan_id=$(yq eval '.pan_id' <(echo "$existing_config"))
-            network_key=$(yq eval '.network_key' <(echo "$existing_config"))
-            channel=$(yq eval '.channel' <(echo "$existing_config"))
-            # Remove the values from existing_config, so they won't override new_config
-            existing_config=$(yq eval 'del(.pan_id, .network_key, .channel)' <(echo "$existing_config"))
-            # Merge configurations (now without the specified keys in existing_config)
-            merged_config_without_keys=$(yq eval-all '. as $item ireduce ({}; . * $item )' \
-                                        <(echo "$existing_config") <(echo "$new_config"))
-            # Add back the values from existing_config
-            merged_config=$(yq eval '.pan_id = strenv(pan_id) | .network_key = strenv(network_key) | .channel = strenv(channel)' \
-                            <(echo "$merged_config_without_keys"))
-            # Write the final merged configuration to /data
-            echo "$merged_config" > /data/configuration.yaml
+            # Create a backup of the existing configuration
+            echo "$existing_config" > /data/configuration.yaml.bak
+            # Overwrite with the new configuration
+            echo "$new_config" > /data/configuration.yaml
 
       containers:
       - image: ghcr.io/koenkk/zigbee2mqtt
