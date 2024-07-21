@@ -67,7 +67,6 @@ spec:
             echo "$existing_config" > /data/configuration.yaml.bak
             # Overwrite with the new configuration
             echo "$new_config" > /data/configuration.yaml
-
       containers:
       - image: ghcr.io/koenkk/zigbee2mqtt
         name: zigbee2mqtt
@@ -95,9 +94,6 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
-        - name: config
-          mountPath: /app/zigbee2mqtt/data/configuration.yaml
-          subPath: configuration.yaml
       volumes:
       - name: data
         persistentVolumeClaim:
