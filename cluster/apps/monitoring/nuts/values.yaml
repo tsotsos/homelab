@@ -11,6 +11,8 @@ config:
       LISTEN 0.0.0.0
     ups.conf: |
       [SmartUPS-SRT]
-          driver = apcsmart
-          port = 10.0.0.164:23
-          desc = "APC Smart-UPS SRT 5000"
+          driver = snmp-ups
+          port = 10.0.1.8
+          community=public
+          snmp_version=v1
+          pollfreq=15
