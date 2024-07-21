@@ -26,7 +26,7 @@ spec:
       requests:
         storage: 10Gi
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -77,9 +77,11 @@ spec:
           subPath: configuration.yaml
       volumes:
       - name: data
+        defaultMode: 0755
         persistentVolumeClaim:
           claimName: zigbee2mqtt-data
       - name: config
+        defaultMode: 0755
         configMap:
           name: z2m-config
 ---
