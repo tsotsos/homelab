@@ -10,6 +10,6 @@ config:
     upsd.conf: |
       LISTEN 0.0.0.0
     ups.conf: |
-        driver = usbhid-ups
+        driver = apcsmart
         port = auto
         desc = "APC Smart-UPS SRT 5000"
