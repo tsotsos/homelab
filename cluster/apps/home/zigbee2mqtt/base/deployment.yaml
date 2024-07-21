@@ -62,13 +62,13 @@ spec:
           periodSeconds: 30
         env:
         - name: TZ
-          value: "Europe/Athens"
+          value: Europe/Athens
         volumeMounts:
-        - name: data
-          mountPath: /data
         - name: config
           mountPath: /app/data/configuration.yaml
           subPath: configuration.yaml
+        - name: data
+          mountPath: /data
       volumes:
       - name: data
         persistentVolumeClaim:
