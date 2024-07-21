@@ -100,7 +100,6 @@ spec:
           claimName: zigbee2mqtt-data
       - name: config
         configMap:
-          defaultMode: 0755
           name: z2m-config
 ---
 apiVersion: networking.k8s.io/v1
