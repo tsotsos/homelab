@@ -1,2 +1,15 @@
 env:
   TZ: Europe/Athens
+config:
+  # -- If set to 'values', the configuration will be read from these values.
+  # Otherwise you have to mount a volume to /etc/nut containing the configuration files.
+  mode: values
+  files:
+    nut.conf: |
+      MODE=netserver
+    upsd.conf: |
+      LISTEN 0.0.0.0
+    ups.conf: |
+        driver = usbhid-ups
+        port = auto
+        desc = "APC Smart-UPS SRT 5000"
