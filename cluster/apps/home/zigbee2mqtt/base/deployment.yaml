@@ -45,7 +45,6 @@ spec:
       labels:
         app.kubernetes.io/name: zigbee2mqtt
     spec:
-      containers:
       initContainers:
       - name: config-merger
         image: mikefarah/yq:4
@@ -78,6 +77,8 @@ spec:
                             <(echo "$merged_config_without_keys"))
             # Write the final merged configuration to /data
             echo "$merged_config" > /data/configuration.yaml
+
+      containers:
       - image: ghcr.io/koenkk/zigbee2mqtt
         name: zigbee2mqtt
         ports:
