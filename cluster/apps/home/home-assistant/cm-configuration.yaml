@@ -18,7 +18,7 @@ data:
     automation: !include automations.yaml
     script: !include scripts.yaml
     scene: !include scenes.yaml
-    influxdb: !include ./extra-config/influxdb.yaml
+    influxdb: !include ./extra/influxdb.yaml
     recorder:
       purge_keep_days: 90
       commit_interval: 3
