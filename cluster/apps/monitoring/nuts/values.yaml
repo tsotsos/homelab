@@ -1,9 +1,2 @@
 env:
   TZ: Europe/Athens
-image:
-  # -- image repository
-  repository: untouchedwagons/network-ups-tools
-  # -- image tag
-  tag: 1.0.0
-  # -- image pull policy
-  pullPolicy: IfNotPresent
