@@ -4,5 +4,25 @@ metadata:
   name: extra-config
   namespace: home
 data:
-  example.yaml: |-
-    test: true
+  influxdb.yaml: |-
+      api_version: 2
+      ssl: false
+      port: 80
+      host: !env_var INFLUXDB2_URL
+      token: !env_var INFLUXDB2_TOKEN
+      organization: !env_var INFLUXDB2_ORG
+      bucket: !env_var INFLUXDB2_BUCKET
+      tags:
+        source: HA
+      tags_attributes:
+        - friendly_name
+      default_measurement: units
+      exclude:
+        entities:
+          - weather.home
+      include:
+        domains:
+          - sensor
+          - binary_sensor
+          - sun
+        entities:

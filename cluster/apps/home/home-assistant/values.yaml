@@ -130,3 +130,4 @@ addons:
           hosts:
             - home-code.kng.house
 #wget -O - https://get.hacs.xyz | bash -
+
