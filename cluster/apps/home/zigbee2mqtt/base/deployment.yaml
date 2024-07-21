@@ -67,6 +67,12 @@ spec:
             echo "$existing_config" > /data/configuration.yaml.bak
             # Overwrite with the new configuration
             echo "$new_config" > /data/configuration.yaml
+            cat "current config"
+            cat /data/configuration.yaml
+            echo "backup config"
+            cat /data/configuration.yaml.bak
+            echo "backup json"
+            cat /data/coordinator_backup.json
       containers:
       - name: zigbee2mqtt
         image: ghcr.io/koenkk/zigbee2mqtt
