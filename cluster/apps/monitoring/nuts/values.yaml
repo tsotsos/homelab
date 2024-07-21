@@ -11,8 +11,13 @@ config:
       LISTEN 0.0.0.0
     ups.conf: |
       [SmartUPS-SRT]
-          driver = snmp-ups
-          port = 10.0.1.8
-          community=public
-          snmp_version=v1
-          pollfreq=15
+          driver: snmp-ups
+          port: 10.0.1.8
+          snmp_version: v3
+          secLevel: authPriv
+          authProtocol: MD5
+          authPassword: 0123456789ABCDEF
+          privProtocol: DES
+          privPassword: 0123456789ABCDEF
+          desc: my description doesn not work
+          config: []
