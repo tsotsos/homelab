@@ -2,8 +2,8 @@ env:
   TZ: Europe/Athens
 image:
   # -- image repository
-  repository: docker.io/aztechian/nut
+  repository: untouchedwagons/network-ups-tools
   # -- image tag
-  tag: latest
+  tag: 1.0.0
   # -- image pull policy
   pullPolicy: IfNotPresent
