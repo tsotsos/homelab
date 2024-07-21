@@ -12,5 +12,5 @@ config:
     ups.conf: |
         [APC_SRT5000]
           driver = apcsmart
-          port = auto
+          port = 10.0.0.164
           desc = "APC Smart-UPS SRT 5000"
