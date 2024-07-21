@@ -46,42 +46,29 @@ spec:
         app.kubernetes.io/name: zigbee2mqtt
     spec:
       containers:
-      - name: zigbee2mqtt
-        image: ghcr.io/koenkk/zigbee2mqtt
-        securityContext:
-          runAsUser: 0
+      - image: ghcr.io/koenkk/zigbee2mqtt
+        name: zigbee2mqtt
         ports:
           - name: http
             containerPort: 8080
             protocol: TCP
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /
+            port: web
+          initialDelaySeconds: 60
+          timeoutSeconds: 10
+          periodSeconds: 30
         env:
-        - name: ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION 
-          value: "true"
-        - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT 
-          value: "tcp://10.0.5.10:6638" 
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL 
-          value: "debug"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__0 
-          value: "console"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__1 
-          value: "file"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID 
-          value: "GENERATE"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID 
-          value: "[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_DISCOVERY_TOPIC 
-          value: "homeassistant"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC 
-          value: "homeassistant/status"
-        - name: ZIGBEE2MQTT_FRONTEND_PORT 
-          value: "8080"
-        - name: ZIGBEE2MQTT_EXPERIMENTAL_NEW_API
-          value: "true"
         - name: TZ
           value: "Europe/Athens"
         volumeMounts:
         - name: data
           mountPath: /data
+        - name: config
+          mountPath: /app/data/configuration.yaml
+          subPath: configuration.yaml
       volumes:
       - name: data
         persistentVolumeClaim:
