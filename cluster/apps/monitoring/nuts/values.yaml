@@ -1,2 +1,9 @@
 env:
   TZ: Europe/Athens
+image:
+  # -- image repository
+  repository: docker.io/aztechian/nut
+  # -- image tag
+  tag: latest
+  # -- image pull policy
+  pullPolicy: IfNotPresent
