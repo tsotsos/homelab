@@ -61,8 +61,10 @@ spec:
           value: "tcp://10.0.5.10:6638" 
         - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL 
           value: "debug"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT 
-          value: "console,file"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__0 
+          value: "console"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__1 
+          value: "file"
         - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID 
           value: "GENERATE"
         - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID 
