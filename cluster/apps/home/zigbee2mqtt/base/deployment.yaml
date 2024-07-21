@@ -48,8 +48,6 @@ spec:
       initContainers:
       - name: config-merger
         image: mikefarah/yq:4
-        securityContext:
-          runAsUser: 0
         volumeMounts:
           - name: data
             mountPath: /data
@@ -67,6 +65,8 @@ spec:
             echo "$existing_config" > /data/configuration.yaml.bak
             # Overwrite with the new configuration
             echo "$new_config" > /data/configuration.yaml
+            chomd 777 /data
+            chmod 777 /data/configuration.yaml
       containers:
       - image: ghcr.io/koenkk/zigbee2mqtt
         name: zigbee2mqtt
@@ -93,7 +93,7 @@ spec:
           value: "Europe/Athens"
         volumeMounts:
         - name: data
-          mountPath: /app/data
+          mountPath: /data
       volumes:
       - name: data
         persistentVolumeClaim:
