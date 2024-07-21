@@ -60,55 +60,55 @@ spec:
           initialDelaySeconds: 60
           timeoutSeconds: 10
           periodSeconds: 30
-          env:
-            - name: TZ
-              value: Europe/Athens
-            - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
-              value: "true"
-            - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
-              value: "true"
-            - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
-              value: "zigbee2mqtt"
-            - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
-              value: "mqtt://mosquitto.home.svc.cluster.local"
-            - name: ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION 
-              value: "true"
-            - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT 
-              value: "tcp://10.0.5.10:6638" 
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL 
-              value: "debug"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__0 
-              value: "console"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__1
-              value: "file"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID 
-              value: "GENERATE"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY 
-              value: "GENERATE"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__0 
-              value: "0x01"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__1 
-              value: "0x02"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__2 
-              value: "0x03"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__3 
-              value: "0x04"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__4 
-              value: "0x05"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__5 
-              value: "0x06"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__6 
-              value: "0x07"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__7 
-              value: "0x08"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_DISCOVERY_TOPIC 
-              value: "homeassistant"
-            - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC 
-              value: "homeassistant/status"
-            - name: ZIGBEE2MQTT_FRONTEND_PORT 
-              value: "8080"
-            - name: ZIGBEE2MQTT_EXPERIMENTAL_NEW_API
-              value: "true" 
+        env:
+          - name: TZ
+            value: Europe/Athens
+          - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
+            value: "true"
+          - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
+            value: "true"
+          - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
+            value: "zigbee2mqtt"
+          - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
+            value: "mqtt://mosquitto.home.svc.cluster.local"
+          - name: ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION 
+            value: "true"
+          - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT 
+            value: "tcp://10.0.5.10:6638" 
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL 
+            value: "debug"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__0 
+            value: "console"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT__1
+            value: "file"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID 
+            value: "GENERATE"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY 
+            value: "GENERATE"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__0 
+            value: "0x01"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__1 
+            value: "0x02"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__2 
+            value: "0x03"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__3 
+            value: "0x04"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__4 
+            value: "0x05"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__5 
+            value: "0x06"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__6 
+            value: "0x07"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID__7 
+            value: "0x08"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_DISCOVERY_TOPIC 
+            value: "homeassistant"
+          - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC 
+            value: "homeassistant/status"
+          - name: ZIGBEE2MQTT_FRONTEND_PORT 
+            value: "8080"
+          - name: ZIGBEE2MQTT_EXPERIMENTAL_NEW_API
+            value: "true" 
         volumeMounts:
         - name: data
           mountPath: /data
