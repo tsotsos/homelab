@@ -45,34 +45,6 @@ spec:
       labels:
         app.kubernetes.io/name: zigbee2mqtt
     spec:
-      initContainers:
-      - name: config-merger
-        image: mikefarah/yq:4
-        securityContext:
-          runAsUser: 0
-        volumeMounts:
-          - name: data
-            mountPath: /data
-          - name: config
-            mountPath: /app/zigbee2mqtt/data/configuration.yaml
-            subPath: configuration.yaml
-        command:
-          - sh
-          - -c
-          - |
-            #!/bin/sh
-            existing_config=$(cat /data/configuration.yaml)
-            new_config=$(cat /app/zigbee2mqtt/data/configuration.yaml)
-            # Create a backup of the existing configuration
-            echo "$existing_config" > /data/configuration.yaml.bak
-            # Overwrite with the new configuration
-            echo "$new_config" > /data/configuration.yaml
-            cat "current config"
-            cat /data/configuration.yaml
-            echo "backup config"
-            cat /data/configuration.yaml.bak
-            echo "backup json"
-            cat /data/coordinator_backup.json
       containers:
       - name: zigbee2mqtt
         image: ghcr.io/koenkk/zigbee2mqtt
@@ -83,20 +55,28 @@ spec:
             containerPort: 8080
             protocol: TCP
         env:
-        - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
-          value: "mqtt://mosquitto.home.svc.cluster.local"
-        - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
-          value: "zigbee2mqtt"
-        - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
+        - name: ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION 
           value: "true"
-        - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
-          value: "true"
-        - name: ZIGBEE2MQTT_DATA
-          value: "/data"
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT 
+          value: "tcp://10.0.5.10:6638" 
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL 
+          value: "debug"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT 
+          value: "console"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT 
+          value: "file"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID 
           value: "GENERATE"
-        - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT
-          value: "ZIGBEE_IP"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID 
+          value: "[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_DISCOVERY_TOPIC 
+          value: "homeassistant"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC 
+          value: "homeassistant/status"
+        - name: ZIGBEE2MQTT_FRONTEND_PORT 
+          value: "8080"
+        - name: ZIGBEE2MQTT_EXPERIMENTAL_NEW_API
+          value: "true"
         - name: TZ
           value: "Europe/Athens"
         volumeMounts:
