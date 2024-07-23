@@ -37,7 +37,7 @@ grafana:
         token_url: "https://auth.kng.house/application/o/token/"
         api_url: "https://auth.kng.house/application/o/userinfo/"
         # Optionally map user groups to Grafana roles
-        role_attribute_path: contains(groups, 'Admins') || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+        role_attribute_path: contains(groups, 'Admins') || contains(groups, 'authentik Admins') || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
   admin:
     existingSecret: grafana-secret
   # Provision grafana-dashboards-kubernetes
