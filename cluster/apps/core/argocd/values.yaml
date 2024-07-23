@@ -21,7 +21,7 @@ configs:
   rbac:
     scopes: "[groups]"
     policy.csv: |
-        g, Admins, role:admin
+        g, Homelab Admins, role:admin
         g, Viewers, role:readonly
 server:
   ingress:
