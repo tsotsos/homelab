@@ -140,6 +140,11 @@ prometheus:
     resources:
       requests:
         memory: 400Mi
+    scrapeConfigs:
+      - job_name: 'kubernetes-apiservers'
+        enabled: false
+      - job_name: 'kubernetes-nodes'
+        enabled: true
     storageSpec:
       volumeClaimTemplate:
         spec:
