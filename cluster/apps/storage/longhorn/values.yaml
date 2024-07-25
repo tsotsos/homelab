@@ -19,7 +19,7 @@ defaultSettings:
   autoDeletePodWhenVolumeDetachedUnexpectedly: true
   nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
   nodeDrainPolicy: always-allow
-  backupTarget: nfs://10.0.1.10:/longhorn
+  backupTarget: nfs://10.0.1.10:/volume1/longhorn
 
 ingress:
   ## Enable creation of ingress resource
