@@ -5,7 +5,7 @@ mqtt:
   server: mqtt://mosquitto.home.svc.cluster.local
   include_device_information: true
 serial:
-  port: tcp://10.0.5.10:6638
+  port: tcp://10.0.5.11:6638
 advanced:
   log_level: debug
   log_output:
