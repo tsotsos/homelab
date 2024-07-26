@@ -3,8 +3,8 @@ kind: Kustomization
 namespace: monitoring
 
 helmCharts:
-- name: grafana/loki
+- name: grafana/loki-stack
   releaseName: loki
   namespace: monitoring
-  repo: https://grafana.github.io/helm-charts
+  repo: https://grafana.charts.helm.sh
   valuesFile: values.yaml
