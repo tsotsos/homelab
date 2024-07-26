@@ -59,6 +59,15 @@ patches:
       path: /spec/template/spec/containers/0/env/1/value
       value: tcp://10.0.5.11:6638
     - op: replace
+      path: /spec/template/spec/containers/0/env/6/value
+      value: 20
+    - op: replace
+      path: /spec/template/spec/containers/0/env/7/value
+      value: debug
+    - op: replace
+      path: /spec/template/spec/containers/0/env/8/value
+      value: file
+    - op: replace
       path: /spec/template/spec/containers/0/env/2/value
       value: mqtt://mosquitto.home.svc.cluster.local
     - op: replace

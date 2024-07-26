@@ -6,7 +6,9 @@ mqtt:
   include_device_information: true
 serial:
   port: tcp://10.0.5.11:6638
+  baudrate: 115200
 advanced:
+  transmit_power: 20
   log_level: debug
   log_output:
     - console
