@@ -6,5 +6,5 @@ helmCharts:
 - name: grafana/loki-stack
   releaseName: loki
   namespace: monitoring
-  repo: https://grafana.charts.helm.sh
+  repo: https://grafana.github.io/helm-charts
   valuesFile: values.yaml
