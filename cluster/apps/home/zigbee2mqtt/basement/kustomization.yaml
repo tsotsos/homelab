@@ -57,7 +57,7 @@ patches:
       value: z2m-0
     - op: replace
       path: /spec/template/spec/containers/0/env/1/value
-      value: tcp://10.0.5.11:6638
+      value: tcp://10.0.5.10:6638
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
       value: "20"
