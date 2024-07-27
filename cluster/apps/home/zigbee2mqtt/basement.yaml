@@ -6,7 +6,7 @@ ingress:
     enabled: true
     annotations:
         cert-manager.io/cluster-issuer: letsencrypt-prod
-        external-dns.alpha.kubernetes.io/hostname: z2m.kng.house
+        external-dns.alpha.kubernetes.io/hostname: z2m-0.kng.house
         nginx.ingress.kubernetes.io/auth-url: |-
           http://ak-outpost-generic-sso.kube-system.svc.cluster.local:9000/outpost.goauthentik.io/auth/nginx
         nginx.ingress.kubernetes.io/auth-signin: |-
@@ -19,12 +19,6 @@ ingress:
     ingressClassName: nginx
     hosts:
       - host: z2m-0.kng.house
-        paths:
-          path: /
-          pathType: Prefix
-          service: 
-            name: zigbee2mqtt
-            port: 8080
     tls:
       - hosts:
           - z2m-0.kng.house
