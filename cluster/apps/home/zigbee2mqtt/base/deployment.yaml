@@ -110,9 +110,6 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: zigbee2mqtt-data
-      - name: config
-        configMap:
-          name: z2m-config
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

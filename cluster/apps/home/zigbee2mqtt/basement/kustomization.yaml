@@ -4,10 +4,10 @@ namespace: home
 resources:
   - ../base
 
-configMapGenerator:
-- name: z2m-0-config
-  files:
-  - configuration.yaml
+# configMapGenerator:
+# - name: z2m-0-config
+#   files:
+#   - configuration.yaml
 
 
 images:
@@ -73,9 +73,7 @@ patches:
     - op: replace
       path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName 
       value: z2m-0-data
-    - op: replace
-      path: /spec/template/spec/volumes/1/configMap/name
-      value: z2m-0-config
+
 - target:
     kind: Ingress
     name: zigbee2mqtt
