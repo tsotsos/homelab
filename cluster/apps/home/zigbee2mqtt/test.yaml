@@ -1,0 +1,202 @@
+apiVersion: v1
+data:
+  configuration.yaml: |
+    advanced:
+      ext_pan_id:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      homeassistant_discovery_topic: homeassistant
+      homeassistant_status_topic: homeassistant/status
+      last_seen: ISO_8601
+      log_level: info
+      log_output:
+      - console
+      - file
+      network_key: GENERATE
+      pan_id: GENERATE
+      transmit_power: 20
+    experimental:
+      new_api: true
+    frontend:
+      port: 8080
+    homeassistant: true
+    mqtt:
+      base_topic: zigbee2mqtt
+      include_device_information: true
+      server: mqtt://localhost
+    permit_join: true
+    serial:
+      baudrate: 115200
+      port: tcp://10.0.5.10:6638
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: basement
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zigbee2mqtt
+    app.kubernetes.io/version: 1.34.0
+    helm.sh/chart: zigbee2mqtt-0.1.4
+  name: basement-zigbee2mqtt-settings
+  namespace: home
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: basement
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zigbee2mqtt
+    app.kubernetes.io/version: 1.34.0
+    helm.sh/chart: zigbee2mqtt-0.1.4
+  name: basement-zigbee2mqtt
+  namespace: home
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/instance: basement
+    app.kubernetes.io/name: zigbee2mqtt
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/instance: basement
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zigbee2mqtt
+    app.kubernetes.io/version: 1.34.0
+    helm.sh/chart: zigbee2mqtt-0.1.4
+  name: basement-zigbee2mqtt-data
+  namespace: home
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: basement
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zigbee2mqtt
+    app.kubernetes.io/version: 1.34.0
+    helm.sh/chart: zigbee2mqtt-0.1.4
+  name: basement-zigbee2mqtt
+  namespace: home
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: basement
+      app.kubernetes.io/name: zigbee2mqtt
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: basement
+        app.kubernetes.io/name: zigbee2mqtt
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - env:
+        - name: ZIGBEE2MQTT_DATA
+          value: /data
+        image: koenkk/zigbee2mqtt:1.34.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 1
+        name: basement-zigbee2mqtt
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 1
+        securityContext:
+          privileged: null
+        startupProbe:
+          failureThreshold: 30
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /data
+          name: data
+        - mountPath: /app/configuration.yaml
+          name: zigbee2mqtt-settings
+          subPath: configuration.yaml
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      serviceAccountName: default
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: basement-zigbee2mqtt-data
+      - configMap:
+          name: basement-zigbee2mqtt-settings
+        name: zigbee2mqtt-settings
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: z2m-0.kng.house
+    nginx.ingress.kubernetes.io/auth-response-headers: Set-Cookie,X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid
+    nginx.ingress.kubernetes.io/auth-signin: https://auth.kng.house/outpost.goauthentik.io/start?rd=$scheme://$http_host$request_uri
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      proxy_set_header X-Forwarded-Host $http_host;
+    nginx.ingress.kubernetes.io/auth-url: http://ak-outpost-generic-sso.kube-system.svc.cluster.local:9000/outpost.goauthentik.io/auth/nginx
+  labels:
+    app.kubernetes.io/instance: basement
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zigbee2mqtt
+    app.kubernetes.io/version: 1.34.0
+    helm.sh/chart: zigbee2mqtt-0.1.4
+  name: basement-zigbee2mqtt
+  namespace: home
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: z2m-0.kng.house
+    http:
+      paths:
+      - backend:
+          service:
+            name: basement-zigbee2mqtt
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - z2m-0.kng.house
+    secretName: z2m-0-tls
