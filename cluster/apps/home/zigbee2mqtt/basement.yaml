@@ -4,7 +4,6 @@ image:
 
 env:
   TZ: Europe/Athens
-  ZIGBEE2MQTT_DATA: /app/data
 
 ingress:
   main:
