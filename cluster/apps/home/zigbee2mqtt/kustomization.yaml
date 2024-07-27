@@ -4,7 +4,7 @@ namespace: home
 
 helmCharts:
 - name: zigbee2mqtt
-  repo: https://github.com/lmatfy/charts/
+  repo: https://lmatfy.github.io/charts
   releaseName: basement
   namespace: home
   valuesFile: basement.yaml
