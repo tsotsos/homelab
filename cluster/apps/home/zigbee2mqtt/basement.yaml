@@ -4,7 +4,7 @@ image:
 
 env:
   TZ: Europe/Athens
-  ZIGBEE2MQTT_DATA: /data
+  ZIGBEE2MQTT_DATA: /app
 
 ingress:
   main:
@@ -34,7 +34,7 @@ ingress:
 persistence:
   data:
     enabled: true
-    mountPath: /data
+    mountPath: /app
     storageClass: longhorn
     accessMode: ReadWriteMany
     size: 5Gi
