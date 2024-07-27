@@ -3,6 +3,7 @@ image:
   tag: 1.39.0
 
 env:
+  TZ: Europe/Athens
   ZIGBEE2MQTT_DATA: /data
 
 ingress:
@@ -35,7 +36,7 @@ persistence:
     enabled: true
     mountPath: /data
     storageClass: longhorn
-    accessMode: ReadWriteOnce
+    accessMode: ReadWriteMany
     size: 5Gi
 # This will be copied into the container's persistent storage at first run only.
 config:
@@ -43,7 +44,8 @@ config:
   permit_join: true
   mqtt:
     base_topic: zigbee2mqtt
-    server: "mqtt://localhost"
+    server: mqtt://mosquitto.home.svc.cluster.local
+    include_device_information: true
   serial:
     port: tcp://10.0.5.10:6638
     baudrate: 115200
