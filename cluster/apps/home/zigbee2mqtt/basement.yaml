@@ -32,7 +32,7 @@ ingress:
 
 persistence:
   data:
-    enabled: true
+    enabled: false
     mountPath: /app/data
     storageClass: longhorn
     accessMode: ReadWriteMany
