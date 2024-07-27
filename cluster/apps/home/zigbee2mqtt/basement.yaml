@@ -35,6 +35,7 @@ persistence:
     enabled: true
     mountPath: /data
     storageClass: longhorn
+    accessMode: ReadWriteOnce
     size: 5Gi
 # This will be copied into the container's persistent storage at first run only.
 config:
