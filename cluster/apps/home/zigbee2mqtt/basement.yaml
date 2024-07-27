@@ -4,6 +4,7 @@ image:
 
 env:
   TZ: Europe/Athens
+  ZIGBEE2MQTT_DATA: /data
 
 ingress:
   main:
@@ -32,15 +33,14 @@ ingress:
 
 persistence:
   data:
-    enabled: false
-    mountPath: /app/data
+    enabled: true
+    mountPath: /data
     storageClass: longhorn
     accessMode: ReadWriteMany
     size: 5Gi
 # This will be copied into the container's persistent storage at first run only.
 config:
   homeassistant: true
-  permit_join: true
   mqtt:
     base_topic: zigbee2mqtt
     server: mqtt://mosquitto.home.svc.cluster.local
