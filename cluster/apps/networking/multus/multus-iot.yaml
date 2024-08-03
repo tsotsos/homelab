@@ -21,4 +21,8 @@ spec:
           ],
           "gateway": "10.0.5.1"
         }
+      },
+      {
+        "type": "route-override",
+        "flushgateway": true
       }
