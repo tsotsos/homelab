@@ -14,15 +14,11 @@ spec:
         "ipam": {
           "type": "host-local",
           "subnet": "10.0.5.0/24",
-          "rangeStart": "10.0.5.200",
-          "rangeEnd": "10.0.5.216",
+          "rangeStart": "10.0.5.220",
+          "rangeEnd": "10.0.5.226",
           "routes": [
             { "dst": "0.0.0.0/0" }
           ],
           "gateway": "10.0.5.1"
         }
-      },
-      {
-        "type": "route-override",
-        "flushgateway": true
       }
