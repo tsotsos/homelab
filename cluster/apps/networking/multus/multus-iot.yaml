@@ -22,3 +22,27 @@ spec:
           "gateway": "10.0.5.1"
         }
       }
+---
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: multus-wifi
+  namespace: default
+spec:
+  config: |-
+      {
+        "cniVersion": "0.3.0",
+        "type": "macvlan",
+        "master": "ens18",
+        "mode": "bridge",
+        "ipam": {
+          "type": "host-local",
+          "subnet": "10.0.3.0/24",
+          "rangeStart": "10.0.3.220",
+          "rangeEnd": "10.0.3.226",
+          "routes": [
+            { "dst": "0.0.0.0/0" }
+          ],
+          "gateway": "10.0.3.1"
+        }
+      }
