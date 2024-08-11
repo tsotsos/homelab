@@ -8,7 +8,7 @@ resources:
 helmCharts:
 - name: pgadmin4
   repo: https://helm.runix.net/
-  version: 1.27.0
+  version: 1.28.0
   releaseName: pgadmin4
   namespace: cnpg-system
   valuesFile: values.yaml
