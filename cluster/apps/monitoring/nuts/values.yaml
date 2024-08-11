@@ -70,7 +70,7 @@ metrics:
       # -- image repository
       repository: hon95/prometheus-nut-exporter
       # -- image tag
-      tag: 1.1.1
+      tag: 1.2.1
       # -- image pull policy
       pullPolicy: IfNotPresent
     env:
