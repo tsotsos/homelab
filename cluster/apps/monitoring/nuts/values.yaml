@@ -1,6 +1,6 @@
 image:
-  repository: ghcr.io/geek-cookbook/network-ups-tools
-  tag: v2.7.4-2479-g86a32237
+  repository: instantlinux/nut-upsd
+  tag: latest
   pullPolicy: IfNotPresent
 env:
   TZ: Europe/Athens
