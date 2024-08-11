@@ -4,4 +4,3 @@ namespace: argocd
 resources:
   - kube-prometheus.yaml
   - loki-stack.yaml
-  - nuts.yaml
