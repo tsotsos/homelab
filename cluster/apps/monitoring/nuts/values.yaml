@@ -20,7 +20,7 @@ ingress:
 
 persistence:
   ups:
-    enabled: true
+    enabled: false
     readOnly: false
 
 securityContext:
