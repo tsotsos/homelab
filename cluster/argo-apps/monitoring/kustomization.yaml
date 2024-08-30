@@ -3,4 +3,3 @@ kind: Kustomization
 namespace: argocd
 resources:
   - kube-prometheus.yaml
-  - loki-stack.yaml
