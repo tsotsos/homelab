@@ -8,6 +8,8 @@ env:
   ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto.home.svc.cluster.local
   ZIGBEE2MQTT_CONFIG_SERIAL_PORT: tcp://10.0.5.10:6638
   ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 115200
+  ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_DISCOVERY_TOPIC: homeassistant
+  ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_STATUS_TOPIC: homeassistant/status
 ingress:
   main:
     enabled: true
@@ -42,7 +44,9 @@ persistence:
     size: 5Gi
 # This will be copied into the container's persistent storage at first run only.
 config:
-  homeassistant: true
+  homeassistant:
+    discovery_topic: 'homeassistant'
+    status_topic: 'homeassistant/status'
   mqtt:
     base_topic: zigbee2mqtt
     server: mqtt://mosquitto.home.svc.cluster.local
@@ -61,8 +65,6 @@ config:
     network_key: GENERATE
     pan_id: GENERATE
     ext_pan_id: [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]
-    homeassistant_discovery_topic: 'homeassistant'
-    homeassistant_status_topic: 'homeassistant/status'
 
   frontend:
     port: 8080
