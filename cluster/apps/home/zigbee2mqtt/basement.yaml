@@ -61,10 +61,7 @@ config:
       - file
     log_level: info
     last_seen: 'ISO_8601'
-    network_key:
-        key: fd86f3cfe90800429238dca45e2bc084
-        sequence_number: 0
-        frame_counter: 2295380
+    network_key: [253, 134, 243, 207, 233, 8, 0, 66, 146, 56, 220, 164, 94, 43, 192, 132]
     pan_id: 61000
     ext_pan_id: [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]
 
