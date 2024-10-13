@@ -61,8 +61,8 @@ config:
       - file
     log_level: info
     last_seen: 'ISO_8601'
-    network_key: GENERATE
-    pan_id: GENERATE
+    network_key: fd86f3cfe90800429238dca45e2bc084
+    pan_id: 61000
     ext_pan_id: [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]
 
   frontend:
