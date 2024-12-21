@@ -11,7 +11,7 @@ helmCharts:
   releaseName: home-assistant
   repo: http://pajikos.github.io/home-assistant-helm-chart/
   valuesFile: values.yaml
-  version: 0.2.89
+  version: 0.2.95
   
 #workaround for not so kustomize friendly helm chart
 patches:
