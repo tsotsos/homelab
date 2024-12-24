@@ -5,12 +5,6 @@ terraform {
       version = "3.0.1-rc6"
     }
   }
-  cloud {
-    organization = "kng"
-    workspaces {
-      name = "k3s-cluster"
-    }
-  }
 }
 provider "proxmox" {
   pm_api_url          = var.proxmox_url
@@ -18,7 +12,6 @@ provider "proxmox" {
   pm_api_token_secret = var.proxmox_secret
   pm_tls_insecure     = var.proxmox_insecure
   pm_debug            = false
-  pm_parallel         = 4
 }
 resource "proxmox_vm_qemu" "k3s" {
   for_each    = var.k3s_virtual_machines
@@ -30,7 +23,6 @@ resource "proxmox_vm_qemu" "k3s" {
   agent       = 1
   cores       = each.value.cores
   sockets     = each.value.sockets
-  cpu         = "host"
   memory      = each.value.memory
   scsihw      = "virtio-scsi-pci"
   bootdisk    = "scsi0"
@@ -59,6 +51,7 @@ resource "proxmox_vm_qemu" "k3s" {
   }
 
   network {
+    id = "0"
     model  = "virtio"
     bridge = "vmbr1"
   }

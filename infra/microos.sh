@@ -5,12 +5,12 @@ VM_NAME="OpenSuSE-microOs"
 STORAGE="local-lvm"   # Adjust if you use different storage
 BRIDGE="vmbr1"         # Replace with your actual bridge interface
 # Suse MicroOS image
-MICRO_OS="https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-16.0.0-ContainerHost-kvm-and-xen-Snapshot20240629.qcow2"
-IMAGE_FILE="openSUSE-MicroOS.x86_64-16.0.0-ContainerHost-kvm-and-xen-Snapshot20240629.qcow2"
+MICRO_OS="https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-ContainerHost-kvm-and-xen.qcow2"
+IMAGE_FILE="openSUSE-MicroOS.x86_64-ContainerHost-kvm-and-xen.qcow2"
 
 # Check if image exists, download if not
 if [ ! -f "$IMAGE_FILE" ]; then
-  echo "Downloading Ubuntu cloud image..."
+  echo "Downloading cloud image..."
   wget "$MICRO_OS"
 else
   echo "Image already exists. Skipping download."
