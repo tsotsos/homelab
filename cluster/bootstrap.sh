@@ -51,7 +51,7 @@ elif [[ $1 == "--no-secrets" ]]; then
   show_progress "sleep 240"
   show_progress "kustomize build --enable-alpha-plugins --enable-helm argo-apps/ | kubectl apply -f -"
   show_progress "kubectl apply -f argo-apps/argo-projects.yaml"
-  show_progress "kubectl apply -f argo-apps/root.yaml"
+  show_progress "kubectl apply -f argo-apps/root-app.yaml"
   show_progress "rm -rf apps/networking/ingress-nginx/charts"
   show_progress "rm -rf apps/networking/cert-manager/charts"
   show_progress "rm -rf apps/networking/external-dns/charts"

@@ -24,20 +24,20 @@ grafana:
       mountPath: /etc/secrets/grafana_sso_secret
       readOnly: true
   grafana.ini:
-    auth:
-        signout_redirect_url: "https://auth.kng.house/application/o/grafana/end-session/"
-        oauth_auto_login: true
-    auth.generic_oauth:
-        name: authentik
-        enabled: true
-        client_id: d9Wh99jcMZ355mtuQXFcGcmLnQaWZ3AE2hhYn9ww
-        client_secret: $__file{/etc/secrets/grafana_sso_secret/clientSecret}
-        scopes: "openid profile email"
-        auth_url: "https://auth.kng.house/application/o/authorize/"
-        token_url: "https://auth.kng.house/application/o/token/"
-        api_url: "https://auth.kng.house/application/o/userinfo/"
-        # Optionally map user groups to Grafana roles
-        role_attribute_path: contains(groups, 'Homelab Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+    # auth:
+    #     signout_redirect_url: "https://auth.kng.house/application/o/grafana/end-session/"
+    #     oauth_auto_login: true
+    # auth.generic_oauth:
+    #     name: authentik
+    #     enabled: true
+    #     client_id: d9Wh99jcMZ355mtuQXFcGcmLnQaWZ3AE2hhYn9ww
+    #     client_secret: $__file{/etc/secrets/grafana_sso_secret/clientSecret}
+    #     scopes: "openid profile email"
+    #     auth_url: "https://auth.kng.house/application/o/authorize/"
+    #     token_url: "https://auth.kng.house/application/o/token/"
+    #     api_url: "https://auth.kng.house/application/o/userinfo/"
+    #     # Optionally map user groups to Grafana roles
+    #     role_attribute_path: contains(groups, 'Homelab Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
   admin:
     existingSecret: grafana-secret
   # Provision grafana-dashboards-kubernetes
