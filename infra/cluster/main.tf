@@ -12,6 +12,7 @@ provider "proxmox" {
   pm_api_token_secret = var.proxmox_secret
   pm_tls_insecure     = var.proxmox_insecure
   pm_debug            = false
+  pm_parallel         = 4
 }
 resource "proxmox_vm_qemu" "k3s" {
   for_each    = var.k3s_virtual_machines
