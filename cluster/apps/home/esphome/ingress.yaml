@@ -31,4 +31,4 @@ spec:
   tls:
     - hosts:
         - esp.kng.house
-      secretName: homepage-tls
+      secretName: esp-tls
