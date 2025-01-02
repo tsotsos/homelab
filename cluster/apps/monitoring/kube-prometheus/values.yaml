@@ -148,7 +148,7 @@ prometheus:
           storageClassName: longhorn
           resources:
             requests:
-              storage: 250Gi
+              storage: 64Gi
 prometheusOperator:
   admissionWebhooks:
     certManager:
