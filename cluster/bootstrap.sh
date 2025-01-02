@@ -33,16 +33,14 @@ show_progress() {
 }
 
 if [[ $# -eq 0 ]]; then
-  echo "Usage: $0 [--secrets-only]"
+  echo "Usage: $0 [--secrets-only] or [--no-secrets]"
   exit 1
 fi
 
 if [[ $1 == "--secrets-only" ]]; then
   show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/core/sealed-secrets/ | kubectl apply -f -"
-  show_progress "sleep 120"
-  show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/networking/kube-vip/ | kubectl apply -f -"
   show_progress "rm -rf apps/core/sealed-secrets/charts"
-  show_progress "rm -rf apps/networking/kube-vip/charts"
+  sleep 60
   create_secrets
 elif [[ $1 == "--no-secrets" ]]; then
   show_progress "kustomize build --enable-alpha-plugins --enable-helm apps/networking/ingress-nginx/ | kubectl apply -f -"
