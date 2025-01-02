@@ -21,10 +21,6 @@ defaultSettings:
   nodeDrainPolicy: always-allow
   backupTarget: nfs://10.0.1.10:/volume1/longhorn
 
-persistence:
-  defaultClass: true
-  defaultFsType: btrfs
-  migratable: true
 ingress:
   ## Enable creation of ingress resource
   enabled: true
