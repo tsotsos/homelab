@@ -6,4 +6,4 @@ maintainers:
 - name: kube-vip
 name: kube-vip-cloud-provider
 type: application
-version: 0.2.5
+version: 0.2.6
