@@ -10,7 +10,7 @@ helmCharts:
   valuesFile: kube-vip.yaml
 - name: kube-vip-cloud-provider
   repo: https://kube-vip.github.io/helm-charts
-  version: 0.2.5
+  version: 0.2.6
   releaseName: kube-vip-cloud-provider
   namespace: kube-system
   valuesFile: kube-vip-cloud-provider.yaml
