@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-apps
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/tsotsos/homelab
+        revision: HEAD
+        files:
+          - path: clusters/*/.config.yaml
+  template:
+    metadata:
+      name: '{{clusterName}}-apps'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/tsotsos/homelab 
+        targetRevision: HEAD
+        path: clusters/{{clusterName}}
+      destination:
+        server: '{{server}}'
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

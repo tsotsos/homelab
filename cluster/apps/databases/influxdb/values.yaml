@@ -1,5 +1,0 @@
-adminUser:
-  existingSecret: influxdb2-auth
-persistence:
-  enabled: true
-  storageClass: longhorn

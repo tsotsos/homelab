@@ -1,0 +1,7 @@
+apiVersion: cluster.argoproj.io/v1
+kind: ClusterConfig
+metadata:
+  name: <Cluster Name>
+spec:
+  clusterName: <Cluster Name>
+  server: <Cluster IP>

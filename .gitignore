@@ -18,5 +18,8 @@ secrets.env
 network.puml
 rke2.yaml
 k3s.yaml
+k3s-s01.yaml
 un.yaml
 secrets-un/
+unsealed-*
+.config.yaml

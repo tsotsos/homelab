@@ -1,0 +1,9 @@
+configs:
+  params:
+    server.insecure: true
+  cm:
+    create: true
+    admin.enabled: true
+server:
+  service:
+    type: ClusterIP

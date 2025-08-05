@@ -1,0 +1,4 @@
+cm:
+  data:
+    range-global: # Overridden per cluster
+

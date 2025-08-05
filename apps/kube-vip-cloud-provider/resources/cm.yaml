@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+data:
+  range-global: # Overridden per cluster
+metadata:
+  name: kubevip
+  namespace: kube-system
