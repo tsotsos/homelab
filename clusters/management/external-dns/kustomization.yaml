@@ -6,9 +6,3 @@ namespace: external-dns
 resources:
   - ../../../apps/external-dns
   - sealed-secret.yaml
-
-patches:
-  - path: patch.yaml
-    target:
-      kind: Deployment
-      name: external-dns-unifi
