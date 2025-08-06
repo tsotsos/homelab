@@ -12,7 +12,7 @@ spec:
           - path: clusters/*/*
   template:
     metadata:
-      name: '{{path.basename}}-{{path.pathComponents[1]}}'
+      name: '{{path.basename}}-{{path.dirname | basename}}'
     spec:
       project: default
       source:
