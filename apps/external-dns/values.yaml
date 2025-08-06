@@ -19,6 +19,8 @@ provider:
         value: "false"
       - name: UNIFI_TLS_SKIP_VERIFY
         value: "true"
+      - name: SERVER_PORT
+        value: 8080
       - name: LOG_LEVEL
         value: info
 
