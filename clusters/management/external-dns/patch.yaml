@@ -7,7 +7,8 @@ spec:
   template:
     spec:
       containers:
-        - name: external-dns
-          env:
-            - name: EXTERNAL_DNS_WEBHOOK_ENDPOINT
-              value: "http://localhost:8080"
+        - name: webhook
+          ports:
+            - containerPort: 8888
+              name: http-webhook
+              protocol: TCP
