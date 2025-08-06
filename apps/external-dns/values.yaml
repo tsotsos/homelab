@@ -6,11 +6,7 @@ provider:
     image:
       repository: ghcr.io/kashalls/external-dns-unifi-webhook
       tag: main
-    service:
-      port: 8888
     env:
-      - name: SERVER_PORT
-        value: "8888"
       - name: UNIFI_HOST
         value: "https://10.0.1.1"
       - name: UNIFI_API_KEY
@@ -24,6 +20,8 @@ provider:
         value: "true"
       - name: LOG_LEVEL
         value: *logLevel
+    args:
+      - --webhook-endpoint=http://localhost:8080
 extraArgs:
   - --ignore-ingress-tls-spec
 policy: sync
