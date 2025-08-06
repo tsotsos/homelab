@@ -8,7 +8,7 @@ provider:
       tag: main
     env:
       - name: SERVER_PORT
-        value: 8080
+        value: "8080"
       - name: UNIFI_HOST
         value: "https://10.0.1.1"
       - name: UNIFI_API_KEY
