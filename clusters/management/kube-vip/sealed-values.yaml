@@ -1,0 +1,18 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  creationTimestamp: null
+  name: kube-vip
+  namespace: kube-system
+spec:
+  encryptedData:
+    values.yaml: AgCUQ8ZaLElDYc+TVKrT0szm3wwOGfVY3FUGvuxMZyq6qRhEarr8ZGYq0jV+h6Olmw52nKTrRlGokf5sZ14T/t/2xgpdn8hd4gruqqgWkjH7FrMKNUuSUO+cMU2Us626851ptmGeB8Qb0ThjcYeWRe08DZ0U0GTQehj+SqkqZOq7ABmbGMvl3gLAqur26Yi9xIZOK2s6ZlFXBnXhTtpqdARfLxg1wXxpFqpEyyiMFZPRWDDZvul9y5QjaYQqWvLQkFbcByBrlNR8fHUktPxeNe7jHGYIyyCJbxhM2IJ/CC7T9jDN7kp4U1DsHtkNtKJ4IGu1pCKimhi5TjYGPkb6SmP4BqTve8W/EtZGpWmS3AgDYyJipl/Qv0jvtgYl8PhRvL3yD1HK3L3yJd9v71ciGvvmCBj9+4Vf0OEk+xk0YqD8q0WvUSuMDN93W9Q9W2PuiHhrdfDNesb1wQ1yqotCtfL6EwXdaJOFvizzr/+FJBGyQghAGsbRXz1kyqJ0VDzrOg9BH8p+hw+iHNG5pV32JMRCIPrGGTfCKb/QLGRLKHA+L+LDNJVmOTAeLJucmelzcVBPpN6mtm7plvLOGWA06zw3BWQxNkgQdTJq03JTLdC0oeXSjkFEMBjkt9Aer2UHyUXLha4YMm8T83O2j9XZAHwbGadD1gHoEOI6V44MpwZD5awFUa2G1Y2ez/peMHjLMeBqY3K7Tc/Xl3LRCbzSJZPX/RM/zzchlcQn6maOqFr59T2vg8UJTUcHXZjy+zwyDODHRP9DauFd7Ng=
+  template:
+    metadata:
+      annotations:
+        sealedsecrets.bitnami.com/managed: "true"
+      creationTimestamp: null
+      name: kube-vip
+      namespace: kube-system
+    type: Opaque

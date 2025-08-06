@@ -5,4 +5,4 @@ namespace: kube-system
 
 resources:
   - ../../../apps/kube-vip-cloud-provider
-  - sealed-configmap.yaml
+  - configmap.yaml
