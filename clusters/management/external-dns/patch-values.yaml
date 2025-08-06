@@ -10,6 +10,7 @@ spec:
         - name: external-dns
           args:
             - --provider=webhook
+            - --webhook-endpoint=http://localhost:8080/webhook
             - --source=ingress
             - --source=service
             - --domain-filter=kng.house
