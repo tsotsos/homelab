@@ -47,3 +47,4 @@ sources:
   - service
 txtOwnerId: default
 txtPrefix: k8s.
+domainFilters: ["kng.house"]
