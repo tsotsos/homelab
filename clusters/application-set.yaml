@@ -12,29 +12,26 @@ spec:
               revision: HEAD
               directories:
                 - path: clusters/*/*
-              template:
-                metadata:
-                  name: ''  # will be overridden below
-                spec:
-                  project: default
-                  source:
-                    repoURL: https://github.com/tsotsos/homelab
-                    targetRevision: HEAD
-                    path: '{{path}}'
-                    kustomize:
-                      buildOptions: --enable-helm
-                  destination:
-                    server: https://kubernetes.default.svc
-                    namespace: '{{path.basename}}'
-                  syncPolicy:
-                    automated:
-                      prune: true
-                      selfHeal: true
-                    syncOptions:
-                      - CreateNamespace=true
           - list:
               elements:
                 - cluster: management
   template:
     metadata:
       name: '{{path.basename}}-{{cluster}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/tsotsos/homelab
+        targetRevision: HEAD
+        path: '{{path}}'
+        kustomize:
+          buildOptions: --enable-helm
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
