@@ -10,8 +10,8 @@ spec:
         - name: external-dns
           args:
             - --provider=webhook
-            - --webhook-provider=unifi
             - --source=ingress
+            - --source=service
             - --domain-filter=kng.house
-            - --log-level=debug
-            - --txt-owner-id=kng-homelab
+            - --txt-prefix=k8s.
+            - --txt-owner-id=default
