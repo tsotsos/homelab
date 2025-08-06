@@ -9,4 +9,9 @@ spec:
       containers:
         - name: external-dns
           args:
+            - --provider=webhook
+            - --webhook-provider=unifi
+            - --source=ingress
             - --domain-filter=kng.house
+            - --log-level=debug
+            - --txt-owner-id=kng-homelab
