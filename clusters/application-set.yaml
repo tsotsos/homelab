@@ -24,8 +24,6 @@ spec:
         repoURL: https://github.com/tsotsos/homelab
         targetRevision: HEAD
         path: '{{path}}'
-        kustomize:
-          enableHelm: true
       destination:
         server: https://kubernetes.default.svc
         namespace: '{{path.basename}}'
