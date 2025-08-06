@@ -1,5 +1,7 @@
 fullnameOverride: external-dns-unifi
 logLevel: &logLevel info
+service:
+  port: 8888
 provider:
   name: webhook
   webhook:
@@ -20,8 +22,6 @@ provider:
         value: "true"
       - name: LOG_LEVEL
         value: *logLevel
-    args:
-      - --webhook-endpoint=http://localhost:8080
 extraArgs:
   - --ignore-ingress-tls-spec
 policy: sync
