@@ -23,6 +23,7 @@ provider:
       - name: LOG_LEVEL
         value: *logLevel
 extraArgs:
+  - --webhook-url=http://localhost:8080
   - --ignore-ingress-tls-spec
 policy: sync
 sources: 
