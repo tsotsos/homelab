@@ -34,6 +34,7 @@ provider:
       timeoutSeconds: 5
 extraArgs:
   - --ignore-ingress-tls-spec
+  - --webhook-endpoint=http://localhost:8080
 policy: sync
 sources: 
   - ingress
