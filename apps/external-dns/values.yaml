@@ -8,10 +8,7 @@ provider:
       tag: main
     env:
       - name: UNIFI_HOST
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-unifi-env
-            key: host
+        value: "https://10.0.1.1"
       - name: UNIFI_API_KEY
         valueFrom:
           secretKeyRef:
