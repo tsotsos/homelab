@@ -1,32 +1,29 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: apps-per-cluster
+  name: clusters
   namespace: argocd
 spec:
   generators:
-    - directory:
-        # This walks all apps under all clusters
-        path: clusters/*/*
-        recurse: true
-        # Each subdir is a (cluster, app) pair
+    - git:
+        repoURL: https://github.com/tsotsos/homelab
+        revision: HEAD
+        directories:
+          - path: clusters/*/*
   template:
     metadata:
-      name: '{{path.basename}}-{{path.dirname}}'  # app-cluster
+      name: '{{path.basename}}-{{path.dirname}}'
     spec:
       project: default
       source:
         repoURL: https://github.com/tsotsos/homelab
         targetRevision: HEAD
-        path: '{{path}}'  # Full path: clusters/<cluster>/<app>
-        plugin: {}        # empty if not using custom plugin
-        helm:
-          enabled: false
+        path: '{{path}}'
         kustomize:
-          enableHelm: true
+          buildOptions: --enable-helm
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{path.basename}}'  # app name as namespace (or fix to e.g. "argocd")
+        namespace: '{{path.basename}}'
       syncPolicy:
         automated:
           prune: true
