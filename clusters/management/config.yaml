@@ -1,0 +1,7 @@
+apiVersion: cluster.argoproj.io/v1
+kind: ClusterConfig
+metadata:
+  name: management
+spec:
+  clusterName: management
+  server: https://kubernetes.default.svc

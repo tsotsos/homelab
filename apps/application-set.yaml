@@ -9,14 +9,14 @@ spec:
         repoURL: https://github.com/tsotsos/homelab
         revision: HEAD
         files:
-          - path: clusters/*/.config.yaml
+          - path: clusters/*/config.yaml
   template:
     metadata:
       name: '{{clusterName}}-apps'
     spec:
       project: default
       source:
-        repoURL: https://github.com/tsotsos/homelab 
+        repoURL: https://github.com/tsotsos/homelab
         targetRevision: HEAD
         path: clusters/{{clusterName}}
       destination:
