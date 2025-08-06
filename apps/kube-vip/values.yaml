@@ -1,7 +1,7 @@
 config:
-  address: 0.0.0.0 # Overridden per cluster
+  address: 10.0.1.30 # Overridden per cluster
 env:
-  vip_interface: eth0 # Overridden per cluster
+  vip_interface: ens18 # Overridden per cluster
   vip_arp: "true"
   lb_enable: "true"
   lb_port: "6443"
