@@ -1,11 +1,12 @@
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
-kind: HelmRelease
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: external-dns
   namespace: external-dns
 spec:
-  values:
-    txtOwnerId: "homelab"
-    txtPrefix: "k8s."
-    domainFilters:
-      - "kng.house"
+  template:
+    spec:
+      containers:
+        - name: external-dns
+          args:
+            - --domain-filter=kng.house

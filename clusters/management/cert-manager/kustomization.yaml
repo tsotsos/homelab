@@ -3,7 +3,6 @@ kind: Kustomization
 namespace: cert-manager
 resources:
   - ../../../apps/cert-manager
+  - clusterIssuer.yaml
   - sealed-secret.yaml
-  
-patchesStrategicMerge:
-  - patch-values.yaml
+

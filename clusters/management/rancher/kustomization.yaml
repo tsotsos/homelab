@@ -5,7 +5,13 @@ namespace: cattle-system
 
 resources:
   - ../../../apps/rancher
-  - sealed-secret.yaml
 
-patchesStrategicMerge:
-  - patch-values.yaml
+patches:
+  - path: deployment.yaml
+    target:
+      kind: Deployment
+      name: rancher
+  - path: ingress.yaml
+    target:
+      kind: Ingress
+      name: rancher

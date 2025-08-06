@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  url: https://argocd.kng.house
+  # redirectURL: https://argocd.kng.house/api/dex/callback
+  # kustomize.buildOptions: --enable-helm
+  # dex.config: |
+  #   connectors:
+  #   - config:
+  #       issuer: https://auth.kng.house/application/o/argocd/
+  #       clientID: xUkNpgciXf54uRTVkLhzSsLyPN3ltpwtScEp9K3R
+  #       clientSecret: $argocd-sso:clientSecret
+  #       redirectURI: https://argocd.kng.house/api/dex/callback
+  #       insecureEnableGroups: true
+  #       scopes:
+  #         - openid
+  #         - profile
+  #         - email
+  #     name: authentik
+  #     type: oidc
+  #     id: authentik

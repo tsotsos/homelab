@@ -1,23 +1,6 @@
-replicas: 3
+replicas: 1
 ingress:
   enabled: true
   ingressClassName: nginx
   tls:
     source: letsEncrypt
----
-replicas: 3
-hostname: rancher.kng.house
-bootstrapPassword: admin
-certmanager:
-  issuer:
-    type: none
-ingress:
-  enabled: true
-  ingressClassName: nginx
-  tls:
-    source: letsencrypt-dns
-  extraAnnotations:
-    cert-manager.io/issuer: letsencrypt-dns
-    cert-manager.io/issuer-kind: ClusterIssuer
-    external-dns.alpha.kubernetes.io/hostname: rancher.kng.house
-    external-dns.alpha.kubernetes.io/target: 10.0.0.20

@@ -1,2 +1,0 @@
-clusterName: management
-server: https://kubernetes.default.svc
