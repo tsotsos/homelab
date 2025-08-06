@@ -12,7 +12,7 @@ spec:
           - path: clusters/*/config.yaml
   template:
     metadata:
-      name: '{{clusterName}}-apps'
+      name: "{{clusterName}}-apps"
     spec:
       project: default
       source:
@@ -20,7 +20,7 @@ spec:
         targetRevision: HEAD
         path: clusters/{{clusterName}}
       destination:
-        server: '{{server}}'
+        server: "{{server}}"
         namespace: argocd
       syncPolicy:
         automated:
