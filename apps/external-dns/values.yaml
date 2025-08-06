@@ -6,8 +6,6 @@ provider:
     image:
       repository: ghcr.io/kashalls/external-dns-unifi-webhook
       tag: main
-    service: 
-      port: 8888
     env:
       - name: UNIFI_HOST
         value: "https://10.0.1.1"
@@ -22,18 +20,6 @@ provider:
         value: "true"
       - name: LOG_LEVEL
         value: *logLevel
-    livenessProbe:
-      httpGet:
-        path: /healthz
-        port: http-webhook
-      initialDelaySeconds: 10
-      timeoutSeconds: 5
-    readinessProbe:
-      httpGet:
-        path: /readyz
-        port: http-webhook
-      initialDelaySeconds: 10
-      timeoutSeconds: 5
 extraArgs:
   - --ignore-ingress-tls-spec
 policy: sync
