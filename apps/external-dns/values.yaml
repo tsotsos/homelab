@@ -8,7 +8,7 @@ provider:
       tag: main
     env:
       - name: SERVER_PORT
-        value: "8080"
+        value: 8080
       - name: UNIFI_HOST
         value: "https://10.0.1.1"
       - name: UNIFI_API_KEY
@@ -23,7 +23,6 @@ provider:
       - name: LOG_LEVEL
         value: *logLevel
 extraArgs:
-  - --webhook-url=http://localhost:8080
   - --ignore-ingress-tls-spec
 policy: sync
 sources: 
