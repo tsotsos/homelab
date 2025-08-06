@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns-unifi
+  namespace: external-dns
+spec:
+  template:
+    spec:
+      containers:
+        - name: external-dns
+          env:
+            - name: EXTERNAL_DNS_WEBHOOK_ENDPOINT
+              value: "http://localhost:8080"
