@@ -15,6 +15,7 @@ spec:
   tls:
     - hosts:
         - argocd.kng.house
+      secretName: argocd-tls
   rules:
     - host: argocd.kng.house
       http:
