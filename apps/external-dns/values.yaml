@@ -1,7 +1,5 @@
 fullnameOverride: external-dns-unifi
 logLevel: &logLevel info
-service:
-  port: 8888
 provider:
   name: webhook
   webhook:
@@ -14,7 +12,7 @@ provider:
       - name: UNIFI_API_KEY
         valueFrom:
           secretKeyRef:
-            name: external-dns-unifi-env
+            name: external-dns-unifi-secret
             key: api-key
       - name: UNIFI_EXTERNAL_CONTROLLER
         value: "false"
@@ -22,12 +20,22 @@ provider:
         value: "true"
       - name: LOG_LEVEL
         value: *logLevel
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http-webhook
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: http-webhook
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
 extraArgs:
   - --ignore-ingress-tls-spec
 policy: sync
-sources: 
-  - ingress
-  - service
+sources: ["ingress", "service"]
 txtOwnerId: default
 txtPrefix: k8s.
 domainFilters: ["kng.house"]
