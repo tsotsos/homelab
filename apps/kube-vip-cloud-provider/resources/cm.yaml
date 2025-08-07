@@ -3,5 +3,5 @@ kind: ConfigMap
 data:
   range-global: # Overridden per cluster
 metadata:
-  name: kubevip
+  name: kube-vip-cloud-provider
   namespace: kube-system
