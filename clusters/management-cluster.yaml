@@ -1,25 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: clusters
+  name: management-cluster
   namespace: argocd
 spec:
   generators:
-    - matrix:
-        generators:
-          - git:
-              repoURL: https://github.com/tsotsos/homelab
-              revision: HEAD
-              directories:
-                - path: clusters/*/*
-          - list:
-              elements:
-                - cluster: management
+    - git:
+        repoURL: https://github.com/tsotsos/homelab
+        revision: HEAD
+        directories:
+          - path: clusters/management/*
   template:
     metadata:
-      name: '{{path.basename}}-{{cluster}}'
+      name: '{{path.basename}}-management'
     spec:
-      project: default
+      project: management
       source:
         repoURL: https://github.com/tsotsos/homelab
         targetRevision: HEAD
