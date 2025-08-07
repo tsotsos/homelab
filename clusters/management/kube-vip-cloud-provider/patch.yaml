@@ -5,3 +5,4 @@ metadata:
   namespace: kube-system
 data:
   range-global: "10.0.1.30-10.0.1.40"
+  dummy: "Data"
