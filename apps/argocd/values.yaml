@@ -4,6 +4,7 @@ configs:
   cm:
     create: true
     admin.enabled: true
+    kustomize.buildOptions: "--enable-helm"
 server:
   ingress:
     enabled: true
