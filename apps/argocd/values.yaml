@@ -5,5 +5,5 @@ configs:
     create: true
     admin.enabled: true
 server:
-  service:
-    type: ClusterIP
+  ingress:
+    enabled: true
