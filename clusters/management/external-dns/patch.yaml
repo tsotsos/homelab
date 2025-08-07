@@ -1,5 +1,3 @@
-- op: remove
+- op: replace
   path: /spec/template/spec/containers/0/args/8
-- op: add
-  path: /spec/template/spec/containers/0/args/-
   value: --domain-filter=kng.house
