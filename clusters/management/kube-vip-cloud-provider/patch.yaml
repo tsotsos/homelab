@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kubevip
+  name: kube-vip-cloud-provider
   namespace: kube-system
 data:
   range-global: "10.0.1.30-10.0.1.40"
