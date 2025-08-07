@@ -4,9 +4,11 @@ kind: Kustomization
 resources:
   - ../../../apps/kube-vip
 
-configMapGenerator:
-  - name: kube-vip-values
-    files:
-      - values.yaml
-generatorOptions:
-  disableNameSuffixHash: true
+patches:
+- path: patch.yaml
+  target:
+    group: apps
+    version: v1
+    kind: DaemonSet
+    name: kube-vip
+    namespace: kube-system
