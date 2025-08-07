@@ -26,4 +26,4 @@ kubectl -n "$ARGO_NS" get secret argo-cd-argocd-initial-admin-secret -o jsonpath
 
 echo "✅ Argo CD is installed and ready."
 
-kubectl apply -f apps/application-set.yaml
+kubectl apply -f ../clusters/management-cluster.yaml
