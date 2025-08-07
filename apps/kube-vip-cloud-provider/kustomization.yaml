@@ -3,7 +3,6 @@ kind: Kustomization
 namespace: kube-system
 resources:
   - resources/rbac.yaml
-  - resources/cm.yaml
   - resources/statefulSet.yaml
 helmCharts:
   - name: kube-vip-cloud-provider
