@@ -5,7 +5,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-dns
     cert-manager.io/common-name: longhorn.kng.house
     external-dns.alpha.kubernetes.io/hostname: longhorn.kng.house
-  name: longhorn-ingress
+  name: longhorn
   namespace: longhorn-system
 spec:
   ingressClassName: nginx
