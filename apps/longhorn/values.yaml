@@ -1,5 +1,11 @@
-persistence:
-  defaultClass: true
+preUpgradeChecker:
+  jobEnabled: false
+
 defaultSettings:
-  defaultReplicaCount: 2
-  #backupTarget: nfs://nas.kng.house:/mnt/backups/longhorn
+  orphanAutoDeletion: false
+  autoDeletePodWhenVolumeDetachedUnexpectedly: true
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+  nodeDrainPolicy: always-allow
+
+ingress:
+  enabled: true

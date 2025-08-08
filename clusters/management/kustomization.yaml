@@ -8,4 +8,5 @@ resources:
     - argocd
     - cert-manager
     - external-dns
+    - longhorn
     - rancher
