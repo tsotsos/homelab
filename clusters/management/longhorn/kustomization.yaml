@@ -10,4 +10,4 @@ patches:
   - path: ingress.yaml
     target:
       kind: Ingress
-      name: longhorn
+      name: longhorn-ingress
