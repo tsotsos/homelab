@@ -3,9 +3,9 @@ kind: Kustomization
 resources:
   - ns.yaml
 helmCharts:
-- name: netboot
-  repo: oci://tccr.io/truecharts/netbootxyz
-  version: 7.2.2
+- name: netbootxyz
+  repo: https://0xemma.github.io/helm-charts
   releaseName: netbootxyz
   namespace: netbootxyz
+  version: 0.0.1
   valuesFile: values.yaml
