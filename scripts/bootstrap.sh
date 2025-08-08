@@ -1,9 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-BASEPATH="../clusters/"
-CLUSTER="$1"  
-CLUSTER_PATH="${BASEPATH}${CLUSTER}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLUSTERS_ROOT="$SCRIPT_DIR/../clusters"
+CLUSTER="$1"
+CLUSTER_PATH="${CLUSTERS_ROOT}/${CLUSTER}"
 
 echo "🚀 Installing Cert Manager"
 kustomize build --enable-helm "$CLUSTER_PATH"/cert-manager | kubectl apply -f -
