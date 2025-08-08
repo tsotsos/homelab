@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - ns.yaml
 helmCharts:
-- name: longhorn
+- name: netboot
   repo: oci://tccr.io/truecharts/netbootxyz
   version: 7.2.2
   releaseName: netbootxyz
