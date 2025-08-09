@@ -7,7 +7,7 @@ metadata:
     harvesterhci.io/sshNames: default/george
     harvesterhci.io/cloudInitUserData: microos1-userdata
 spec:
-  running: false
+  running: true
   template:
     spec:
       domain:
