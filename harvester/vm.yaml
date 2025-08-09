@@ -22,7 +22,7 @@ spec:
                 bus: virtio
             - name: cloudinitdisk
               disk:
-                bus: virtio
+                bus: sata
       volumes:
         - name: rootdisk
           dataVolume:
@@ -31,7 +31,5 @@ spec:
           cloudInitNoCloud:
             userDataSecretRef:
               name: microos1-cloudinit
-              key: userdata
-            networkDataSecretRef:
+            networkDataSceretRef:
               name: microos1-cloudinit
-              key: networkdata
