@@ -21,6 +21,8 @@ spec:
             - name: rootdisk
               disk:
                 bus: virtio
+            - name: cloudinitdisk
+              disk: { bus: sata }
       volumes:
         - name: rootdisk
           dataVolume:
