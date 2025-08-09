@@ -33,24 +33,17 @@ spec:
               #cloud-config
               disable_root: false
               ssh_pwauth: true
-
-              system_info:
-                default_user:
-                  name: root
-
-              users:
-                - name: root
-                  lock_passwd: false
-                  passwd: $6$rounds=4096$gIHRK7SwqpWSM3L5$gCwEJpVmODsdXwN8wqSeKc5pRJym.qWb9k1ai9rMC2zpjD4fwZdw82zXoDqG4LPjoxEYQx1nZrJ1AUVywwv3O1
-
+              chpasswd:
+                expire: false
+                list: |
+                  root:$6$rounds=4096$gIHRK7SwqpWSM3L5$gCwEJpVmODsdXwN8wqSeKc5pRJym.qWb9k1ai9rMC2zpjD4fwZdw82zXoDqG4LPjoxEYQx1nZrJ1AUVywwv3O1
               runcmd:
-                - transactional-update -n pkg install qemu-guest-agent
-                - transactional-update -n run systemctl enable qemu-guest-agent.service
-
+                - [ sh, -c, 'usermod -U root' ]  # ensure unlocked
+                - [ sh, -c, 'transactional-update -n pkg install qemu-guest-agent' ]
+                - [ sh, -c, 'transactional-update -n run systemctl enable qemu-guest-agent.service' ]
               power_state:
                 mode: reboot
                 message: "Rebooting to activate qemu-guest-agent (MicroOS transactional root)"
                 timeout: 30
                 condition: true
-
             networkData: |
