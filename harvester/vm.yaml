@@ -30,6 +30,7 @@ spec:
         - name: cloudinitdisk
           cloudInitNoCloud:
             userData: |
+              #cloud-config
               disable_root: false
               ssh_pwauth: true
               users:
