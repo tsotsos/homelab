@@ -21,32 +21,7 @@ spec:
             - name: rootdisk
               disk:
                 bus: virtio
-            - name: cloudinitdisk
-              disk: { bus: sata }
       volumes:
         - name: rootdisk
           dataVolume:
             name: microos2-rootdisk
-        - name: cloudinitdisk
-          cloudInitNoCloud:
-            userData: |
-              #cloud-config
-              disable_root: false
-              ssh_pwauth: true
-              users:
-                - name: root
-                  lock_passwd: false
-                  passwd: "$y$j9T$PPGS2ZmcEwK9Rva6ijffv.$FfSLRBTa9rctOyzshG6s77Gasi8pXaiInQ635D9TJZ5"
-                  ssh_authorized_keys:
-                    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDJ8JbonZgkET9Da28JR0heMMFsQSEpjbltHoRNMKa1ccjccQenpbvWW4hzLLhUWx8UQEa6ia1MrLAjyQt14rEd+AUgkhH/J9kAYqjwd8uhgP/W1/gDWzQTteS2bMvyVgezE5xk//RuFz4WNjHPIAFh9mjhSIkPOztKC7cDQDkTrDXP7sItPAkTFeqsaFJ6+uUXWhHjsZ2xUCvWw+uLzqEbr0sFk9VIslGvL0U8AjSVYMxqGxljKY51zAW8xAX0ljStO8zthJejuiJvVpEINxHb+PY4RBOomI+DHSsqALFE56cUd6Ft5BvI+b60WrM7nCZtkINeNrOGiGlvsoYuV92NsdzU6k91nOoBp1REFqoWBKunbL2cNAgCoYE/ECzSlId/8MwTCMKZ57ru7NNvUQwng6cNgjIrgjW3f0y4QM84F008KUzfUUDOGC1lWm8Eu5Dn3xbWH47JW4lzbR6v22hFmIoMWGndH+YRWbgAG8kmaYjg/1xqHngK/WtDgzbDtR8= george@Georgioss-Mini.home
-                    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local
-            networkData: |
-              version: 2
-              ethernets:
-                enp1s0:
-                  dhcp4: false
-                  dhcp6: true
-                  addresses: [ "10.0.2.50/24" ]
-                  gateway4: 10.0.2.1
-                  nameservers:
-                    addresses: [10.0.1.1]
