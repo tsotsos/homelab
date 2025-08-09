@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     harvesterhci.io/sshNames: default/george
-    harvesterhci.io/cloudInitUserData: microos1-userdata
+    harvesterhci.io/cloudInitUserData: default/default-root
 spec:
   running: true
   template:
