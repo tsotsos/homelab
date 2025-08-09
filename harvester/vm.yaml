@@ -42,12 +42,3 @@ spec:
                 ssh_authorized_keys:
                   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"
             networkData: |
-              version: 2
-              ethernets:
-                ens18:
-                  dhcp4: false
-                  dhcp6: true
-                  addresses: [ "10.0.2.50/24" ]
-                  gateway4: 10.0.2.1
-                  nameservers:
-                    addresses: [10.0.1.1]
