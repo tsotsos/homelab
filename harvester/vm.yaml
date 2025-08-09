@@ -1,0 +1,27 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: microos1
+  namespace: default
+  annotations:
+    harvesterhci.io/sshNames: default/george
+    harvesterhci.io/cloudInitUserData: microos1-userdata
+spec:
+  running: false
+  template:
+    spec:
+      domain:
+        cpu:
+          cores: 2
+        resources:
+          requests:
+            memory: 2Gi
+        devices:
+          disks:
+            - name: rootdisk
+              disk:
+                bus: virtio
+      volumes:
+        - name: rootdisk
+          dataVolume:
+            name: microos1-rootdisk
