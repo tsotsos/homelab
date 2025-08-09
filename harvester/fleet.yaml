@@ -1,0 +1,8 @@
+defaultNamespace: default
+targetCustomizations:
+  - name: harvester
+    clusterSelector:
+      matchLabels:
+        management.cattle.io/cluster-name: local
+    kustomize:
+      dir: .
