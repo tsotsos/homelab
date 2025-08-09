@@ -1,7 +1,7 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: microos2
+  name: microos3
   namespace: default
   annotations:
     harvesterhci.io/sshNames: default/george
@@ -22,11 +22,11 @@ spec:
                 bus: virtio
             - name: cloudinitdisk
               disk:
-                bus: sata
+                bus: virtio
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos2-rootdisk
+            name: microos3-rootdisk
         - name: cloudinitdisk
           cloudInitNoCloud:
             userData: |
