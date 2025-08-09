@@ -31,5 +31,7 @@ spec:
           cloudInitNoCloud:
             userDataSecretRef:
               name: microos1-cloudinit
+              key: userdata
             networkDataSecretRef:
               name: microos1-cloudinit
+              key: networkdata
