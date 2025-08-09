@@ -25,3 +25,13 @@ spec:
         - name: rootdisk
           dataVolume:
             name: microos2-rootdisk
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userData: |
+            #cloud-config
+            users:
+            - name: root
+              lock_passwd: false
+              passwd: "$y$j9T$PPGS2ZmcEwK9Rva6ijffv.$FfSLRBTa9rctOyzshG6s77Gasi8pXaiInQ635D9TJZ5"
+              ssh_authorized_keys:
+                - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"
