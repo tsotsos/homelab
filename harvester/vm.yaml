@@ -31,7 +31,6 @@ spec:
           cloudInitNoCloud:
             userData: |
               #cloud-config
-              password: root123
               disable_root: false
               ssh_pwauth: true
               packages:
