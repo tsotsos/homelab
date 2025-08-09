@@ -21,7 +21,14 @@ spec:
             - name: rootdisk
               disk:
                 bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
       volumes:
         - name: rootdisk
           dataVolume:
             name: microos2-rootdisk
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userDataSecretRef:
+              name: microos-userdata
