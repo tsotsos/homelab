@@ -31,16 +31,20 @@ spec:
           cloudInitNoCloud:
             userData: |
               #cloud-config
-              users:
-              - name: root
-                lock_passwd: false
-                passwd: "$y$j9T$MjaNW3whk1b0snP5VFaaz1$VAVFdHX0SDje4xgVSk.7k.3VOhC0uUSPE2hEc42aIS9"
-                ssh_authorized_keys:
-                  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"
+              debug: False
+              disable_root: False
+              ssh_pwauth: False
+              ssh_deletekeys: False
+              ssh_authorized_keys:
+                - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"
+              chpasswd:
+                list: |
+                  root:$y$j9T$MjaNW3whk1b0snP5VFaaz1$VAVFdHX0SDje4xgVSk.7k.3VOhC0uUSPE2hEc42aIS9
+                expire: False
             networkData: |
               version: 2
               ethernets:
-                ens18:
+                enp1s0:
                   dhcp4: false
                   dhcp6: true
                   addresses: [ "10.0.2.50/24" ]
