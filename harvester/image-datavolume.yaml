@@ -1,7 +1,7 @@
 apiVersion: cdi.kubevirt.io/v1beta1
 kind: DataVolume
 metadata:
-  name: microos1-rootdisk
+  name: microos2-rootdisk
   namespace: default
 spec:
   source:

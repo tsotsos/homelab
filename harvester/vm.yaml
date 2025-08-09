@@ -1,7 +1,7 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: microos1
+  name: microos2
   namespace: default
   annotations:
     harvesterhci.io/sshNames: default/george
@@ -24,4 +24,4 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos1-rootdisk
+            name: microos2-rootdisk
