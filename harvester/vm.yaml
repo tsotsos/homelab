@@ -55,7 +55,4 @@ spec:
                   list: |
                     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
                 runcmd:
-                  - [ /usr/sbin/transactional-update, -n, pkg, install, qemu-guest-agent ]
-                  - [ /usr/sbin/transactional-update, -n, run, systemctl, enable, qemu-guest-agent.service ]
-                  - [ sync ]
-                  - [ shutdown, -r, now, "Reboot via cloud-init after TU" ]
+                  - [ /usr/sbin/transactional-update, -n, pkg, install, qemu-guest-agent, --continue, run, systemctl, enable, qemu-guest-agent.service, --continue, reboot ]
