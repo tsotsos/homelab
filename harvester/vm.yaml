@@ -37,7 +37,7 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos-rootdisk
+            name: microos3-rootdisk
         - name: cloudinit
           cloudInitConfigDrive:
               userData: |
@@ -56,7 +56,9 @@ spec:
                     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
                 runcmd:
                   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent && systemctl enable qemu-guest-agent.service" ]
-                  - [ /usr/sbin/transactional-update, -n, run, bash, -lc, "cat >/etc/NetworkManager/system-connections/primary.nmconnection <<'EOF'\n[connection]\nid=primary\ntype=ethernet\ninterface-name=enp1s0\nautoconnect=true\n\n[ipv4]\naddress1=10.0.2.150/24,10.0.2.1\ndns=1.1.1.1;8.8.8.8\nmethod=manual\n\n[ipv6]\nmethod=ignore\nEOF\nchmod 600 /etc/NetworkManager/system-connections/primary.nmconnection && nmcli con up primary" ]
+                  - [ /usr/sbin/transactional-update, -n, run, bash, -lc, "cat >/etc/NetworkManager/system-connections/primary.nmconnection <<'EOF'\n[connection]\nid=primary\ntype=ethernet\ninterface-name=enp1s0\nautoconnect=true\n\n[ipv4]\naddress1=10.0.2.150/24,10.0.2.1\ndns=1.1.1.1;8.8.8.8\nmethod=manual\n\n[ipv6]\nmethod=ignore\nEOF\nchmod 600 /etc/NetworkManager/system-connections/primary.nmconnection" ]
+                  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "nmcli con up primary" ]
+
                 power_state:
                   mode: reboot
                   message: "Reboot to activate QGA snapshot"
