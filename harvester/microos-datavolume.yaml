@@ -5,8 +5,9 @@ metadata:
   namespace: default
 spec:
   source:
-    http:
-      url: https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-ContainerHost-OpenStack-Cloud.qcow2
+    pvc:
+      namespace: default
+      name: opensuse-microos.x86_64-containerhost-kvm-and-xen.qcow2
   pvc:
     accessModes: ["ReadWriteOnce"]
     resources:
