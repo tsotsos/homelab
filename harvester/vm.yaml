@@ -19,10 +19,6 @@ spec:
           requests:
             memory: 2Gi
         devices:
-          channels:
-            - name: qga0
-              target:
-                name: org.qemu.guest_agent.0
           disks:
             - name: rootdisk
               disk:
@@ -60,11 +56,3 @@ spec:
                 runcmd:
                   - transactional-update -n pkg install qemu-guest-agent
                   - transactional-update -n run systemctl enable qemu-guest-agent.service
-              networkData: |
-                version: 2
-                ethernets:
-                  eth0:
-                    addresses: [10.0.2.50/24]
-                    gateway4: 10.0.2.1
-                    nameservers:
-                      addresses: [10.0.1.1]
