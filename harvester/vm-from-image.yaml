@@ -23,9 +23,14 @@ metadata:
 spec:
   runStrategy: RerunOnFailure
   template:
+    metadata:
+      annotations:
+        harvesterhci.io/sshNames: '["default/george"]'
+      creationTimestamp: null
+      labels:
+        harvesterhci.io/vmName: kng-01
     spec:
       hostname: kng-01
-      architecture: amd64
       domain:
         cpu:
           cores: 2
@@ -40,7 +45,11 @@ spec:
               bootOrder: 1
               disk:
                 bus: virtio
+            - disk:
+                bus: virtio
+              name: cloudinitdisk
       volumes:
         - name: root
           persistentVolumeClaim:
             claimName: kng-01-disk
+        - cloudInitNoCloud:
