@@ -34,8 +34,7 @@ spec:
       domain:
         firmware:
           bootloader:
-            efi:
-              secureBoot: false 
+            bios: {}
         cpu:
           cores: 2
           sockets: 1
