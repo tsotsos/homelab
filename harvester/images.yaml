@@ -17,3 +17,13 @@ spec:
   displayName: MicroOS Openstack Image
   sourceType: download
   url: https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-ContainerHost-OpenStack-Cloud.qcow2
+---
+apiVersion: harvesterhci.io/v1beta1
+kind: VirtualMachineImage
+metadata:
+  name: ubuntu-2403
+  namespace: default
+spec:
+  displayName: Ubuntu 24.03 LTS
+  sourceType: download
+  url: https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-amd64.img
