@@ -1,0 +1,42 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: microos3
+  namespace: default
+spec:
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: microos3
+    spec:
+      domain:
+        cpu:
+          cores: 2
+        resources:
+          requests:
+            memory: 2Gi
+        devices:
+          disks:
+            - name: rootdisk
+              disk:
+                bus: virtio
+            - name: ignition
+              disk:
+                bus: virtio
+          interfaces:
+            - name: nic0
+              model: virtio
+              bridge: {}
+      networks:
+        - name: nic0
+          multus:
+            networkName: default/k8s-network
+      volumes:
+        - name: rootdisk
+          dataVolume:
+            name: microos3-rootdisk
+        - name: ignition
+          cloudInitConfigDrive:
+              userData: '{"ignition":{"version":"3.2.0"},"passwd":{"users":[{"name":"root","passwordHash":"$6$rounds=4096$gIHRK7SwqpWSM3L5$gCwEJpVmODsdXwN8wqSeKc5pRJym.qWb9k1ai9rMC2zpjD4fwZdw82zXoDqG4LPjoxEYQx1nZrJ1AUVywwv3O1"}]},"storage":{"files":[{"path":"/etc/ssh/sshd_config.d/99-ign.conf","mode":420,"contents":{"source":"data:,PasswordAuthentication%20yes%0APermitRootLogin%20yes%0A"}}]},"systemd":{"units":[{"name":"firstboot-qga.service","enabled":true,"contents":"[Unit]\nDescription=First boot: install qemu-guest-agent (transactional)\nConditionPathExists=!/var/lib/firstboot-qga.done\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/sbin/transactional-update -n pkg install qemu-guest-agent\nExecStart=/usr/sbin/transactional-update -n run systemctl enable qemu-guest-agent.service\nExecStart=/usr/bin/touch /var/lib/firstboot-qga.done\nExecStart=/usr/bin/systemctl reboot\n\n[Install]\nWantedBy=multi-user.target\n"}]}}'
+
