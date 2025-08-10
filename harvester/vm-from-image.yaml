@@ -25,8 +25,7 @@ spec:
   template:
     metadata:
       annotations:
-        harvesterhci.io/sshNames: 
-          - default/george
+        harvesterhci.io/sshNames: '["default/george"]'
       creationTimestamp: null
       labels:
         harvesterhci.io/vmName: kng-02
