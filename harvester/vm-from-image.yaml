@@ -5,6 +5,7 @@ metadata:
   namespace: default
   annotations:
     harvesterhci.io/sshNames: default/george
+    harvesterhci.io/imageId: vm-images/microos-openstack
 spec:
   running: true
   template:
@@ -56,7 +57,7 @@ spec:
                       autoconnect-priority=100
 
                       [ipv4]
-                      address1=10.0.2.150/24,10.0.2.1
+                      address1=10.0.2.151/24,10.0.2.1
                       dns=10.0.1.1
                       method=manual
                       ignore-auto-dns=true
