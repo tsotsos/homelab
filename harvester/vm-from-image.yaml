@@ -2,7 +2,7 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   name: kng-workload-01
-  namespace: workloads
+  namespace: default
 spec:
   runStrategy: Always
   template:
