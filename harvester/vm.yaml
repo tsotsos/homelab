@@ -56,6 +56,10 @@ spec:
                     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
                 packages:
                   - qemu-guest-agent
+                runcmd:
+                  - [ systemctl, daemon-reload ]
+                  - [ systemctl, enable, qemu-guest-agent ]
+                  - [ systemctl, start, --no-block, qemu-guest-agent ]
                 power_state:
                   mode: reboot
                   message: "Reboot to activate QGA snapshot"
