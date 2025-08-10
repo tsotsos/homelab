@@ -46,13 +46,13 @@ spec:
                 users:
                 - name: root
                   lock_passwd: false
-                  passwd: $y$j9T$MjaNW3whk1b0snP5VFaaz1$VAVFdHX0SDje4xgVSk.7k.3VOhC0uUSPE2hEc42aIS9
+                  passwd: $6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
                   ssh_authorized_keys:
-                    - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"
+                    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local
                 chpasswd:
                   expire: false
                   list: |
-                    root:$6$rounds=$y$j9T$MjaNW3whk1b0snP5VFaaz1$VAVFdHX0SDje4xgVSk.7k.3VOhC0uUSPE2hEc42aIS9
+                    root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
                 runcmd:
-                  - transactional-update -n pkg install qemu-guest-agent
-                  - transactional-update -n run systemctl enable qemu-guest-agent.service
+                  - [ sh, "transactional-update -n pkg install qemu-guest-agent" ]
+                  - [ sh, "transactional-update -n run systemctl enable qemu-guest-agent.service]

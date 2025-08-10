@@ -1,0 +1,19 @@
+apiVersion: harvesterhci.io/v1beta1
+kind: VirtualMachineImage
+metadata:
+  name: microos-kvm
+  namespace: default
+spec:
+  displayName: MicroOS KVM Image
+  sourceType: download
+  url: https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-ContainerHost-kvm-and-xen.qcow2
+---
+apiVersion: harvesterhci.io/v1beta1
+kind: VirtualMachineImage
+metadata:
+  name: microos-openstack
+  namespace: default
+spec:
+  displayName: MicroOS Openstack Image
+  sourceType: download
+  url: https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-ContainerHost-OpenStack-Cloud.qcow2
