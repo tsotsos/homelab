@@ -38,7 +38,7 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos-new-rootdisk
+            name: kng-workload-01-rootdisk
         - name: cloudinit
           cloudInitConfigDrive:
               userData: |
