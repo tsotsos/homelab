@@ -53,3 +53,6 @@ spec:
           persistentVolumeClaim:
             claimName: kng-01-disk
         - cloudInitNoCloud:
+              userData: |
+                #cloud-config
+                ssh_pwauth: true
