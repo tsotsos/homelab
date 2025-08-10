@@ -7,7 +7,7 @@ metadata:
     harvesterhci.io/imageId: default/ubuntu-2403
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 20Gi
