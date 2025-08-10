@@ -1,7 +1,7 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: microos3
+  name: microos-new
   namespace: default
   annotations:
     harvesterhci.io/sshNames: default/george
@@ -11,7 +11,7 @@ spec:
   template:
     metadata:
       labels:
-        kubevirt.io/domain: microos3
+        kubevirt.io/domain: microos-new
     spec:
       domain:
         cpu:
@@ -38,7 +38,7 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos-rootdisk
+            name: microos-new-rootdisk
         - name: cloudinit
           cloudInitConfigDrive:
               userData: |
