@@ -5,9 +5,9 @@ metadata:
   namespace: default
   annotations:
     harvesterhci.io/sshNames: default/george
-    harvesterhci.io/imageId: vm-images/microos-openstack
 spec:
   running: true
+  runStrategy: Always
   template:
     metadata:
       labels:
@@ -98,3 +98,17 @@ spec:
                   message: "Reboot to activate QGA snapshot"
                   timeout: 30
                   condition: true
+  dataVolumeTemplates:
+    - metadata:
+        name: kng-workload-01-rootdisk
+        annotations:
+          harvesterhci.io/imageId: vm-images/microos-openstack
+      spec:
+        pvc:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 64Gi
+          storageClassName: harvester-longhorn
+        source:
+          blank: {}
