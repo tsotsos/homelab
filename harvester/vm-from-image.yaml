@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kng-01-root
+  name: kng-01-root-disk
   namespace: default
   annotations:
     harvesterhci.io/imageId: default/ubuntu-2403
@@ -43,4 +43,4 @@ spec:
       volumes:
         - name: root
           persistentVolumeClaim:
-            claimName: kng-01-root
+            claimName: kng-01-root-disk
