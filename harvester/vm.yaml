@@ -37,7 +37,7 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos3-rootdisk
+            name: microos3-kvm-rootdisk
         - name: ignition
           cloudInitConfigDrive:
               userData: '{"ignition":{"version":"3.2.0"},"passwd":{"users":[{"name":"root","passwordHash":"$6$02VNuKeDFmW6iQ7T$VvM8eN2r5yOLFZ3Z3i6oEiDSQvB83Hx4/MLd6.WARNVDWm/NYlvvbiFFvQ7Il2BsX7tvFxMf5gFQPm1QtjVR/."}]},"storage":{"files":[{"path":"/etc/ssh/sshd_config.d/99-ign.conf","mode":420,"contents":{"source":"data:,PasswordAuthentication%20yes%0APermitRootLogin%20yes%0A"}}]},"systemd":{"units":[{"name":"firstboot-qga.service","enabled":true,"contents":"[Unit]\nDescription=First boot: install qemu-guest-agent (transactional)\nConditionPathExists=!/var/lib/firstboot-qga.done\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/sbin/transactional-update -n pkg install qemu-guest-agent\nExecStart=/usr/sbin/transactional-update -n run systemctl enable qemu-guest-agent.service\nExecStart=/usr/bin/touch /var/lib/firstboot-qga.done\nExecStart=/usr/bin/systemctl reboot\n\n[Install]\nWantedBy=multi-user.target\n"}]}}'
