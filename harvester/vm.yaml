@@ -19,6 +19,10 @@ spec:
           requests:
             memory: 2Gi
         devices:
+          channels:
+            - name: qga0
+              target:
+                name: org.qemu.guest_agent.0
           disks:
             - name: rootdisk
               disk:
@@ -37,7 +41,7 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos-kvm-rootdisk
+            name: microos-rootdisk
         - name: cloudinit
           cloudInitConfigDrive:
               userData: |
@@ -54,12 +58,13 @@ spec:
                   list: |
                     root:$6$rounds=4096$gIHRK7SwqpWSM3L5$gCwEJpVmODsdXwN8wqSeKc5pRJym.qWb9k1ai9rMC2zpjD4fwZdw82zXoDqG4LPjoxEYQx1nZrJ1AUVywwv3O1
                 runcmd:
-                  - [ sh, -c, 'transactional-update -n pkg install qemu-guest-agent' ]
-                  - [ sh, -c, 'transactional-update -n run systemctl enable qemu-guest-agent.service' ]
-                  - [ sh, -c, 'zypper --non-interactive install qemu-guest-agent' ]
-
-                power_state:
-                  mode: reboot
-                  message: "Rebooting to activate qemu-guest-agent (MicroOS transactional root)"
-                  timeout: 30
-                  condition: true
+                  - transactional-update -n pkg install qemu-guest-agent
+                  - transactional-update -n run systemctl enable qemu-guest-agent.service
+              networkData: |
+                version: 2
+                ethernets:
+                  eth0:
+                    addresses: [10.0.2.50/24]
+                    gateway4: 10.0.2.1
+                    nameservers:
+                      addresses: [10.0.1.1]
