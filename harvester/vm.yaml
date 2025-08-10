@@ -50,13 +50,13 @@ spec:
                 users:
                 - name: root
                   lock_passwd: false
-                  passwd: 4096$gIHRK7SwqpWSM3L5$gCwEJpVmODsdXwN8wqSeKc5pRJym.qWb9k1ai9rMC2zpjD4fwZdw82zXoDqG4LPjoxEYQx1nZrJ1AUVywwv3O1
+                  passwd: $y$j9T$MjaNW3whk1b0snP5VFaaz1$VAVFdHX0SDje4xgVSk.7k.3VOhC0uUSPE2hEc42aIS9
                   ssh_authorized_keys:
                     - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"
                 chpasswd:
                   expire: false
                   list: |
-                    root:$6$rounds=4096$gIHRK7SwqpWSM3L5$gCwEJpVmODsdXwN8wqSeKc5pRJym.qWb9k1ai9rMC2zpjD4fwZdw82zXoDqG4LPjoxEYQx1nZrJ1AUVywwv3O1
+                    root:$6$rounds=$y$j9T$MjaNW3whk1b0snP5VFaaz1$VAVFdHX0SDje4xgVSk.7k.3VOhC0uUSPE2hEc42aIS9
                 runcmd:
                   - transactional-update -n pkg install qemu-guest-agent
                   - transactional-update -n run systemctl enable qemu-guest-agent.service
