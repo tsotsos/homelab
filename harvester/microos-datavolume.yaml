@@ -7,7 +7,7 @@ spec:
   source:
     pvc:
       namespace: default
-      name: opensuse-microos.x86_64-containerhost-kvm-and-xen.qcow2
+      name: image-nvwpj
   pvc:
     accessModes: ["ReadWriteOnce"]
     resources:
