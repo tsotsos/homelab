@@ -24,6 +24,8 @@ spec:
   runStrategy: RerunOnFailure
   template:
     spec:
+      hostname: kng-01
+      architecture: amd64
       domain:
         cpu:
           cores: 2
