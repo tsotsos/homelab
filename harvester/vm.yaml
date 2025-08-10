@@ -37,7 +37,7 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos3-rootdisk
+            name: microos-rootdisk
         - name: cloudinit
           cloudInitConfigDrive:
               userData: |
@@ -54,6 +54,17 @@ spec:
                   expire: false
                   list: |
                     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
+                network:
+                  version: 2
+                  ethernets:
+                    enp1s0:
+                      dhcp4: false
+                      addresses:
+                        - 10.0.2.50/24
+                      gateway4: 10.0.2.1
+                      nameservers:
+                        addresses:
+                          - 10.0.1.1
                 runcmd:
                   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent && systemctl enable qemu-guest-agent.service" ]
                 power_state:
