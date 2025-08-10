@@ -43,6 +43,7 @@ spec:
               userData: |
                 #cloud-config
                 ssh_pwauth: true
+                hostname: k8s-01
                 users:
                 - name: root
                   lock_passwd: false
