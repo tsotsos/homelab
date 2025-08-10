@@ -27,12 +27,15 @@ spec:
       domain:
         cpu:
           cores: 2
+          sockets: 1
+          threads: 1
         resources:
           requests:
             memory: 4Gi
         devices:
           disks:
             - name: root
+              bootOrder: 1
               disk:
                 bus: virtio
       volumes:
