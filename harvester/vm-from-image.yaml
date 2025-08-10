@@ -6,7 +6,6 @@ metadata:
   annotations:
     harvesterhci.io/sshNames: default/george
 spec:
-  running: true
   runStrategy: Always
   template:
     metadata:
