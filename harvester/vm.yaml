@@ -37,7 +37,7 @@ spec:
       volumes:
         - name: rootdisk
           dataVolume:
-            name: microos-rootdisk
+            name: microos3-rootdisk
         - name: cloudinit
           cloudInitConfigDrive:
               userData: |
