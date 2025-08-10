@@ -1,12 +1,12 @@
 apiVersion: cdi.kubevirt.io/v1beta1
 kind: DataVolume
 metadata:
-  name: microos3-kvm-rootdisk
+  name: microos-rootdisk
   namespace: default
 spec:
   source:
     http:
-      url: https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-ContainerHost-kvm-and-xen.qcow2
+      url: https://download.opensuse.org/tumbleweed/appliances/openSUSE-MicroOS.x86_64-ContainerHost-OpenStack-Cloud.qcow2
   pvc:
     accessModes: ["ReadWriteOnce"]
     resources:
