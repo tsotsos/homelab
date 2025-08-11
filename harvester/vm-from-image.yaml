@@ -1,7 +1,7 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: kng-02
+  name: kng-01
   namespace: kng-cluster
   annotations:
     harvesterhci.io/vmRunStrategy: RerunOnFailure
@@ -11,16 +11,16 @@ metadata:
       [
         {
           "metadata": {
-            "name": "kng-02-disk-0",
+            "name": "kng-01-disk-0",
             "annotations": {
-              "harvesterhci.io/imageId": "default/ubuntu-2403"
+              "harvesterhci.io/imageId": "default/microos-openstack"
             }
           },
           "spec": {
             "accessModes": ["ReadWriteMany"],
             "resources": { "requests": { "storage": "64Gi" } },
             "volumeMode": "Block",
-            "storageClassName": "longhorn-ubuntu-2403"
+            "storageClassName": "longhorn-microos-openstack"
           }
         }
       ]
@@ -29,11 +29,11 @@ spec:
   template:
     metadata:
       labels:
-        harvesterhci.io/vmName: kng-02
+        harvesterhci.io/vmName: kng-01
       annotations:
         harvesterhci.io/sshNames: '["default/george"]'
     spec:
-      hostname: kng-02
+      hostname: kng-01
       domain:
         cpu:
           cores: 4
@@ -65,12 +65,63 @@ spec:
       volumes:
         - name: disk-0
           persistentVolumeClaim:
-            claimName: kng-02-disk-0
+            claimName: kng-01-disk-0
         - name: cloudinitdisk
-          cloudInitNoCloud:
-            networkDataSecretRef:
-              name: cloudinit-common
-            secretRef:
-              name: cloudinit-common
+          cloudInitConfigDrive:
+              userData: |
+                #cloud-config
+                ssh_pwauth: true
+                hostname: k8s-01
+                write_files:
+                  - path: /etc/NetworkManager/system-connections/primary.nmconnection
+                    permissions: '0600'
+                    content: |
+                      [connection]
+                      id=primary
+                      type=ethernet
+                      interface-name=enp1s0
+                      autoconnect=true
+                      autoconnect-priority=100
 
-            
+                      [ipv4]
+                      address1=10.0.2.50/24,10.0.2.1
+                      dns=10.0.1.1
+                      method=manual
+                      ignore-auto-dns=true
+                      ignore-auto-routes=true
+
+                      [ipv6]
+                      method=ignore
+
+                  - path: /var/lib/cloud/scripts/per-boot/20-net-static
+                    permissions: '0755'
+                    content: |
+                      #!/bin/sh
+                      PRIMARY="primary"
+                      IF="enp1s0"
+                      nmcli con load "/etc/NetworkManager/system-connections/${PRIMARY}.nmconnection" 2>/dev/null || true
+                      nmcli -t -f NAME,DEVICE con show | awk -F: -v iface="$IF" '$2==iface{print $1}' | while read -r C; do
+                        [ "$C" = "$PRIMARY" ] && continue
+                        nmcli con down "$C" 2>/dev/null || true
+                        nmcli con delete "$C" 2>/dev/null || true
+                      done
+                      nmcli con mod "$PRIMARY" connection.autoconnect yes connection.autoconnect-priority 100 ipv4.may-fail no
+                      nmcli con up "$PRIMARY" || true
+                users:
+                  - name: root
+                    lock_passwd: false
+                    passwd: $6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
+                    ssh_authorized_keys:
+                      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local
+                chpasswd:
+                  expire: false
+                  list: |
+                    root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
+                runcmd:
+                  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent && systemctl enable qemu-guest-agent.service" ]
+
+                power_state:
+                  mode: reboot
+                  message: "Reboot to activate QGA snapshot"
+                  timeout: 30
+                  condition: true

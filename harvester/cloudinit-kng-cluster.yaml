@@ -31,8 +31,6 @@ stringData:
         lock_passwd: false
         ssh_authorized_keys:
           - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local
-
-    # TEMP: easy password to prove it works; remove later
     chpasswd:
       expire: false
       list: |
