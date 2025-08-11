@@ -22,6 +22,8 @@ stringData:
     #cloud-config
     ssh_pwauth: true
     package_update: true
+    package_upgrade: true
+    package_reboot_if_required: true
     users:
       - default
       - name: george
@@ -59,7 +61,7 @@ stringData:
       - sed -i '/\sswap\s/ s/^/#/' /etc/fstab
     power_state:
       delay: "+15"
-      mode: poweroff
-      message: Rebooting!
+      mode: reboot
+      message: "Rebooting!"
       timeout: 30
-      condition: True
+      condition: true
