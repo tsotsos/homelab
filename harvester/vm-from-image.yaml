@@ -71,7 +71,7 @@ spec:
           persistentVolumeClaim:
             claimName: kng-02-disk-0
         - name: cloudinitdisk
-          cloudInitConfigDrive:
+          cloudInitNoCloud:
             userData: |-
                 #cloud-config
                 ssh_pwauth: true
