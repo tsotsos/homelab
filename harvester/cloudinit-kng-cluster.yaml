@@ -21,9 +21,6 @@ stringData:
   userdata: |
     #cloud-config
     ssh_pwauth: true
-    package_update: true
-    package_upgrade: true
-    package_reboot_if_required: true
     users:
       - default
       - name: george
@@ -38,12 +35,6 @@ stringData:
       expire: false
       list: |
         root:$6$uFhQ0e7WahIYsNCE$bQXrGTYjLXVBZQdaubgCwnznEtmR79dX2yqyF107ZhJ9B1LXR2emEbhPojPtQiJ6IMDJ6nndFbZVGpcmJtGaa.
-    packages:
-      - openssh-server 
-      - qemu-guest-agent
-      - curl
-      - open-iscsi
-      - nfs-common
     write_files:
       - path: /etc/modules-load.d/k8s.conf
         content: |
@@ -54,6 +45,16 @@ stringData:
           net.ipv4.ip_forward=1
           net.bridge.bridge-nf-call-iptables=1
           net.bridge.bridge-nf-call-ip6tables=1
+
+    package_update: true
+    package_upgrade: true
+    package_reboot_if_required: true
+    packages:
+      - openssh-server 
+      - qemu-guest-agent
+      - curl
+      - open-iscsi
+      - nfs-common
     runcmd:
       - systemctl enable --now qemu-guest-agent
       - systemctl enable --now iscsid || true
