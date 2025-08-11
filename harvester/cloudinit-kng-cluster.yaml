@@ -18,9 +18,10 @@ stringData:
             via: 10.0.2.1
         nameservers:
           addresses: [10.0.1.1,1.1.1.1]
-  userdata: |
+  userdata: |-
     #cloud-config
     ssh_pwauth: true
+    disable_root: false
     users:
       - default
       - name: george
@@ -28,20 +29,24 @@ stringData:
         shell: /bin/bash
         sudo: ALL=(ALL) NOPASSWD:ALL
         lock_passwd: false
-        passwd: "$6$uFhQ0e7WahIYsNCE$bQXrGTYjLXVBZQdaubgCwnznEtmR79dX2yqyF107ZhJ9B1LXR2emEbhPojPtQiJ6IMDJ6nndFbZVGpcmJtGaa."
         ssh_authorized_keys:
           - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local
+
+    # TEMP: easy password to prove it works; remove later
     chpasswd:
       expire: false
       list: |
-        root:$6$uFhQ0e7WahIYsNCE$bQXrGTYjLXVBZQdaubgCwnznEtmR79dX2yqyF107ZhJ9B1LXR2emEbhPojPtQiJ6IMDJ6nndFbZVGpcmJtGaa.
-    packages:
-      - openssh-server 
-      - qemu-guest-agent
-      - curl
-      - open-iscsi
-      - nfs-common
+        george:changeme123
+        root:changeme123
+
+    # ensure sshd allows password auth (override the “60-cloudimg” drop-in)
     write_files:
+      - path: /etc/ssh/sshd_config.d/99-local.conf
+        content: |
+          PasswordAuthentication yes
+          PubkeyAuthentication yes
+          ChallengeResponseAuthentication no
+          KbdInteractiveAuthentication no
       - path: /etc/modules-load.d/k8s.conf
         content: |
           br_netfilter
@@ -51,10 +56,16 @@ stringData:
           net.ipv4.ip_forward=1
           net.bridge.bridge-nf-call-iptables=1
           net.bridge.bridge-nf-call-ip6tables=1
+    packages:
+      - openssh-server
+      - qemu-guest-agent
     runcmd:
+      - systemctl enable --now ssh || systemctl enable --now sshd
+      - systemctl restart ssh || systemctl restart sshd
       - systemctl enable --now qemu-guest-agent
       - systemctl enable --now iscsid || true
       - swapoff -a
       - sed -i '/\sswap\s/ s/^/#/' /etc/fstab
+
 
 
