@@ -7,7 +7,6 @@ type: Opaque
 stringData:
   userdata: |-
       #cloud-config
-      hostname: default-host
       manage_etc_hosts: true
       ssh_pwauth: true
       users:
@@ -20,6 +19,7 @@ stringData:
           ssh_authorized_keys:
             - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local
       packages:
+        - openssh-server 
         - qemu-guest-agent
         - curl
         - open-iscsi
