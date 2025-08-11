@@ -72,20 +72,7 @@ spec:
             claimName: kng-02-disk-0
         - name: cloudinitdisk
           cloudInitConfigDrive:
-            networkdata: |-
-                version: 2
-                ethernets:
-                  eth0:
-                    match: { name: "e*" }
-                    set-name: eth0
-                    dhcp4: false
-                    addresses: [10.0.2.50/24]
-                    routes:
-                      - to: 0.0.0.0/0
-                        via: 10.0.2.1
-                    nameservers:
-                      addresses: [10.0.1.1,1.1.1.1]
-            userdata: |-
+            userData: |-
                 #cloud-config
                 ssh_pwauth: true
                 users:
@@ -123,3 +110,17 @@ spec:
                   - systemctl enable --now iscsid || true
                   - swapoff -a
                   - sed -i '/\sswap\s/ s/^/#/' /etc/fstab
+            networkData: |-
+                version: 2
+                ethernets:
+                  eth0:
+                    match: { name: "e*" }
+                    set-name: eth0
+                    dhcp4: false
+                    addresses: [10.0.2.50/24]
+                    routes:
+                      - to: 0.0.0.0/0
+                        via: 10.0.2.1
+                    nameservers:
+                      addresses: [10.0.1.1,1.1.1.1]
+            
