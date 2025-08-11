@@ -39,7 +39,9 @@ spec:
           threads: 1
           sockets: 1
         resources:
-          memory: 4Gi
+          limits:
+            memory: 4Gi
+            cpu: 2
         devices:
           disks:
             - name: disk-0
