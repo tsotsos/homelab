@@ -38,6 +38,8 @@ spec:
           cores: 2
           threads: 1
           sockets: 1
+        resources:
+          memory: 4Gi
         devices:
           disks:
             - name: disk-0
