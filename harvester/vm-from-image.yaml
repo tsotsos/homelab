@@ -53,7 +53,7 @@ spec:
                 bus: virtio
           interfaces:
             - bridge: {}
-              macAddress: 0e:1b:bc:e5:a3:8a
+              macAddress: 0e:1b:bc:e5:a3:7a
               model: virtio
               name: default
       networks:
