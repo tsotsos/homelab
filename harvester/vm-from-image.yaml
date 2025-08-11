@@ -77,7 +77,7 @@ spec:
         - name: disk-0
           persistentVolumeClaim:
             claimName: kng-01-disk-0
-        - name: cloudinit
+        - name: cloudinitdisk
           cloudInitNoCloud:
             userDataSecretRef:
               name: cloudinit-common
