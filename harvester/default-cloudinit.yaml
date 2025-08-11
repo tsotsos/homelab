@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 name: default-init
-namespace: kng-cluster
+namespace: default
 metadata:
   annotations:
     field.cattle.io/description: Default Cloud Init for RKE2
