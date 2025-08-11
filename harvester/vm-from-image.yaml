@@ -79,5 +79,5 @@ spec:
             claimName: kng-01-disk-0
         - name: cloudinitdisk
           cloudInitNoCloud:
-            userDataSecretRef:
+            secretRef:
               name: cloudinit-common
