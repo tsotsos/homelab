@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kng-01-disk
+  name: kng-02-disk
   namespace: kng-cluster
   annotations:
     harvesterhci.io/imageId: "default/ubuntu-2403"
@@ -16,7 +16,7 @@ spec:
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: kng-01
+  name: kng-02
   namespace: kng-cluster
   annotations:
     harvesterhci.io/vmRunStrategy: RerunOnFailure
@@ -27,11 +27,11 @@ spec:
   template:
     metadata:
       labels:
-        harvesterhci.io/vmName: kng-01
+        harvesterhci.io/vmName: kng-02
       annotations:
         harvesterhci.io/sshNames: '["default/george"]'
     spec:
-      hostname: kng-01
+      hostname: kng-02
       domain:
         cpu:
           cores: 4
@@ -62,7 +62,7 @@ spec:
       volumes:
         - name: disk-0
           persistentVolumeClaim:
-            claimName: kng-01-disk
+            claimName: kng-02-disk
         - name: cloudinitdisk
           cloudInitNoCloud:
             networkDataSecretRef:
