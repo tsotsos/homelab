@@ -5,7 +5,7 @@ metadata:
   namespace: kng-cluster
 type: Opaque
 stringData:
-  userData: |-
+  userdata: |-
       #cloud-config
       hostname: default-host
       manage_etc_hosts: true
