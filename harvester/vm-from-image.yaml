@@ -33,15 +33,16 @@ spec:
     spec:
       hostname: kng-02
       domain:
-        memory: 16Gi
-        cpu: 
+        cpu:
           cores: 2
-          threads: 1
           sockets: 1
+          threads: 1
+        memory:
+          guest: 16Gi
         resources:
-          limits:
-            memory: 4Gi
-            cpu: 2
+          requests:
+            cpu: "2"
+            memory: 16Gi
         devices:
           disks:
             - name: disk-0
