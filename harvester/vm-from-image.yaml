@@ -33,12 +33,11 @@ spec:
     spec:
       hostname: kng-01
       domain:
-        resources:
-          requests:
-            memory: 2Gi
-            cpu: 2
-            threads: 1
-            sockets: 1
+        memory: 16Gi
+        cpu: 
+          cores: 2
+          threads: 1
+          sockets: 1
         devices:
           disks:
             - name: disk-0
