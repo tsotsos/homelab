@@ -52,10 +52,10 @@ spec:
               disk:
                 bus: virtio
           interfaces:
-            - bridge: {}
-              macAddress: 0e:1b:bc:e5:a3:7a
+            - name: default
+              bridge: {}
               model: virtio
-              name: default
+
       networks:
         - name: default
           multus:
