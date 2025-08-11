@@ -55,6 +55,11 @@ spec:
             - name: cloudinitdisk
               disk:
                 bus: virtio
+          interfaces:
+            - bridge: {}
+              macAddress: 0e:1b:bc:e5:a3:8a
+              model: virtio
+              name: default
       networks:
         - name: default
           multus:
