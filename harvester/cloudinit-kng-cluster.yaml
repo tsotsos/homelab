@@ -21,6 +21,7 @@ stringData:
   userdata: |
     #cloud-config
     ssh_pwauth: true
+    package_update: true
     users:
       - default
       - name: george
@@ -57,7 +58,8 @@ stringData:
       - swapoff -a
       - sed -i '/\sswap\s/ s/^/#/' /etc/fstab
     power_state:
-      mode: reboot
-      message: "Reboot"
+      delay: "+15"
+      mode: poweroff
+      message: Rebooting!
       timeout: 30
-      condition: true
+      condition: True
