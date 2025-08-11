@@ -35,17 +35,13 @@ spec:
     spec:
       hostname: kng-01
       domain:
-        machine:
-          type: q35
-        features:
-          acpi:
-            enabled: true
         cpu:
           cores: 4
           sockets: 1
           threads: 1
-        memory:
-          guest: 8Gi
+        resources:
+          requests:
+            memory: 16Gi
         devices:
           disks:
             - name: disk-0
