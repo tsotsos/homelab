@@ -1,15 +1,18 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: kng-03
-  namespace: default
+  name: kng-01
+  namespace: kng-cluster
   annotations:
     harvesterhci.io/vmRunStrategy: RerunOnFailure
+    harvesterhci.io/creator: fleet
+    harvesterhci.io/os: linux
+    harvesterhci.io/maintain-mode-strategy: ShutdownAndRestartAfterEnable
     harvesterhci.io/volumeClaimTemplates: >
       [
         {
           "metadata": {
-            "name": "kng-03-disk-0",
+            "name": "kng-01-disk-0",
             "annotations": {
               "harvesterhci.io/imageId": "default/ubuntu-2403"
             }
@@ -27,11 +30,11 @@ spec:
   template:
     metadata:
       labels:
-        harvesterhci.io/vmName: kng-03
+        harvesterhci.io/vmName: kng-01
       annotations:
         harvesterhci.io/sshNames: '["default/george"]'
     spec:
-      hostname: kng-03
+      hostname: kng-01
       domain:
         machine:
           type: q35
@@ -55,9 +58,11 @@ spec:
           disks:
             - name: disk-0
               bootOrder: 1
-              disk: { bus: virtio }
+              disk:
+                bus: virtio
             - name: cloudinitdisk
-              disk: { bus: virtio }
+              disk:
+                bus: virtio
           interfaces:
             - name: default
               model: virtio
@@ -71,9 +76,21 @@ spec:
       volumes:
         - name: disk-0
           persistentVolumeClaim:
-            claimName: kng-03-disk-0
-        - name: cloudinitdisk
+            claimName: kng-01-disk-0
+        - name: cloudinit
           cloudInitNoCloud:
-            userData: |
-              #cloud-config
-              ssh_pwauth: true
+            userDataSecretRef:
+              name: cloudinit-common
+            networkData: |-
+              version: 2
+              ethernets:
+                eth0:
+                  match: { name: "e*" }
+                  set-name: eth0
+                  dhcp4: false
+                  addresses: [10.0.2.50/24]
+                  routes:
+                    - to: 0.0.0.0/0
+                      via: 10.0.2.1
+                  nameservers:
+                    addresses: [10.0.1.1,1.1.1.1]
