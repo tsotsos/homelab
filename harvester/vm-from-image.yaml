@@ -58,7 +58,7 @@ spec:
       networks:
         - name: default
           multus:
-            networkName: default/k8s-network 
+            networkName: kng-cluster/k8s-network 
       terminationGracePeriodSeconds: 120
       evictionStrategy: LiveMigrateIfPossible
       volumes:
