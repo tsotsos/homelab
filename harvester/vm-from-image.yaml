@@ -55,7 +55,6 @@ spec:
             - name: default
               bridge: {}
               model: virtio
-
       networks:
         - name: default
           multus:
