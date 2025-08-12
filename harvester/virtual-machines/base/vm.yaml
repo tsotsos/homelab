@@ -34,19 +34,19 @@ spec:
           threads: 1
         memory:
           guest: 2Gi
-      devices:
-        disks:
-          - name: disk-0
-            bootOrder: 1
-            disk:
-              bus: virtio
-          - name: cloudinitdisk
-            disk:
-              bus: virtio
-        interfaces:
-          - name: default
-            bridge: {}
-            model: virtio
+        devices:
+          disks:
+            - name: disk-0
+              bootOrder: 1
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+            - name: default
+              bridge: {}
+              model: virtio
       networks:
         - name: default
           multus:
