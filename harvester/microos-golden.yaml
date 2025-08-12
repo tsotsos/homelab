@@ -1,0 +1,17 @@
+type: persistentvolumeclaim
+metadata:
+  namespace: kng-cluster
+  annotations:
+    harvesterhci.io/imageId: default/microos-openstack
+  labels: {}
+  name: microos-openstack-golden
+__clone: true
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn-microos-openstack
+  volumeName: ''
+  resources:
+    requests:
+      storage: 64Gi
+  volumeMode: Block
