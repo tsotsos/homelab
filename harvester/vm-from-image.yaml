@@ -37,8 +37,7 @@ spec:
       labels:
         harvesterhci.io/vmName: kng-02
       annotations:
-        harvesterhci.io/sshNames: 
-          - default/george
+        harvesterhci.io/sshNames: '["default/george"]'
     spec:
       hostname: kng-02
       domain:
