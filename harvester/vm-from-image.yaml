@@ -1,45 +1,37 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: kng-02
+  name: kng-01
   namespace: kng-cluster
   annotations:
     harvesterhci.io/vmRunStrategy: RerunOnFailure
     harvesterhci.io/os: linux
     harvesterhci.io/maintain-mode-strategy: ShutdownAndRestartAfterEnable
-    harvesterhci.io/volumeClaimTemplates: |
-      [
-        {
-          "metadata": {
-            "name": "kng-02-disk",
-            "annotations": {
-              "harvesterhci.io/imageId": "default/microos-openstack"
-            }
-          },
-          "spec": {
-            "accessModes": [
-              "ReadWriteMany"
-            ],
-            "resources": {
-              "requests": {
-                "storage": "64Gi"
-              }
-            },
-            "volumeMode": "Block",
-            "storageClassName": "longhorn-microos-openstack"
-          }
-        }
-      ]
 spec:
   runStrategy: RerunOnFailure
+  dataVolumeTemplates:
+    - metadata:
+        name: kng-01-disk
+        annotations:
+          harvesterhci.io/imageId: default/microos-openstack
+      spec:
+        source:
+          blank: {}
+        storage:
+          storageClassName: longhorn-microos-openstack
+          accessModes: ["ReadWriteMany"]
+          volumeMode: Block
+          resources:
+            requests:
+              storage: 64Gi
   template:
     metadata:
       labels:
-        harvesterhci.io/vmName: kng-02
+        harvesterhci.io/vmName: kng-01
       annotations:
         harvesterhci.io/sshNames: '["default/george"]'
     spec:
-      hostname: kng-02
+      hostname: kng-01
       domain:
         cpu:
           cores: 2
@@ -73,7 +65,7 @@ spec:
       volumes:
         - name: disk-0
           dataVolume:
-            name: kng-02-disk
+            name: kng-01-disk
         - name: cloudinitdisk
           cloudInitNoCloud:
             networkDataSecretRef:
