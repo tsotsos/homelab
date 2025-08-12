@@ -21,7 +21,7 @@ stringData:
           autoconnect-priority=100
 
           [ipv4]
-          address1=10.0.2.150/24,10.0.2.1
+          address1=10.0.2.50/24,10.0.2.1
           dns=10.0.1.1
           method=manual
           ignore-auto-dns=true
