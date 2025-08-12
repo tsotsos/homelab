@@ -17,7 +17,7 @@ metadata:
             }
           },
           "spec": {
-            "accessModes": ["ReadWriteOnce"],
+            "accessModes": ["ReadWriteMany"],
             "resources": { "requests": { "storage": "64Gi" } }
           }
         }
