@@ -15,6 +15,7 @@ spec:
       spec:
         storage:
           storageClassName: longhorn-microos-openstack
+          volumeMode: Block
           resources:
             requests:
               storage: 64Gi
