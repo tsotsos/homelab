@@ -6,9 +6,9 @@ metadata:
   annotations:
     harvesterhci.io/imageId: default/microos-openstack
 spec:
-  storageClassName: longhorn
+  storageClassName: longhorn-microos-openstack
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
+      storage: 64Gi

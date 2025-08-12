@@ -14,7 +14,7 @@ spec:
         name: kng-05-disk
       spec:
         storage:
-          storageClassName: longhorn
+          storageClassName: longhorn-microos-openstack
           resources:
             requests:
               storage: 64Gi
