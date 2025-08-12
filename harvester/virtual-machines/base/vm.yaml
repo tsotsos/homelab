@@ -50,7 +50,7 @@ spec:
       networks:
         - name: default
           multus:
-            networkName: network
+            networkName: kng-cluster/k8s-network
       volumes:
         - name: disk-0
           dataVolume:
