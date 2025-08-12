@@ -1,7 +1,0 @@
-apiVersion: harvesterhci.io/v1beta1
-kind: KeyPair
-metadata:
-  name: george
-  namespace: default
-spec:
-  publicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"

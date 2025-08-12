@@ -7,11 +7,3 @@ targetCustomizations:
         management.cattle.io/cluster-name: local
     kustomize:
       dir: .
-
-diff:
-  comparePatches:
-    - apiVersion: kubevirt.io/v1
-      kind: VirtualMachine
-      jsonPointers:
-        - /status/observedGeneration
-        - /status/conditions
