@@ -4,9 +4,11 @@ metadata:
   name: microos-openstack-golden
   namespace: kng-cluster
   annotations:
-    harvesterhci.io/imageId: "default/microos-openstack"
+    harvesterhci.io/imageId: default/microos-openstack
+spec:
   storageClassName: longhorn
-  accessModes: ["ReadWriteOnce"]
+  accessModes:
+    - ReadWriteOnce
   resources:
     requests:
       storage: 20Gi
