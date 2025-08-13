@@ -4,7 +4,7 @@ metadata:
   name: base-vm-disk
   labels:
     recurring-job.longhorn.io/source: "enabled"
-    harvesterhci.io/imageId: default/microos-openstack
+    harvesterhci.io/imageId: "default/microos-openstack"
 spec:
   accessModes: ["ReadWriteMany"]
   volumeMode: Block
