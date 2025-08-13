@@ -12,6 +12,9 @@ spec:
   dataVolumeTemplates:
     - metadata:
         name: base-vm-disk
+        labels:
+          recurring-job.longhorn.io/source: enabled
+          recurring-job-group.longhorn.io/kng-cluster: enabled
       spec:
         source:
           blank: {}
