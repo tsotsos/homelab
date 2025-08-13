@@ -1,9 +1,18 @@
-namespace: kng-cluster
 resources:
   - cloudinit-secret.yaml
   - ../base
-
 patches:
+  - target:
+      version: v1
+      kind: PersistentVolumeClaim
+      name: base-vm-disk
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: kng-01-disk
+      - op: add
+        path: /metadata/labels/recurring-job-group.longhorn.io~1kng-vms
+        value: "enabled"
   - target:
       group: kubevirt.io
       version: v1
@@ -14,6 +23,22 @@ patches:
         path: /metadata/name
         value: kng-01
       - op: replace
+        path: /metadata/labels/vm.kng.house~1role
+        value: control-plane
+      - op: replace
+        path: /metadata/labels/app.kubernetes.io~1component
+        value: control-plane
+      - op: add
+        path: /spec/template/spec/affinity/podAntiAffinity
+        value:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values: ["control-plane"]
+              topologyKey: kubernetes.io/hostname
+      - op: replace
         path: /spec/template/spec/hostname
         value: kng-01
       - op: replace
@@ -21,12 +46,9 @@ patches:
         value: 2
       - op: replace
         path: /spec/template/spec/domain/memory/guest
-        value: 16Gi
+        value: 8Gi
       - op: replace
-        path: /spec/dataVolumeTemplates/0/metadata/name
-        value: kng-01-disk
-      - op: replace
-        path: /spec/template/spec/volumes/0/dataVolume/name
+        path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName
         value: kng-01-disk
       - op: replace
         path: /spec/template/spec/volumes/1/cloudInitNoCloud/secretRef/name

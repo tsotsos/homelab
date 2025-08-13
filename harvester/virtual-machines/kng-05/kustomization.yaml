@@ -1,3 +1,4 @@
+# Worker - lightweight
 resources:
   - cloudinit-secret.yaml
   - ../base
@@ -9,7 +10,7 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-02-disk
+        value: kng-05-disk
       - op: add
         path: /metadata/labels/recurring-job-group.longhorn.io~1kng-vms
         value: "enabled"
@@ -21,26 +22,25 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-02
+        value: kng-05
       - op: replace
         path: /metadata/labels/vm.kng.house~1role
-        value: control-plane
+        value: worker-node
       - op: replace
         path: /metadata/labels/app.kubernetes.io~1component
-        value: control-plane
-      - op: add
-        path: /spec/template/spec/affinity/podAntiAffinity
+        value: worker-node
+      - op: replace
+        path: /spec/template/spec/affinity/nodeAffinity/preferredDuringSchedulingIgnoredDuringExecution
         value:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/component
-                    operator: In
-                    values: ["control-plane"]
-              topologyKey: kubernetes.io/hostname
+          - weight: 50
+            preference:
+              matchExpressions:
+                - key: node-pool
+                  operator: In
+                  values: ["2p5g"]
       - op: replace
         path: /spec/template/spec/hostname
-        value: kng-02
+        value: kng-05
       - op: replace
         path: /spec/template/spec/domain/cpu/cores
         value: 2
@@ -49,7 +49,7 @@ patches:
         value: 8Gi
       - op: replace
         path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName
-        value: kng-02-disk
+        value: kng-05-disk
       - op: replace
         path: /spec/template/spec/volumes/1/cloudInitNoCloud/secretRef/name
         value: kng01-cloudinit-secret

@@ -1,3 +1,7 @@
+namespace: kng-vms
 resources:
   - kng-01
   - kng-02
+  - kng-03
+  - kng-04
+  - kng-05

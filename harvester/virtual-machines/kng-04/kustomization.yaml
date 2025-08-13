@@ -9,7 +9,7 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-02-disk
+        value: kng-04-disk
       - op: add
         path: /metadata/labels/recurring-job-group.longhorn.io~1kng-vms
         value: "enabled"
@@ -21,35 +21,25 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-02
+        value: kng-04
       - op: replace
         path: /metadata/labels/vm.kng.house~1role
-        value: control-plane
+        value: worker-node
       - op: replace
         path: /metadata/labels/app.kubernetes.io~1component
-        value: control-plane
-      - op: add
-        path: /spec/template/spec/affinity/podAntiAffinity
-        value:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/component
-                    operator: In
-                    values: ["control-plane"]
-              topologyKey: kubernetes.io/hostname
+        value: worker-node
       - op: replace
         path: /spec/template/spec/hostname
-        value: kng-02
+        value: kng-04
       - op: replace
         path: /spec/template/spec/domain/cpu/cores
-        value: 2
+        value: 4
       - op: replace
         path: /spec/template/spec/domain/memory/guest
-        value: 8Gi
+        value: 12Gi
       - op: replace
         path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName
-        value: kng-02-disk
+        value: kng-04-disk
       - op: replace
         path: /spec/template/spec/volumes/1/cloudInitNoCloud/secretRef/name
         value: kng01-cloudinit-secret

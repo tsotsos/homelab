@@ -9,7 +9,7 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-02-disk
+        value: kng-03-disk
       - op: add
         path: /metadata/labels/recurring-job-group.longhorn.io~1kng-vms
         value: "enabled"
@@ -21,7 +21,7 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-02
+        value: kng-03
       - op: replace
         path: /metadata/labels/vm.kng.house~1role
         value: control-plane
@@ -40,7 +40,7 @@ patches:
               topologyKey: kubernetes.io/hostname
       - op: replace
         path: /spec/template/spec/hostname
-        value: kng-02
+        value: kng-03
       - op: replace
         path: /spec/template/spec/domain/cpu/cores
         value: 2
@@ -49,7 +49,7 @@ patches:
         value: 8Gi
       - op: replace
         path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName
-        value: kng-02-disk
+        value: kng-03-disk
       - op: replace
         path: /spec/template/spec/volumes/1/cloudInitNoCloud/secretRef/name
         value: kng01-cloudinit-secret
