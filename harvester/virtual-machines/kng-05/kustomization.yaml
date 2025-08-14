@@ -13,6 +13,9 @@ patches:
       - op: add
         path: /metadata/labels/recurring-job-group.longhorn.io~1kng-vms
         value: "enabled"
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 120Gi
   - target:
       group: kubevirt.io
       version: v1
