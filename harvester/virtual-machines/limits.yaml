@@ -16,5 +16,9 @@ spec:
       cpu: "12000m"
       memory: "24Gi"
     min:
+      cpu: "5m"
+      memory: "32Mi"
+  - type: Pod
+    min:
       cpu: "500m"
       memory: "2Gi"
