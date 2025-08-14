@@ -1,4 +1,4 @@
-namespace: kng-vms
+namespace: kng-cluster
 resources:
   - ./limits.yaml
   - ./kng-vms-network.yaml
