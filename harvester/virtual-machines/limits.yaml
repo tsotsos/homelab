@@ -18,17 +18,3 @@ spec:
     min:
       cpu: "500m"
       memory: "2Gi"
----
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: vm-budget
-  namespace: default
-spec:
-  hard:
-    requests.cpu: "24"
-    limits.cpu: "28"
-    requests.memory: "64Gi"
-    limits.memory: "120i"
-    requests.storage: "1.5Ti"
-    persistentvolumeclaims: "50"
