@@ -1,0 +1,73 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: base-vm
+  namespace: default
+  labels:
+    vm.kng.house/cluster: kng
+    vm.kng.house/role: control-plane
+    vm.kng.house/env: prod
+    app.kubernetes.io/name: rke2-node
+    app.kubernetes.io/part-of: kng-cluster
+    app.kubernetes.io/component: control-plane
+  annotations:
+    harvesterhci.io/vmRunStrategy: RerunOnFailure
+    harvesterhci.io/os: linux
+    harvesterhci.io/maintain-mode-strategy: ShutdownAndRestartAfterEnable
+spec:
+  runStrategy: RerunOnFailure
+  template:
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: kng-cluster
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: node-pool
+                    operator: In
+                    values: ["10g"]
+      hostname: base-vm
+      terminationGracePeriodSeconds: 120
+      evictionStrategy: LiveMigrate
+      domain:
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
+        memory:
+          guest: 2Gi
+        devices:
+          disks:
+            - name: disk-0
+              bootOrder: 1
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+            - name: default
+              bridge: {}
+              model: virtio
+      networks:
+        - name: default
+          multus:
+            networkName: kng-cluster/k8s-network
+      volumes:
+        - name: disk-0
+          persistentVolumeClaim:
+            claimName: base-vm-disk
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            networkDataSecretRef:
+              name: cloudinit-secret
+            secretRef:
+              name: cloudinit-secret
