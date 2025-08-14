@@ -1,0 +1,11 @@
+namespace: kng-vms
+resources:
+  - ./limits.yaml
+  - ./kng-vms-network.yaml
+  - kng-01
+  - kng-02
+  - kng-03
+  - kng-04
+  - kng-05
+  - kng-06
+  

@@ -1,0 +1,30 @@
+resources:
+  - cloudinit-secret.yaml
+  - ../base
+patches:
+  - target:
+      version: v1
+      kind: PersistentVolumeClaim
+      name: base-vm-disk
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: kng-01-disk
+      - op: add
+        path: /metadata/labels/recurring-job-group.longhorn.io~1kng-vms
+        value: "enabled"
+  - target:
+      group: kubevirt.io
+      version: v1
+      kind: VirtualMachine
+      name: base-vm
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: kng-01
+  - target:
+      group: kubevirt.io
+      version: v1
+      kind: VirtualMachine
+      name: kng-01
+    path: patch.yaml
