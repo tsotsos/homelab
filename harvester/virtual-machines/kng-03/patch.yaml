@@ -43,3 +43,5 @@ spec:
           interfaces:
             - name: default
               macAddress: 02:00:00:00:10:03
+              bridge: {}
+              model: virtio
