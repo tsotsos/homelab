@@ -7,15 +7,22 @@ metadata:
       [
         {
           "metadata": {
-            "name": "kng-05-disk",
+            "name": "kng-05",
             "annotations": {
               "harvesterhci.io/imageId": "default/microos-openstack"
             }
           },
           "spec": {
-            "accessModes": ["ReadWriteMany"],
-            "resources": { "requests": { "storage": "64Gi" } },
-            "storageClassName": "longhorn"
+            "accessModes": [
+              "ReadWriteMany"
+            ],
+            "resources": {
+              "requests": {
+                "storage": "128Gi"
+              }
+            },
+            "volumeMode": "Block",
+            "storageClassName": "longhorn-microos-openstack"
           }
         }
       ]
@@ -26,7 +33,7 @@ spec:
       volumes:
         - name: disk-0
           persistentVolumeClaim:
-            claimName: kng-05-disk
+            claimName: kng-05
         - name: cloudinitdisk
           cloudInitNoCloud:
             secretRef:
