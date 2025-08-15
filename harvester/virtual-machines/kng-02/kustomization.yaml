@@ -1,6 +1,5 @@
 resources:
-  - cloudinit-secret.yaml
-  - ../base
+  - ../control-planes
 patches:
   - target:
       version: v1
@@ -22,9 +21,12 @@ patches:
       - op: replace
         path: /metadata/name
         value: kng-02
-  - target:
-      group: kubevirt.io
-      version: v1
-      kind: VirtualMachine
-      name: kng-02
-    path: patch.yaml
+      - op: replace
+        path: /spec/template/spec/hostname
+        value: kng-02
+      - op: replace
+        path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName
+        value: kng-02-disk
+      - op: replace
+        path: /spec/template/spec/domain/devices/interfaces/0/macAddress
+        value: 02:00:00:00:10:02

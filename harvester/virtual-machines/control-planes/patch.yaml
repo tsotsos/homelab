@@ -1,7 +1,7 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: kng-01
+  name: base-vm
   labels:
     vm.kng.house/role: control-plane
     app.kubernetes.io/component: control-plane
@@ -12,14 +12,6 @@ spec:
         vm.kng.house/role: control-plane
         app.kubernetes.io/component: control-plane
     spec:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: control-plane
-      hostname: kng-01
       domain:
         cpu:
           sockets: 1
@@ -30,11 +22,10 @@ spec:
         resources:
           requests: { cpu: "2000m", memory: "8Gi" }
           limits:   { cpu: "4000m", memory: "8Gi" }
-      volumes:
-        - name: disk-0
-          persistentVolumeClaim:
-            claimName: kng-01-disk
-        - name: cloudinitdisk
-          cloudInitNoCloud:
-            secretRef:
-              name: kng-01-cloudinit-secret
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/component: control-plane

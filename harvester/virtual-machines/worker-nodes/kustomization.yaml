@@ -1,0 +1,9 @@
+resources:
+  - ../base
+patches:
+  - target:
+      group: kubevirt.io
+      version: v1
+      kind: VirtualMachine
+      name: base-vm
+    path: patch.yaml

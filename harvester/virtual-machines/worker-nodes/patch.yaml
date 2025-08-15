@@ -1,7 +1,7 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: kng-05
+  name: base-vm
   labels:
     vm.kng.house/role: worker-node
     app.kubernetes.io/component: worker-node
@@ -19,7 +19,6 @@ spec:
           labelSelector:
             matchLabels:
               app.kubernetes.io/component: worker-node
-      hostname: kng-05
       domain:
         cpu:
           sockets: 1
@@ -30,11 +29,3 @@ spec:
         resources:
           requests: { cpu: "2000m", memory: "16Gi" }
           limits:   { cpu: "8000m", memory: "16Gi" }
-      volumes:
-        - name: disk-0
-          persistentVolumeClaim:
-            claimName: kng-05-disk
-        - name: cloudinitdisk
-          cloudInitNoCloud:
-            secretRef:
-              name: kng-05-cloudinit-secret
