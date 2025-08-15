@@ -1,7 +1,7 @@
 namespace: kng-cluster
 resources:
   - ./limits.yaml
-  - ./kng-vms-network.yaml
+  - ./networks.yaml
   - ./cloudinit-secret.yaml
   - kng-01
   - kng-02

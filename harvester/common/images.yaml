@@ -27,14 +27,3 @@ spec:
   displayName: Ubuntu 24.03 LTS
   sourceType: download
   url: https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-amd64.img
-
----
-apiVersion: harvesterhci.io/v1beta1
-kind: VirtualMachineImage
-metadata:
-  name: vyos-rolling
-  namespace: default
-spec:
-  displayName: VyOS Rolling (qcow2)
-  sourceType: download
-  url: https://github.com/vyos/vyos-rolling-nightly-builds/releases/latest/download/vyos-rolling-amd64-qemu.qcow2

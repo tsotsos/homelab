@@ -20,8 +20,12 @@ spec:
         memory:
           guest: 8Gi
         resources:
-          requests: { cpu: "2000m", memory: "8Gi" }
-          limits:   { cpu: "4000m", memory: "8Gi" }
+          requests:
+            cpu: "2000m"
+            memory: "8Gi"
+          limits:
+            cpu: "4000m"
+            memory: "8Gi"
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname

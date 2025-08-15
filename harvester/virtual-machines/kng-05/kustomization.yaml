@@ -2,20 +2,6 @@ resources:
   - ../worker-nodes
 patches:
   - target:
-      version: v1
-      kind: PersistentVolumeClaim
-      name: base-vm-disk
-    patch: |-
-      - op: replace
-        path: /metadata/name
-        value: kng-05-disk
-      - op: add
-        path: /metadata/labels/recurring-job-group.longhorn.io~1kng-vms
-        value: "enabled"
-      - op: replace
-        path: /spec/resources/requests/storage
-        value: 120Gi
-  - target:
       group: kubevirt.io
       version: v1
       kind: VirtualMachine
@@ -24,12 +10,9 @@ patches:
       - op: replace
         path: /metadata/name
         value: kng-05
-      - op: replace
-        path: /spec/template/spec/hostname
-        value: kng-05
-      - op: replace
-        path: /spec/template/spec/volumes/0/persistentVolumeClaim/claimName
-        value: kng-05-disk
-      - op: replace
-        path: /spec/template/spec/domain/devices/interfaces/0/macAddress
-        value: 02:00:00:00:10:05
+  - target:
+      group: kubevirt.io
+      version: v1
+      kind: VirtualMachine
+      name: kng-05
+    path: patch.yaml

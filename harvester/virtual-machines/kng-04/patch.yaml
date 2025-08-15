@@ -1,0 +1,38 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: kng-04
+  annotations:
+    harvesterhci.io/volumeClaimTemplates: |
+      [
+        {
+          "metadata": {
+            "name": "kng-04-disk",
+            "annotations": {
+              "harvesterhci.io/imageId": "default/microos-openstack"
+            }
+          },
+          "spec": {
+            "accessModes": ["ReadWriteMany"],
+            "resources": { "requests": { "storage": "64Gi" } },
+            "storageClassName": "longhorn"
+          }
+        }
+      ]
+spec:
+  template:
+    spec:
+      hostname: kng-04
+      volumes:
+        - name: disk-0
+          persistentVolumeClaim:
+            claimName: kng-04-disk
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            secretRef:
+              name: cloudinit-secret
+      domain:
+        devices:
+          interfaces:
+            - name: default
+              macAddress: 02:00:00:00:10:04
