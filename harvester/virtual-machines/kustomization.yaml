@@ -1,6 +1,14 @@
 namespace: kng-cluster
+secretGenerator:
+  - name: cloudinit-secret
+    namespace: kng-cluster
+    files:
+      - userdata=cloud-init
+
+generatorOptions:
+  disableNameSuffixHash: true
+
 resources:
-  - ./cloudinit-secret.yaml
   - kng-01
   - kng-02
   - kng-03
