@@ -14,11 +14,11 @@ spec:
     spec:
       domain:
         cpu:
-          sockets: 1
-          cores: 2
-          threads: 1
+          sockets: "1"
+          cores: "2"
+          threads: "1"
         memory:
-          guest: 16Gi
+          guest: "16Gi"
         resources:
           requests:
             cpu: "2000m"

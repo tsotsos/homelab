@@ -1,5 +1,5 @@
 resources:
-  - ../worker-nodes
+  - ../base-wrk
 patches:
   - target:
       group: kubevirt.io
@@ -9,10 +9,10 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-04
+        value: w2
   - target:
       group: kubevirt.io
       version: v1
       kind: VirtualMachine
-      name: kng-04
+      name: w2
     path: patch.yaml

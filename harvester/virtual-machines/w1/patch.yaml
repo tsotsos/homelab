@@ -1,13 +1,13 @@
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: kng-03
+  name: w1
   annotations:
     harvesterhci.io/volumeClaimTemplates: |
       [
         {
           "metadata": {
-            "name": "kng-03",
+            "name": "w1",
             "annotations": {
               "harvesterhci.io/imageId": "default/microos-openstack"
             }
@@ -18,7 +18,7 @@ metadata:
             ],
             "resources": {
               "requests": {
-                "storage": "64Gi"
+                "storage": "128Gi"
               }
             },
             "volumeMode": "Block",
@@ -29,11 +29,11 @@ metadata:
 spec:
   template:
     spec:
-      hostname: kng-03
+      hostname: w1
       volumes:
         - name: disk-0
           persistentVolumeClaim:
-            claimName: kng-03
+            claimName: w1
         - name: cloudinitdisk
           cloudInitNoCloud:
             secretRef:
@@ -42,6 +42,6 @@ spec:
         devices:
           interfaces:
             - name: default
-              macAddress: 02:00:00:00:10:03
+              macAddress: 02:00:00:00:10:04
               bridge: {}
               model: virtio

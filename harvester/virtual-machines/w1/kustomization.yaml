@@ -1,5 +1,5 @@
 resources:
-  - ../control-planes
+  - ../base-wrk
 patches:
   - target:
       group: kubevirt.io
@@ -9,10 +9,10 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: kng-02
+        value: w1
   - target:
       group: kubevirt.io
       version: v1
       kind: VirtualMachine
-      name: kng-02
+      name: w1
     path: patch.yaml
