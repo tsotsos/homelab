@@ -21,9 +21,7 @@ spec:
               app.kubernetes.io/component: worker-node
       domain:
         cpu:
-          sockets: "1"
-          cores: "6"
-          threads: "1"
+          cores: 6
         memory:
           guest: "24Gi"
         resources:
