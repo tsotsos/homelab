@@ -107,11 +107,11 @@ write_files:
         fi
       else
         # -------- WORKER NODES --------
-        cat >> /etc/rancher/rke2/config.yaml <<EOF
-server: "https://${BOOTSTRAP}.${DOMAIN}:9345"
-node-label:
-  - "role=worker"
-EOF
+        {
+          printf '%s\n' "server: \"https://${BOOTSTRAP}.${DOMAIN}:9345\""
+          printf '%s\n' "node-label:"
+          printf '%s\n' "  - \"role=worker\""
+        } >> /etc/rancher/rke2/config.yaml
         echo "[rke2-bootstrap] Waiting for ${BOOTSTRAP}.${DOMAIN}:9345 ..."
         until curl -sk --max-time 2 "https://${BOOTSTRAP}.${DOMAIN}:9345/ping" | grep -q pong; do
           sleep 5
