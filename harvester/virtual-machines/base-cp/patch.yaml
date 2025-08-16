@@ -14,16 +14,19 @@ spec:
     spec:
       domain:
         cpu:
+          sockets: 1
           cores: 2
+          threads: 1
+          dedicatedCpuPlacement: true
         memory:
-          guest: "16Gi"
-        # resources:
-        #   requests:
-        #     cpu: "2000m"
-        #     memory: "8Gi"
-        #   limits:
-        #     cpu: "4000m"
-        #     memory: "16Gi"
+          guest: 16Gi
+        resources:
+          limits:
+            cpu: "2"
+            memory: 16Gi
+          requests:
+            cpu: "2"
+            memory: 16Gi
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
