@@ -27,7 +27,7 @@ write_files:
       RANCHER_CLUSTER="local"
       TOKEN_SECRET_NS="local"
       TOKEN_SECRET_NAME="token-rke2"
-      RANCHER_TOKEN="token-tl9ps:rc7jg5d8swgzz4mgjmkkrkqx9lqknpjxgf5bhwbbgx558sr98cs7w7" # this expires ~10–15 min after bootstrap
+      RANCHER_TOKEN="token-tl9ps:rc7jg5d8swgzz4mgjmkkrkqx9lqknpjxgf5bhwbbgx558sr98cs7w7" # expires ~10–15 min
 
       HN="$(hostname -s)"
       FQDN="${HN}.${DOMAIN}"
@@ -44,7 +44,7 @@ write_files:
 
       command -v curl >/dev/null 2>&1 || zypper -n in curl || true
 
-      # ---- Fetch RKE2 token from Rancher (retry until ready; ignores SSL with -k) ----
+      # ---- Fetch RKE2 token from Rancher (retry; ignore SSL with -k) ----
       API_URL="${RANCHER_URL}/k8s/clusters/${RANCHER_CLUSTER}/api/v1/namespaces/${TOKEN_SECRET_NS}/secrets/${TOKEN_SECRET_NAME}"
       AUTH="Authorization: Bearer ${RANCHER_TOKEN}"
       TOKEN=""
@@ -89,14 +89,19 @@ write_files:
         else
           printf 'server: "https://%s:9345"\n' "${BOOTSTRAP}.${DOMAIN}" >> "${CFG}"
         fi
-        curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sh -
+        # Install to the TU snapshot; DO NOT touch systemd here
+        curl -sfL https://get.rke2.io \
+          | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=server \
+            INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -
       else
         {
           printf 'server: "https://%s:9345"\n' "${BOOTSTRAP}.${DOMAIN}"
           printf 'node-label:\n'
           printf '  - "role=worker"\n'
         } >> "${CFG}"
-        curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=agent sh -
+        curl -sfL https://get.rke2.io \
+          | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=agent \
+            INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -
       fi
 
   - path: /usr/local/sbin/rke2-firstboot.sh
@@ -128,12 +133,25 @@ write_files:
         done
       }
 
+      # Make sure the unit files actually exist (installed by TU run)
+      have_unit() { systemctl list-unit-files | grep -q "^$1\\.service"; }
+
       if [[ "${HN}" =~ ^c[0-9]+$ ]]; then
+        # server
+        if ! have_unit rke2-server; then
+          echo "[firstboot] rke2-server.service not found; aborting."
+          exit 1
+        fi
         if [[ "${HN}" != "${BOOTSTRAP}" ]]; then
           wait_for_api
         fi
         systemctl enable --now rke2-server.service
       else
+        # worker
+        if ! have_unit rke2-agent; then
+          echo "[firstboot] rke2-agent.service not found; aborting."
+          exit 1
+        fi
         wait_for_api
         systemctl enable --now rke2-agent.service
       fi
