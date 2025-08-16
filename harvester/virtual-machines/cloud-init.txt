@@ -12,13 +12,39 @@ chpasswd:
     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
 
 write_files:
+  # --- Phase 1 (TU): install only, no systemd, no token fetch ---
   - path: /usr/local/sbin/rke2-bootstrap.sh
     permissions: '0755'
     owner: root:root
     content: |
       #!/usr/bin/env bash
       set -euo pipefail
+      HN="$(hostname -s)"
+      ROLE="agent"
+      [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
 
+      # Ensure curl available in snapshot
+      command -v curl >/dev/null 2>&1 || zypper -n in curl || true
+
+      if [[ "${ROLE}" = "server" ]]; then
+        curl -sfL https://get.rke2.io \
+          | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=server \
+            INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -
+      else
+        curl -sfL https://get.rke2.io \
+          | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=agent \
+            INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -
+      fi
+
+  # --- Phase 2 (first boot): fetch token, write config, start correct service ---
+  - path: /usr/local/sbin/rke2-firstboot.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      # ---- your values ----
       DOMAIN="kng.house"
       VIP_DNS="cluster.kng.house"
       VIP_IP="172.30.0.20"
@@ -27,29 +53,41 @@ write_files:
       RANCHER_CLUSTER="local"
       TOKEN_SECRET_NS="local"
       TOKEN_SECRET_NAME="token-rke2"
-      RANCHER_TOKEN="token-tl9ps:rc7jg5d8swgzz4mgjmkkrkqx9lqknpjxgf5bhwbbgx558sr98cs7w7" # expires ~10–15 min
+      RANCHER_TOKEN="token-tl9ps:rc7jg5d8swgzz4mgjmkkrkqx9lqknpjxgf5bhwbbgx558sr98cs7w7"  # short-lived
+      # ---------------------
 
       HN="$(hostname -s)"
       FQDN="${HN}.${DOMAIN}"
-      install -d /etc/rancher/rke2
+      BOOTSTRAP_FQDN="${BOOTSTRAP}.${DOMAIN}"
 
-      # role detection from hostname
-      if [[ "${HN}" =~ ^c[0-9]+$ ]]; then
-        ROLE="server"
-      elif [[ "${HN}" =~ ^w[0-9]+$ ]]; then
-        ROLE="agent"
-      else
-        ROLE="agent"
-      fi
+      systemctl daemon-reload || true
 
-      command -v curl >/dev/null 2>&1 || zypper -n in curl || true
+      unit_exists() {
+        local n="$1"
+        [[ -f "/etc/systemd/system/${n}.service" ]] \
+          || [[ -f "/usr/local/lib/systemd/system/${n}.service" ]] \
+          || [[ -f "/usr/lib/systemd/system/${n}.service" ]]
+      }
 
-      # ---- Fetch RKE2 token from Rancher (retry; ignore SSL with -k) ----
+      # Tools on PATH for convenience
+      install -d /usr/local/bin
+      for b in kubectl crictl ctr; do
+        if [ -x "/var/lib/rancher/rke2/bin/${b}" ]; then
+          ln -sf "/var/lib/rancher/rke2/bin/${b}" "/usr/local/bin/${b}"
+        fi
+      done
+      mkdir -p /root/.kube
+      ln -sf /etc/rancher/rke2/rke2.yaml /root/.kube/config || true
+
+      ROLE="agent"
+      [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
+
+      # ---- Fetch cluster token from Rancher (bounded retry, ignore SSL) ----
       API_URL="${RANCHER_URL}/k8s/clusters/${RANCHER_CLUSTER}/api/v1/namespaces/${TOKEN_SECRET_NS}/secrets/${TOKEN_SECRET_NAME}"
       AUTH="Authorization: Bearer ${RANCHER_TOKEN}"
       TOKEN=""
-      echo "[rke2-bootstrap] Fetching join token from Rancher: ${API_URL}"
-      while true; do
+      waited=0
+      until [ -n "${TOKEN}" ] || [ ${waited} -ge 900 ]; do  # 15 minutes max
         RAW="$(curl -sSk -H "${AUTH}" -w '\n%{http_code}' "${API_URL}" || true)"
         BODY="$(printf '%s' "$RAW" | sed '$d')"
         CODE="$(printf '%s' "$RAW" | tail -n1)"
@@ -63,96 +101,50 @@ write_files:
             fi
           fi
         fi
-        [ -n "${TOKEN}" ] && echo "[rke2-bootstrap] Token retrieved." && break
-        echo "[rke2-bootstrap] Rancher/secret not ready (HTTP ${CODE:-n/a}). Retrying in 10s..."
-        sleep 10
+        [ -n "${TOKEN}" ] || { sleep 10; waited=$((waited+10)); }
       done
+      [ -n "${TOKEN}" ] || { echo "[firstboot] Token not available, will retry next boot"; exit 1; }
 
-      # ---- Build /etc/rancher/rke2/config.yaml (Secret-safe; no heredocs) ----
+      # ---- Write /etc/rancher/rke2/config.yaml ----
+      install -d /etc/rancher/rke2
       CFG="/etc/rancher/rke2/config.yaml"
       : > "${CFG}"
       printf 'token: "%s"\n' "${TOKEN}" >> "${CFG}"
       printf 'write-kubeconfig-mode: "0644"\n' >> "${CFG}"
       printf 'tls-san:\n' >> "${CFG}"
       printf '  - %s\n' "${VIP_DNS}" >> "${CFG}"
-      printf '  - %s\n' "${BOOTSTRAP}.${DOMAIN}" >> "${CFG}"
+      printf '  - %s\n' "${BOOTSTRAP_FQDN}" >> "${CFG}"
       if [[ "${ROLE}" = "server" ]]; then
         printf '  - %s\n' "${FQDN}" >> "${CFG}"
       fi
       if [ -n "${VIP_IP}" ]; then printf '  - %s\n' "${VIP_IP}" >> "${CFG}"; fi
       printf 'disable:\n' >> "${CFG}"
       printf '  - rke2-ingress-nginx\n' >> "${CFG}"
+      printf 'kube-controller-manager-arg:\n' >> "${CFG}"
+      printf '  - "cloud-provider=external"\n' >> "${CFG}"
+      printf 'kubelet-arg:\n' >> "${CFG}"
+      printf '  - "cloud-provider=external"\n' >> "${CFG}"
 
       if [[ "${ROLE}" = "server" ]]; then
         if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
           printf 'cluster-init: true\n' >> "${CFG}"
         else
-          printf 'server: "https://%s:9345"\n' "${BOOTSTRAP}.${DOMAIN}" >> "${CFG}"
+          printf 'server: "https://%s:9345"\n' "${BOOTSTRAP_FQDN}" >> "${CFG}"
         fi
-        # Install to the TU snapshot; DO NOT touch systemd here
-        curl -sfL https://get.rke2.io \
-          | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=server \
-            INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -
-      else
-        {
-          printf 'server: "https://%s:9345"\n' "${BOOTSTRAP}.${DOMAIN}"
-          printf 'node-label:\n'
-          printf '  - "role=worker"\n'
-        } >> "${CFG}"
-        curl -sfL https://get.rke2.io \
-          | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=agent \
-            INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -
-      fi
-
-  - path: /usr/local/sbin/rke2-firstboot.sh
-    permissions: '0755'
-    owner: root:root
-    content: |
-      #!/usr/bin/env bash
-      set -euo pipefail
-
-      DOMAIN="kng.house"
-      BOOTSTRAP="c1"
-      BOOTSTRAP_FQDN="${BOOTSTRAP}.${DOMAIN}"
-      HN="$(hostname -s)"
-
-      # PATH conveniences
-      install -d /usr/local/bin
-      for b in kubectl crictl ctr; do
-        if [ -x "/var/lib/rancher/rke2/bin/${b}" ]; then
-          ln -sf "/var/lib/rancher/rke2/bin/${b}" "/usr/local/bin/${b}"
-        fi
-      done
-      mkdir -p /root/.kube
-      ln -sf /etc/rancher/rke2/rke2.yaml /root/.kube/config || true
-
-      # wait for c1 API if I'm not c1 (servers) or if I'm a worker
-      wait_for_api() {
-        until curl -sk --max-time 2 "https://${BOOTSTRAP_FQDN}:9345/ping" | grep -q pong; do
-          sleep 5
-        done
-      }
-
-      # Make sure the unit files actually exist (installed by TU run)
-      have_unit() { systemctl list-unit-files | grep -q "^$1\\.service"; }
-
-      if [[ "${HN}" =~ ^c[0-9]+$ ]]; then
-        # server
-        if ! have_unit rke2-server; then
-          echo "[firstboot] rke2-server.service not found; aborting."
-          exit 1
-        fi
+        unit_exists rke2-server || { echo "[firstboot] rke2-server.service missing; retry next boot"; exit 1; }
+        # Non-bootstrap servers wait for API (ignore SSL)
         if [[ "${HN}" != "${BOOTSTRAP}" ]]; then
-          wait_for_api
+          until curl -sk --max-time 2 "https://${BOOTSTRAP_FQDN}:9345/ping" | grep -q pong; do sleep 5; done
         fi
         systemctl enable --now rke2-server.service
       else
-        # worker
-        if ! have_unit rke2-agent; then
-          echo "[firstboot] rke2-agent.service not found; aborting."
-          exit 1
-        fi
-        wait_for_api
+        {
+          printf 'server: "https://%s:9345"\n' "${BOOTSTRAP_FQDN}"
+          printf 'node-label:\n'
+          printf '  - "role=worker"\n'
+        } >> "${CFG}"
+        unit_exists rke2-agent || { echo "[firstboot] rke2-agent.service missing; retry next boot"; exit 1; }
+        until curl -sk --max-time 2 "https://${BOOTSTRAP_FQDN}:9345/ping" | grep -q pong; do sleep 5; end
         systemctl enable --now rke2-agent.service
       fi
 
@@ -172,14 +164,14 @@ write_files:
       [Service]
       Type=oneshot
       ExecStart=/usr/local/sbin/rke2-firstboot.sh
+      Restart=on-failure
+      RestartSec=10s
 
       [Install]
       WantedBy=multi-user.target
 
 runcmd:
-  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent && systemctl enable qemu-guest-agent.service" ]
-  - [ /usr/sbin/transactional-update, "-n", "run", "bash", "/usr/local/sbin/rke2-bootstrap.sh" ]
-  - [ /usr/sbin/transactional-update, "-n", "run", "systemctl", "enable", "rke2-firstboot.service" ]
+  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent && systemctl enable qemu-guest-agent.service && /usr/local/sbin/rke2-bootstrap.sh && systemctl enable rke2-firstboot.service" ]
 
 power_state:
   mode: reboot
