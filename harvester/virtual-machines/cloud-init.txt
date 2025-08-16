@@ -12,7 +12,7 @@ chpasswd:
     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
 
 write_files:
-  # --- Phase 1 (TU): install only, no systemd, no token fetch ---
+  # --- Phase 1 (TU): best-effort installer only (no token/config, no systemd) ---
   - path: /usr/local/sbin/rke2-bootstrap.sh
     permissions: '0755'
     owner: root:root
@@ -23,9 +23,10 @@ write_files:
       ROLE="agent"
       [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
 
-      # Ensure curl available in snapshot
+      # Ensure curl is available inside the snapshot
       command -v curl >/dev/null 2>&1 || zypper -n in curl || true
 
+      # Try to install RKE2 into the TU snapshot; skip systemd actions
       if [[ "${ROLE}" = "server" ]]; then
         curl -sfL https://get.rke2.io \
           | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=server \
@@ -36,13 +37,16 @@ write_files:
             INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -
       fi
 
-  # --- Phase 2 (first boot): fetch token, write config, start correct service ---
+  # --- Phase 2 (after reboot): token fetch, config, start; self-heal install if needed ---
   - path: /usr/local/sbin/rke2-firstboot.sh
     permissions: '0755'
     owner: root:root
     content: |
       #!/usr/bin/env bash
       set -euo pipefail
+
+      # Log to file + journal
+      exec > >(tee -a /var/log/rke2-firstboot.log) 2>&1
 
       # ---- your values ----
       DOMAIN="kng.house"
@@ -69,7 +73,10 @@ write_files:
           || [[ -f "/usr/lib/systemd/system/${n}.service" ]]
       }
 
-      # Tools on PATH for convenience
+      ROLE="agent"
+      [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
+
+      # Ensure CLI conveniences
       install -d /usr/local/bin
       for b in kubectl crictl ctr; do
         if [ -x "/var/lib/rancher/rke2/bin/${b}" ]; then
@@ -79,10 +86,27 @@ write_files:
       mkdir -p /root/.kube
       ln -sf /etc/rancher/rke2/rke2.yaml /root/.kube/config || true
 
-      ROLE="agent"
-      [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
+      # If the installer didn't land the units yet, install via TU now and exit;
+      # the reboot will make units visible and this service will run again.
+      if [[ "${ROLE}" = "server" ]] && ! unit_exists rke2-server; then
+        echo "[firstboot] rke2-server.service missing -> installing via transactional-update and exiting"
+        transactional-update -n run bash -lc 'curl -sfL https://get.rke2.io | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=server INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -' || true
+        exit 0
+      fi
+      if [[ "${ROLE}" = "agent" ]] && ! unit_exists rke2-agent; then
+        echo "[firstboot] rke2-agent.service missing -> installing via transactional-update and exiting"
+        transactional-update -n run bash -lc 'curl -sfL https://get.rke2.io | INSTALL_RKE2_CHANNEL=stable INSTALL_RKE2_TYPE=agent INSTALL_RKE2_SKIP_ENABLE=true INSTALL_RKE2_SKIP_START=true sh -' || true
+        exit 0
+      fi
 
-      # ---- Fetch cluster token from Rancher (bounded retry, ignore SSL) ----
+      # Wait helper for non-bootstrap nodes (ignore SSL)
+      wait_for_api() {
+        until curl -sk --max-time 2 "https://${BOOTSTRAP_FQDN}:9345/ping" | grep -q pong; do
+          sleep 5
+        done
+      }
+
+      # ---- Fetch cluster token from Rancher (bounded retry; ignore SSL) ----
       API_URL="${RANCHER_URL}/k8s/clusters/${RANCHER_CLUSTER}/api/v1/namespaces/${TOKEN_SECRET_NS}/secrets/${TOKEN_SECRET_NAME}"
       AUTH="Authorization: Bearer ${RANCHER_TOKEN}"
       TOKEN=""
@@ -103,7 +127,10 @@ write_files:
         fi
         [ -n "${TOKEN}" ] || { sleep 10; waited=$((waited+10)); }
       done
-      [ -n "${TOKEN}" ] || { echo "[firstboot] Token not available, will retry next boot"; exit 1; }
+      if [ -z "${TOKEN}" ]; then
+        echo "[firstboot] Token not available (probably expired) — will retry next boot"
+        exit 1
+      fi
 
       # ---- Write /etc/rancher/rke2/config.yaml ----
       install -d /etc/rancher/rke2
@@ -125,16 +152,10 @@ write_files:
       printf 'kubelet-arg:\n' >> "${CFG}"
       printf '  - "cloud-provider=external"\n' >> "${CFG}"
 
+      # Start the right service
       if [[ "${ROLE}" = "server" ]]; then
-        if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
-          printf 'cluster-init: true\n' >> "${CFG}"
-        else
-          printf 'server: "https://%s:9345"\n' "${BOOTSTRAP_FQDN}" >> "${CFG}"
-        fi
-        unit_exists rke2-server || { echo "[firstboot] rke2-server.service missing; retry next boot"; exit 1; }
-        # Non-bootstrap servers wait for API (ignore SSL)
         if [[ "${HN}" != "${BOOTSTRAP}" ]]; then
-          until curl -sk --max-time 2 "https://${BOOTSTRAP_FQDN}:9345/ping" | grep -q pong; do sleep 5; done
+          wait_for_api
         fi
         systemctl enable --now rke2-server.service
       else
@@ -143,8 +164,7 @@ write_files:
           printf 'node-label:\n'
           printf '  - "role=worker"\n'
         } >> "${CFG}"
-        unit_exists rke2-agent || { echo "[firstboot] rke2-agent.service missing; retry next boot"; exit 1; }
-        until curl -sk --max-time 2 "https://${BOOTSTRAP_FQDN}:9345/ping" | grep -q pong; do sleep 5; end
+        wait_for_api
         systemctl enable --now rke2-agent.service
       fi
 
@@ -166,12 +186,15 @@ write_files:
       ExecStart=/usr/local/sbin/rke2-firstboot.sh
       Restart=on-failure
       RestartSec=10s
+      StandardOutput=journal
+      StandardError=journal
 
       [Install]
       WantedBy=multi-user.target
 
 runcmd:
-  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent && systemctl enable qemu-guest-agent.service && /usr/local/sbin/rke2-bootstrap.sh && systemctl enable rke2-firstboot.service" ]
+  # Single TU run (no stacking). If the installer fails here, first-boot will self-install via TU.
+  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent && systemctl enable qemu-guest-agent.service; bash /usr/local/sbin/rke2-bootstrap.sh || true; systemctl enable rke2-firstboot.service" ]
 
 power_state:
   mode: reboot
