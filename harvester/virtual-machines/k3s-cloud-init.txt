@@ -14,6 +14,7 @@ chpasswd:
     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
 
 write_files:
+  # Optional: ensure bootstrap name resolves even if DNS isn’t ready yet
   - path: /etc/hosts.d/k3s-bootstrap
     permissions: '0644'
     owner: root:root
@@ -33,7 +34,7 @@ write_files:
       VIP_DNS="cluster.kng.house"
       VIP_IP="172.30.0.20"
       BOOTSTRAP="c1"
-      BOOTSTRAP_IP="172.30.0.10"   # fallback if DNS not ready
+      BOOTSTRAP_IP="172.30.0.10"     # fallback if DNS not ready
       RANCHER_URL="https://rancher.kng.house"
       RANCHER_CLUSTER="local"
       TOKEN_SECRET_NS="local"
@@ -45,16 +46,15 @@ write_files:
       FQDN="${HN}.${DOMAIN}"
       BOOTSTRAP_FQDN="${BOOTSTRAP}.${DOMAIN}"
 
-      # Role from hostname (override by /etc/node-role if you want)
+      # Role from hostname (override with /etc/node-role if you like)
       if [ -f /etc/node-role ]; then
         ROLE="$(cat /etc/node-role)"
       else
         ROLE="agent"; [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
       fi
 
-      # Early: make sure bootstrap name resolves
+      # Merge hosts snippet (safe no-op if empty)
       cat /etc/hosts.d/* >> /etc/hosts 2>/dev/null || true
-
       systemctl daemon-reload || true
 
       unit_exists() {
@@ -64,7 +64,7 @@ write_files:
           || [[ -f "/usr/lib/systemd/system/${n}.service" ]]
       }
 
-      # 1) Install k3s server/agent on LIVE root (curl installed post-reboot)
+      # 1) Install k3s (server or agent) on LIVE root (curl is present after reboot)
       if [[ "${ROLE}" = "server" ]]; then
         if ! unit_exists k3s || ! command -v /usr/local/bin/k3s >/dev/null 2>&1; then
           echo "[firstboot] Installing k3s server"
@@ -81,13 +81,13 @@ write_files:
         fi
       fi
 
-      # 2) kubectl shim (server only writes kubeconfig; agent won't have it)
+      # 2) kubectl shim (server writes kubeconfig; agent won’t have it)
       install -d /usr/local/bin
       ln -sf /usr/local/bin/k3s /usr/local/bin/kubectl
       mkdir -p /root/.kube
       [ -f /etc/rancher/k3s/k3s.yaml ] && ln -sf /etc/rancher/k3s/k3s.yaml /root/.kube/config || true
 
-      # 3) Fetch join token from Rancher secret (fallback to /etc/rancher/k3s/join-token if present)
+      # 3) Fetch join token from Rancher (fallback to a preseed file if you ever add one)
       API_URL="${RANCHER_URL}/k8s/clusters/${RANCHER_CLUSTER}/api/v1/namespaces/${TOKEN_SECRET_NS}/secrets/${TOKEN_SECRET_NAME}"
       AUTH="Authorization: Bearer ${RANCHER_TOKEN}"
       TOKEN="$(cat /etc/rancher/k3s/join-token 2>/dev/null || true)"
@@ -111,47 +111,37 @@ write_files:
       done
       [ -n "${TOKEN}" ] || { echo "[firstboot] No token yet; will retry next boot"; exit 1; }
 
-      # 4) Build role-specific config.yaml
+      # 4) Build role-specific /etc/rancher/k3s/config.yaml  (no heredocs)
       install -d /etc/rancher/k3s
       CFG="/etc/rancher/k3s/config.yaml"
+      : > "${CFG}"
+      printf 'token: "%s"\n' "${TOKEN}" >> "${CFG}"
 
-      # Common bits
       SERVER_TARGET="${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}"
 
       if [[ "${ROLE}" = "server" ]]; then
-        cat >"${CFG}" <<EOF
-      token: "${TOKEN}"
-      write-kubeconfig-mode: "0644"
-      tls-san:
-        - ${VIP_DNS}
-        - ${BOOTSTRAP_FQDN}
-        - ${FQDN}
-      $( [ -n "${VIP_IP}" ] && printf '  - %s\n' "${VIP_IP}" )
-      disable:
-        - traefik
-      kube-controller-manager-arg:
-        - cloud-provider=external
-      kubelet-arg:
-        - cloud-provider=external
-EOF
+        printf 'write-kubeconfig-mode: "0644"\n' >> "${CFG}"
+        printf 'tls-san:\n' >> "${CFG}"
+        printf '  - %s\n' "${VIP_DNS}" >> "${CFG}"
+        printf '  - %s\n' "${BOOTSTRAP_FQDN}" >> "${CFG}"
+        printf '  - %s\n' "${FQDN}" >> "${CFG}"
+        if [ -n "${VIP_IP}" ]; then printf '  - %s\n' "${VIP_IP}" >> "${CFG}"; fi
+        printf 'disable:\n  - traefik\n' >> "${CFG}"
+        printf 'kube-controller-manager-arg:\n  - cloud-provider=external\n' >> "${CFG}"
+        printf 'kubelet-arg:\n  - cloud-provider=external\n' >> "${CFG}"
         if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
-          echo 'cluster-init: true' >> "${CFG}"
+          printf 'cluster-init: true\n' >> "${CFG}"
         else
-          echo "server: \"https://${SERVER_TARGET}:6443\"" >> "${CFG}"
+          printf 'server: "https://%s:6443"\n' "${SERVER_TARGET}" >> "${CFG}"
         fi
       else
-        # AGENT: ONLY agent-safe keys
-        cat >"${CFG}" <<EOF
-      token: "${TOKEN}"
-      server: "https://${SERVER_TARGET}:6443"
-      kubelet-arg:
-        - cloud-provider=external
-      node-label:
-        - role=worker
-EOF
+        # Agent: ONLY agent-safe keys
+        printf 'server: "https://%s:6443"\n' "${SERVER_TARGET}" >> "${CFG}"
+        printf 'kubelet-arg:\n  - cloud-provider=external\n' >> "${CFG}"
+        printf 'node-label:\n  - role=worker\n' >> "${CFG}"
       fi
 
-      # 5) Wait for API (TCP) then start the correct service
+      # 5) Wait for API (TCP) then start correct service
       wait_for_api() {
         local target="${SERVER_TARGET}"
         until timeout 2 bash -c ">/dev/tcp/${target}/6443" 2>/dev/null; do
@@ -189,7 +179,6 @@ EOF
       WantedBy=multi-user.target
 
 runcmd:
-  # Install packages and ENABLE units inside TU snapshot; snapshot will apply after reboot
   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c",
       "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service" ]
 

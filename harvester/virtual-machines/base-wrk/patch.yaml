@@ -28,7 +28,7 @@ spec:
           guest: 24Gi
         resources:
           requests:
-            cpu: "3"
+            cpu: "6"
             memory: 24Gi
           limits:
             cpu: "6"
