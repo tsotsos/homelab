@@ -142,45 +142,58 @@ write_files:
       install -d /var/lib/rancher/k3s
       : > /var/lib/rancher/k3s/.firstboot-done
 
+  - path: /usr/local/sbin/k3s-ensure.sh
+    permissions: '0755'
+    content: |
+        #!/bin/sh
+        set -eu
+        if [ -f /etc/rancher/k3s/config.yaml ]; then
+        if systemctl list-unit-files | grep -q '^k3s\.service'; then
+            systemctl is-enabled k3s >/dev/null 2>&1 || systemctl enable k3s
+            systemctl is-active  k3s >/dev/null 2>&1 || systemctl start  k3s
+        elif systemctl list-unit-files | grep -q '^k3s-agent\.service'; then
+            systemctl is-enabled k3s-agent >/dev/null 2>&1 || systemctl enable k3s-agent
+            systemctl is-active  k3s-agent >/dev/null 2>&1 || systemctl start  k3s-agent
+        fi
+        fi
+
   - path: /etc/systemd/system/k3s-firstboot.service
     permissions: '0644'
     owner: root:root
     content: |
-      [Unit]
-      Description=k3s first-boot enabler (server/agent) and CLI symlinks
-      Wants=network-online.target
-      After=network-online.target
-      ConditionPathExists=!/var/lib/rancher/k3s/.firstboot-done
+        [Unit]
+        Description=k3s first-boot enabler (server/agent) and CLI symlinks
+        Wants=network-online.target
+        After=network-online.target
+        ConditionPathExists=!/var/lib/rancher/k3s/.firstboot-done
 
-      [Service]
-      Type=oneshot
-      ExecStart=/usr/local/sbin/k3s-firstboot.sh
-      Restart=on-failure
-      RestartSec=10s
-      StandardOutput=journal
-      StandardError=journal
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/k3s-firstboot.sh
+        Restart=on-failure
+        RestartSec=10s
+        StandardOutput=journal
+        StandardError=journal
 
-      [Install]
-      WantedBy=multi-user.target
+        [Install]
+        WantedBy=multi-user.target
 
   - path: /etc/systemd/system/k3s-ensure.service
     permissions: '0644'
     content: |
-      [Unit]
-      Description=Ensure k3s is enabled and running
-      Wants=network-online.target
-      After=network-online.target k3s-firstboot.service
+        [Unit]
+        Description=Ensure k3s is enabled and running
+        Wants=network-online.target
+        After=network-online.target k3s-firstboot.service
+        ConditionPathExists=/etc/rancher/k3s/config.yaml
+        ConditionPathExists=/usr/local/sbin/k3s-ensure.sh
 
-      [Service]
-      Type=oneshot
-      ExecStart=/bin/sh -lc '
-        if [ -f /etc/rancher/k3s/config.yaml ]; then
-          systemctl is-enabled k3s >/dev/null 2>&1 || systemctl enable k3s || systemctl enable k3s-agent || true;
-          systemctl is-active  k3s >/dev/null 2>&1 || systemctl start  k3s || systemctl start  k3s-agent || true;
-        fi
-      '
-      [Install]
-      WantedBy=multi-user.target
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/k3s-ensure.sh
+
+        [Install]
+        WantedBy=multi-user.target
 
 runcmd:
   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service && systemctl enable k3s-ensure.service" ]
