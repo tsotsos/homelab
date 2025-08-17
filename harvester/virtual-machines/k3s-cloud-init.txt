@@ -14,7 +14,7 @@ chpasswd:
     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
 
 write_files:
-  # Optional early /etc/hosts entry so join doesn't depend on DNS
+  # Optional: make bootstrap resolvable even if DNS isn’t ready yet
   - path: /etc/hosts.d/k3s-bootstrap
     permissions: '0644'
     owner: root:root
@@ -29,26 +29,29 @@ write_files:
       set -euo pipefail
       exec > >(tee -a /var/log/k3s-firstboot.log) 2>&1
 
-      # --------
+      # ---- Your values ----
       DOMAIN="kng.house"
       VIP_DNS="cluster.kng.house"
       VIP_IP="172.30.0.20"
       BOOTSTRAP="c1"
-      BOOTSTRAP_IP="172.30.0.10"     # <- fallback if DNS not ready
+      BOOTSTRAP_IP="172.30.0.10"     # fallback if DNS not ready
       RANCHER_URL="https://rancher.kng.house"
       RANCHER_CLUSTER="local"
       TOKEN_SECRET_NS="local"
       TOKEN_SECRET_NAME="token-k3s"
       RANCHER_TOKEN="token-tl9ps:rc7jg5d8swgzz4mgjmkkrkqx9lqknpjxgf5bhwbbgx558sr98cs7w7"
-      # --------
+      # ---------------------
 
       HN="$(hostname -s)"
       FQDN="${HN}.${DOMAIN}"
       BOOTSTRAP_FQDN="${BOOTSTRAP}.${DOMAIN}"
 
-      # role from hostname
+      # role from hostname: c1/c2/c3 => server, others => agent
       ROLE="agent"
       [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
+
+      # 0) Merge hosts snippet (safe if already merged)
+      cat /etc/hosts.d/* >> /etc/hosts 2>/dev/null || true
 
       systemctl daemon-reload || true
 
@@ -59,6 +62,7 @@ write_files:
           || [[ -f "/usr/lib/systemd/system/${n}.service" ]]
       }
 
+      # 1) Install k3s/k3s-agent on LIVE root (curl present after reboot)
       if [[ "${ROLE}" = "server" ]]; then
         if ! unit_exists k3s || ! command -v /usr/local/bin/k3s >/dev/null 2>&1; then
           echo "[firstboot] Installing k3s server"
@@ -75,16 +79,13 @@ write_files:
         fi
       fi
 
+      # 2) CLI shims
       install -d /usr/local/bin
       ln -sf /usr/local/bin/k3s /usr/local/bin/kubectl
-      DATA_DIR="/var/lib/rancher/k3s"
-      BIN_DIR="$(find "$DATA_DIR"/data -type d -name bin 2>/dev/null | head -n1 || true)"
-      for b in crictl ctr; do
-        [ -n "$BIN_DIR" ] && [ -x "$BIN_DIR/$b" ] && ln -sf "$BIN_DIR/$b" "/usr/local/bin/$b" || true
-      done
       mkdir -p /root/.kube
       ln -sf /etc/rancher/k3s/k3s.yaml /root/.kube/config || true
 
+      # 3) Fetch join token from Rancher secret
       API_URL="${RANCHER_URL}/k8s/clusters/${RANCHER_CLUSTER}/api/v1/namespaces/${TOKEN_SECRET_NS}/secrets/${TOKEN_SECRET_NAME}"
       AUTH="Authorization: Bearer ${RANCHER_TOKEN}"
       TOKEN=""
@@ -108,6 +109,7 @@ write_files:
       done
       [ -n "${TOKEN}" ] || { echo "[firstboot] Token not available (expired?); will retry next boot"; exit 1; }
 
+      # 4) Write config
       install -d /etc/rancher/k3s
       CFG="/etc/rancher/k3s/config.yaml"
       : > "${CFG}"
@@ -127,6 +129,7 @@ write_files:
       printf 'kubelet-arg:\n' >> "${CFG}"
       printf '  - cloud-provider=external\n' >> "${CFG}"
 
+      # 5) Wait for bootstrap API via TCP (handles early DNS/401)
       wait_for_api() {
         local target="${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}"
         until timeout 2 bash -c ">/dev/tcp/${target}/6443" 2>/dev/null; do
@@ -134,6 +137,7 @@ write_files:
         done
       }
 
+      # 6) Join & start
       if [[ "${ROLE}" = "server" ]]; then
         if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
           printf 'cluster-init: true\n' >> "${CFG}"
@@ -155,28 +159,12 @@ write_files:
       install -d /var/lib/rancher/k3s
       : > /var/lib/rancher/k3s/.firstboot-done
 
-  - path: /usr/local/sbin/k3s-ensure.sh
-    permissions: '0755'
-    owner: root:root
-    content: |
-      #!/bin/sh
-      set -eu
-      if [ -f /etc/rancher/k3s/config.yaml ]; then
-        if systemctl list-unit-files | grep -q '^k3s\.service'; then
-          systemctl is-enabled k3s >/dev/null 2>&1 || systemctl enable k3s
-          systemctl is-active  k3s >/dev/null 2>&1 || systemctl start  k3s
-        elif systemctl list-unit-files | grep -q '^k3s-agent\.service'; then
-          systemctl is-enabled k3s-agent >/dev/null 2>&1 || systemctl enable k3s-agent
-          systemctl is-active  k3s-agent >/dev/null 2>&1 || systemctl start  k3s-agent
-        fi
-      fi
-
   - path: /etc/systemd/system/k3s-firstboot.service
     permissions: '0644'
     owner: root:root
     content: |
       [Unit]
-      Description=k3s first-boot enabler (server/agent) and CLI symlinks
+      Description=k3s first-boot enabler (server/agent)
       Wants=network-online.target
       After=network-online.target
       ConditionPathExists=!/var/lib/rancher/k3s/.firstboot-done
@@ -190,46 +178,14 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 
-  - path: /etc/systemd/system/k3s-ensure.service
-    permissions: '0644'
-    owner: root:root
-    content: |
-      [Unit]
-      Description=Ensure k3s is enabled and running
-      Wants=network-online.target
-      After=network-online.target k3s-firstboot.service
-      ConditionPathExists=/etc/rancher/k3s/config.yaml
-      ConditionPathExists=/usr/local/sbin/k3s-ensure.sh
-
-      [Service]
-      Type=oneshot
-      ExecStart=/usr/local/sbin/k3s-ensure.sh
-
-      [Install]
-      WantedBy=multi-user.target
-
-  - path: /etc/systemd/system/k3s-ensure.timer
-    permissions: '0644'
-    owner: root:root
-    content: |
-      [Unit]
-      Description=Run k3s-ensure periodically until k3s is up
-
-      [Timer]
-      OnBootSec=30s
-      OnUnitActiveSec=60s
-      Unit=k3s-ensure.service
-
-      [Install]
-      WantedBy=timers.target
-
 runcmd:
+  # Merge hosts snippet early (safe no-op if empty)
   - [ sh, "-lc", "cat /etc/hosts.d/* >> /etc/hosts || true" ]
+
+  # Install packages in a TU snapshot AND only enable units there.
+  # They will take effect after the reboot below when the snapshot is activated.
   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c",
-      "zypper -n in qemu-guest-agent curl" ]
-  - [ sh, "-lc", "systemctl daemon-reload; systemctl enable --now qemu-guest-agent.service" ]
-  - [ sh, "-lc", "systemctl daemon-reload; systemctl enable --now k3s-firstboot.service" ]
-  - [ sh, "-lc", "systemctl start k3s-ensure.service; systemctl enable --now k3s-ensure.timer" ]
+      "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service" ]
 
 power_state:
   mode: reboot
