@@ -14,7 +14,6 @@ chpasswd:
     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
 
 write_files:
-  # Optional: make bootstrap resolvable even if DNS isn’t ready yet
   - path: /etc/hosts.d/k3s-bootstrap
     permissions: '0644'
     owner: root:root
@@ -34,7 +33,7 @@ write_files:
       VIP_DNS="cluster.kng.house"
       VIP_IP="172.30.0.20"
       BOOTSTRAP="c1"
-      BOOTSTRAP_IP="172.30.0.10"     # fallback if DNS not ready
+      BOOTSTRAP_IP="172.30.0.10"   # fallback if DNS not ready
       RANCHER_URL="https://rancher.kng.house"
       RANCHER_CLUSTER="local"
       TOKEN_SECRET_NS="local"
@@ -46,11 +45,14 @@ write_files:
       FQDN="${HN}.${DOMAIN}"
       BOOTSTRAP_FQDN="${BOOTSTRAP}.${DOMAIN}"
 
-      # role from hostname: c1/c2/c3 => server, others => agent
-      ROLE="agent"
-      [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
+      # Role from hostname (override by /etc/node-role if you want)
+      if [ -f /etc/node-role ]; then
+        ROLE="$(cat /etc/node-role)"
+      else
+        ROLE="agent"; [[ "${HN}" =~ ^c[0-9]+$ ]] && ROLE="server"
+      fi
 
-      # 0) Merge hosts snippet (safe if already merged)
+      # Early: make sure bootstrap name resolves
       cat /etc/hosts.d/* >> /etc/hosts 2>/dev/null || true
 
       systemctl daemon-reload || true
@@ -62,7 +64,7 @@ write_files:
           || [[ -f "/usr/lib/systemd/system/${n}.service" ]]
       }
 
-      # 1) Install k3s/k3s-agent on LIVE root (curl present after reboot)
+      # 1) Install k3s server/agent on LIVE root (curl installed post-reboot)
       if [[ "${ROLE}" = "server" ]]; then
         if ! unit_exists k3s || ! command -v /usr/local/bin/k3s >/dev/null 2>&1; then
           echo "[firstboot] Installing k3s server"
@@ -71,7 +73,7 @@ write_files:
           systemctl daemon-reload || true
         fi
       else
-        if ! unit_exists k3s-agent || ! command -v /usr/local/bin/k3s >/dev/null 2>&1; then
+        if ! unit_exists k3s-agent || ! systemctl list-unit-files | grep -q '^k3s-agent\.service'; then
           echo "[firstboot] Installing k3s agent"
           curl -sfL https://get.k3s.io \
             | INSTALL_K3S_CHANNEL=stable INSTALL_K3S_SKIP_ENABLE=true INSTALL_K3S_SKIP_START=true sh -s - agent
@@ -79,16 +81,16 @@ write_files:
         fi
       fi
 
-      # 2) CLI shims
+      # 2) kubectl shim (server only writes kubeconfig; agent won't have it)
       install -d /usr/local/bin
       ln -sf /usr/local/bin/k3s /usr/local/bin/kubectl
       mkdir -p /root/.kube
-      ln -sf /etc/rancher/k3s/k3s.yaml /root/.kube/config || true
+      [ -f /etc/rancher/k3s/k3s.yaml ] && ln -sf /etc/rancher/k3s/k3s.yaml /root/.kube/config || true
 
-      # 3) Fetch join token from Rancher secret
+      # 3) Fetch join token from Rancher secret (fallback to /etc/rancher/k3s/join-token if present)
       API_URL="${RANCHER_URL}/k8s/clusters/${RANCHER_CLUSTER}/api/v1/namespaces/${TOKEN_SECRET_NS}/secrets/${TOKEN_SECRET_NAME}"
       AUTH="Authorization: Bearer ${RANCHER_TOKEN}"
-      TOKEN=""
+      TOKEN="$(cat /etc/rancher/k3s/join-token 2>/dev/null || true)"
       waited=0
       echo "[firstboot] Fetching k3s token from Rancher: ${API_URL}"
       until [ -n "${TOKEN}" ] || [ ${waited} -ge 900 ]; do
@@ -107,52 +109,60 @@ write_files:
         fi
         [ -n "${TOKEN}" ] || { sleep 10; waited=$((waited+10)); }
       done
-      [ -n "${TOKEN}" ] || { echo "[firstboot] Token not available (expired?); will retry next boot"; exit 1; }
+      [ -n "${TOKEN}" ] || { echo "[firstboot] No token yet; will retry next boot"; exit 1; }
 
-      # 4) Write config
+      # 4) Build role-specific config.yaml
       install -d /etc/rancher/k3s
       CFG="/etc/rancher/k3s/config.yaml"
-      : > "${CFG}"
-      printf 'token: "%s"\n' "${TOKEN}" >> "${CFG}"
-      printf 'write-kubeconfig-mode: "0644"\n' >> "${CFG}"
-      printf 'tls-san:\n' >> "${CFG}"
-      printf '  - %s\n' "${VIP_DNS}" >> "${CFG}"
-      printf '  - %s\n' "${BOOTSTRAP_FQDN}" >> "${CFG}"
-      if [[ "${ROLE}" = "server" ]]; then
-        printf '  - %s\n' "${FQDN}" >> "${CFG}"
-      fi
-      if [ -n "${VIP_IP}" ]; then printf '  - %s\n' "${VIP_IP}" >> "${CFG}"; fi
-      printf 'disable:\n' >> "${CFG}"
-      printf '  - traefik\n' >> "${CFG}"
-      printf 'kube-controller-manager-arg:\n' >> "${CFG}"
-      printf '  - cloud-provider=external\n' >> "${CFG}"
-      printf 'kubelet-arg:\n' >> "${CFG}"
-      printf '  - cloud-provider=external\n' >> "${CFG}"
 
-      # 5) Wait for bootstrap API via TCP (handles early DNS/401)
+      # Common bits
+      SERVER_TARGET="${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}"
+
+      if [[ "${ROLE}" = "server" ]]; then
+        cat >"${CFG}" <<EOF
+      token: "${TOKEN}"
+      write-kubeconfig-mode: "0644"
+      tls-san:
+        - ${VIP_DNS}
+        - ${BOOTSTRAP_FQDN}
+        - ${FQDN}
+      $( [ -n "${VIP_IP}" ] && printf '  - %s\n' "${VIP_IP}" )
+      disable:
+        - traefik
+      kube-controller-manager-arg:
+        - cloud-provider=external
+      kubelet-arg:
+        - cloud-provider=external
+EOF
+        if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
+          echo 'cluster-init: true' >> "${CFG}"
+        else
+          echo "server: \"https://${SERVER_TARGET}:6443\"" >> "${CFG}"
+        fi
+      else
+        # AGENT: ONLY agent-safe keys
+        cat >"${CFG}" <<EOF
+      token: "${TOKEN}"
+      server: "https://${SERVER_TARGET}:6443"
+      kubelet-arg:
+        - cloud-provider=external
+      node-label:
+        - role=worker
+EOF
+      fi
+
+      # 5) Wait for API (TCP) then start the correct service
       wait_for_api() {
-        local target="${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}"
+        local target="${SERVER_TARGET}"
         until timeout 2 bash -c ">/dev/tcp/${target}/6443" 2>/dev/null; do
           sleep 5
         done
       }
+      [[ "${HN}" != "${BOOTSTRAP}" ]] && wait_for_api
 
-      # 6) Join & start
       if [[ "${ROLE}" = "server" ]]; then
-        if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
-          printf 'cluster-init: true\n' >> "${CFG}"
-        else
-          printf 'server: "https://%s:6443"\n' "${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}" >> "${CFG}"
-          wait_for_api
-        fi
         systemctl enable --now k3s.service
       else
-        {
-          printf 'server: "https://%s:6443"\n' "${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}"
-          printf 'node-label:\n'
-          printf '  - role=worker\n'
-        } >> "${CFG}"
-        wait_for_api
         systemctl enable --now k3s-agent.service
       fi
 
@@ -164,7 +174,7 @@ write_files:
     owner: root:root
     content: |
       [Unit]
-      Description=k3s first-boot enabler (server/agent)
+      Description=k3s first-boot (server/agent)
       Wants=network-online.target
       After=network-online.target
       ConditionPathExists=!/var/lib/rancher/k3s/.firstboot-done
@@ -179,11 +189,10 @@ write_files:
       WantedBy=multi-user.target
 
 runcmd:
-  # Merge hosts snippet early (safe no-op if empty)
+  # Make bootstrap resolvable early
   - [ sh, "-lc", "cat /etc/hosts.d/* >> /etc/hosts || true" ]
 
-  # Install packages in a TU snapshot AND only enable units there.
-  # They will take effect after the reboot below when the snapshot is activated.
+  # Install packages and ENABLE units inside TU snapshot; snapshot will apply after reboot
   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c",
       "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service" ]
 
