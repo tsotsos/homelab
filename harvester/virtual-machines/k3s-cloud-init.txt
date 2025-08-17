@@ -189,9 +189,6 @@ EOF
       WantedBy=multi-user.target
 
 runcmd:
-  # Make bootstrap resolvable early
-  - [ sh, "-lc", "cat /etc/hosts.d/* >> /etc/hosts || true" ]
-
   # Install packages and ENABLE units inside TU snapshot; snapshot will apply after reboot
   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c",
       "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service" ]
