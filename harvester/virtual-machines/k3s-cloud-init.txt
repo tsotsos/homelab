@@ -96,7 +96,6 @@ write_files:
       done
       [ -n "${TOKEN}" ] || { echo "[firstboot] Token not available (expired?); will retry next boot"; exit 1; }
 
-      # 4) Write /etc/rancher/k3s/config.yaml
       install -d /etc/rancher/k3s
       CFG="/etc/rancher/k3s/config.yaml"
       : > "${CFG}"
@@ -164,9 +163,28 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 
+  - path: /etc/systemd/system/k3s-ensure.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Ensure k3s is enabled and running
+      Wants=network-online.target
+      After=network-online.target k3s-firstboot.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/bin/sh -lc '
+        if [ -f /etc/rancher/k3s/config.yaml ]; then
+          systemctl is-enabled k3s >/dev/null 2>&1 || systemctl enable k3s || systemctl enable k3s-agent || true;
+          systemctl is-active  k3s >/dev/null 2>&1 || systemctl start  k3s || systemctl start  k3s-agent || true;
+        fi
+      '
+      [Install]
+      WantedBy=multi-user.target
 runcmd:
-  # Single TU run: install qemu-guest-agent + curl, and enable the firstboot unit.
-  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service" ]
+  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service" ]
+  - [ sh, "-lc", "systemctl daemon-reload && systemctl enable k3s-firstboot.service && systemctl start k3s-firstboot.service" ]
+  - [ sh, "-lc", "systemctl enable k3s-ensure.service" ]
 
 power_state:
   mode: reboot
