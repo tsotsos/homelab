@@ -181,10 +181,9 @@ write_files:
       '
       [Install]
       WantedBy=multi-user.target
+
 runcmd:
-  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service" ]
-  - [ sh, "-lc", "systemctl daemon-reload && systemctl enable k3s-firstboot.service && systemctl start k3s-firstboot.service" ]
-  - [ sh, "-lc", "systemctl enable k3s-ensure.service" ]
+  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service && systemctl enable k3s-ensure.service" ]
 
 power_state:
   mode: reboot
