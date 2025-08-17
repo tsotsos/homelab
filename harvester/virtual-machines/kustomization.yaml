@@ -3,7 +3,7 @@ secretGenerator:
   - name: cloudinit-secret
     namespace: kng-cluster
     files:
-      - userdata=cloud-init.txt
+      - userdata=k3s-cloud-init.txt
 
 generatorOptions:
   disableNameSuffixHash: true
