@@ -32,4 +32,4 @@ spec:
             memory: 24Gi
           requests:
             cpu: "375m"
-            memory: 16384Mi
+            memory: 24Gi
