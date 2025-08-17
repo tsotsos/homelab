@@ -1,4 +1,6 @@
 #cloud-config
+timezone: Europe/Athens
+
 ssh_pwauth: true
 users:
   - name: root
@@ -12,6 +14,13 @@ chpasswd:
     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
 
 write_files:
+  # Optional early /etc/hosts entry so join doesn't depend on DNS
+  - path: /etc/hosts.d/k3s-bootstrap
+    permissions: '0644'
+    owner: root:root
+    content: |
+      172.30.0.10  c1.kng.house c1
+
   - path: /usr/local/sbin/k3s-firstboot.sh
     permissions: '0755'
     owner: root:root
@@ -19,15 +28,20 @@ write_files:
       #!/usr/bin/env bash
       set -euo pipefail
       exec > >(tee -a /var/log/k3s-firstboot.log) 2>&1
+
+      # --------
       DOMAIN="kng.house"
       VIP_DNS="cluster.kng.house"
       VIP_IP="172.30.0.20"
       BOOTSTRAP="c1"
+      BOOTSTRAP_IP="172.30.0.10"     # <- fallback if DNS not ready
       RANCHER_URL="https://rancher.kng.house"
       RANCHER_CLUSTER="local"
       TOKEN_SECRET_NS="local"
       TOKEN_SECRET_NAME="token-k3s"
       RANCHER_TOKEN="token-tl9ps:rc7jg5d8swgzz4mgjmkkrkqx9lqknpjxgf5bhwbbgx558sr98cs7w7"
+      # --------
+
       HN="$(hostname -s)"
       FQDN="${HN}.${DOMAIN}"
       BOOTSTRAP_FQDN="${BOOTSTRAP}.${DOMAIN}"
@@ -47,14 +61,14 @@ write_files:
 
       if [[ "${ROLE}" = "server" ]]; then
         if ! unit_exists k3s || ! command -v /usr/local/bin/k3s >/dev/null 2>&1; then
-          echo "[firstboot] Installing k3s server (live root)"
+          echo "[firstboot] Installing k3s server"
           curl -sfL https://get.k3s.io \
             | INSTALL_K3S_CHANNEL=stable INSTALL_K3S_SKIP_ENABLE=true INSTALL_K3S_SKIP_START=true sh -s - server
           systemctl daemon-reload || true
         fi
       else
         if ! unit_exists k3s-agent || ! command -v /usr/local/bin/k3s >/dev/null 2>&1; then
-          echo "[firstboot] Installing k3s agent (live root)"
+          echo "[firstboot] Installing k3s agent"
           curl -sfL https://get.k3s.io \
             | INSTALL_K3S_CHANNEL=stable INSTALL_K3S_SKIP_ENABLE=true INSTALL_K3S_SKIP_START=true sh -s - agent
           systemctl daemon-reload || true
@@ -62,11 +76,9 @@ write_files:
       fi
 
       install -d /usr/local/bin
-      ln -sf /usr/local/bin/k3s /usr/local/bin/kubectl   # k3s kubectl shim
-      # best-effort links for crictl/ctr from the k3s data dir
-      DATA_DIR="$(/usr/local/bin/k3s --data-dir 2>/dev/null || true)"
-      [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/rancher/k3s"
-      BIN_DIR="$(find "$DATA_DIR"/data -type d -name 'bin' 2>/dev/null | head -n1 || true)"
+      ln -sf /usr/local/bin/k3s /usr/local/bin/kubectl
+      DATA_DIR="/var/lib/rancher/k3s"
+      BIN_DIR="$(find "$DATA_DIR"/data -type d -name bin 2>/dev/null | head -n1 || true)"
       for b in crictl ctr; do
         [ -n "$BIN_DIR" ] && [ -x "$BIN_DIR/$b" ] && ln -sf "$BIN_DIR/$b" "/usr/local/bin/$b" || true
       done
@@ -78,7 +90,7 @@ write_files:
       TOKEN=""
       waited=0
       echo "[firstboot] Fetching k3s token from Rancher: ${API_URL}"
-      until [ -n "${TOKEN}" ] || [ ${waited} -ge 900 ]; do  # up to ~15m
+      until [ -n "${TOKEN}" ] || [ ${waited} -ge 900 ]; do
         RAW="$(curl -sSk -H "${AUTH}" -w '\n%{http_code}' "${API_URL}" || true)"
         BODY="$(printf '%s' "$RAW" | sed '$d')"
         CODE="$(printf '%s' "$RAW" | tail -n1)"
@@ -111,12 +123,13 @@ write_files:
       printf 'disable:\n' >> "${CFG}"
       printf '  - traefik\n' >> "${CFG}"
       printf 'kube-controller-manager-arg:\n' >> "${CFG}"
-      printf '  - "cloud-provider=external"\n' >> "${CFG}"
+      printf '  - cloud-provider=external\n' >> "${CFG}"
       printf 'kubelet-arg:\n' >> "${CFG}"
-      printf '  - "cloud-provider=external"\n' >> "${CFG}"
+      printf '  - cloud-provider=external\n' >> "${CFG}"
 
       wait_for_api() {
-        until curl -sk --max-time 2 "https://${BOOTSTRAP_FQDN}:6443/readyz" | grep -q ok; do
+        local target="${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}"
+        until timeout 2 bash -c ">/dev/tcp/${target}/6443" 2>/dev/null; do
           sleep 5
         done
       }
@@ -125,15 +138,15 @@ write_files:
         if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
           printf 'cluster-init: true\n' >> "${CFG}"
         else
-          printf 'server: "https://%s:6443"\n' "${BOOTSTRAP_FQDN}" >> "${CFG}"
+          printf 'server: "https://%s:6443"\n' "${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}" >> "${CFG}"
           wait_for_api
         fi
         systemctl enable --now k3s.service
       else
         {
-          printf 'server: "https://%s:6443"\n' "${BOOTSTRAP_FQDN}"
+          printf 'server: "https://%s:6443"\n' "${BOOTSTRAP_IP:-${BOOTSTRAP_FQDN}}"
           printf 'node-label:\n'
-          printf '  - "role=worker"\n'
+          printf '  - role=worker\n'
         } >> "${CFG}"
         wait_for_api
         systemctl enable --now k3s-agent.service
@@ -144,59 +157,79 @@ write_files:
 
   - path: /usr/local/sbin/k3s-ensure.sh
     permissions: '0755'
+    owner: root:root
     content: |
-        #!/bin/sh
-        set -eu
-        if [ -f /etc/rancher/k3s/config.yaml ]; then
+      #!/bin/sh
+      set -eu
+      if [ -f /etc/rancher/k3s/config.yaml ]; then
         if systemctl list-unit-files | grep -q '^k3s\.service'; then
-            systemctl is-enabled k3s >/dev/null 2>&1 || systemctl enable k3s
-            systemctl is-active  k3s >/dev/null 2>&1 || systemctl start  k3s
+          systemctl is-enabled k3s >/dev/null 2>&1 || systemctl enable k3s
+          systemctl is-active  k3s >/dev/null 2>&1 || systemctl start  k3s
         elif systemctl list-unit-files | grep -q '^k3s-agent\.service'; then
-            systemctl is-enabled k3s-agent >/dev/null 2>&1 || systemctl enable k3s-agent
-            systemctl is-active  k3s-agent >/dev/null 2>&1 || systemctl start  k3s-agent
+          systemctl is-enabled k3s-agent >/dev/null 2>&1 || systemctl enable k3s-agent
+          systemctl is-active  k3s-agent >/dev/null 2>&1 || systemctl start  k3s-agent
         fi
-        fi
+      fi
 
   - path: /etc/systemd/system/k3s-firstboot.service
     permissions: '0644'
     owner: root:root
     content: |
-        [Unit]
-        Description=k3s first-boot enabler (server/agent) and CLI symlinks
-        Wants=network-online.target
-        After=network-online.target
-        ConditionPathExists=!/var/lib/rancher/k3s/.firstboot-done
+      [Unit]
+      Description=k3s first-boot enabler (server/agent) and CLI symlinks
+      Wants=network-online.target
+      After=network-online.target
+      ConditionPathExists=!/var/lib/rancher/k3s/.firstboot-done
 
-        [Service]
-        Type=oneshot
-        ExecStart=/usr/local/sbin/k3s-firstboot.sh
-        Restart=on-failure
-        RestartSec=10s
-        StandardOutput=journal
-        StandardError=journal
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/k3s-firstboot.sh
+      Restart=on-failure
+      RestartSec=10s
 
-        [Install]
-        WantedBy=multi-user.target
+      [Install]
+      WantedBy=multi-user.target
 
   - path: /etc/systemd/system/k3s-ensure.service
     permissions: '0644'
+    owner: root:root
     content: |
-        [Unit]
-        Description=Ensure k3s is enabled and running
-        Wants=network-online.target
-        After=network-online.target k3s-firstboot.service
-        ConditionPathExists=/etc/rancher/k3s/config.yaml
-        ConditionPathExists=/usr/local/sbin/k3s-ensure.sh
+      [Unit]
+      Description=Ensure k3s is enabled and running
+      Wants=network-online.target
+      After=network-online.target k3s-firstboot.service
+      ConditionPathExists=/etc/rancher/k3s/config.yaml
+      ConditionPathExists=/usr/local/sbin/k3s-ensure.sh
 
-        [Service]
-        Type=oneshot
-        ExecStart=/usr/local/sbin/k3s-ensure.sh
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/k3s-ensure.sh
 
-        [Install]
-        WantedBy=multi-user.target
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /etc/systemd/system/k3s-ensure.timer
+    permissions: '0644'
+    owner: root:root
+    content: |
+      [Unit]
+      Description=Run k3s-ensure periodically until k3s is up
+
+      [Timer]
+      OnBootSec=30s
+      OnUnitActiveSec=60s
+      Unit=k3s-ensure.service
+
+      [Install]
+      WantedBy=timers.target
 
 runcmd:
-  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c", "zypper -n in qemu-guest-agent curl && systemctl enable qemu-guest-agent.service && systemctl enable k3s-firstboot.service && systemctl enable k3s-ensure.service" ]
+  - [ sh, "-lc", "cat /etc/hosts.d/* >> /etc/hosts || true" ]
+  - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c",
+      "zypper -n in qemu-guest-agent curl" ]
+  - [ sh, "-lc", "systemctl daemon-reload; systemctl enable --now qemu-guest-agent.service" ]
+  - [ sh, "-lc", "systemctl daemon-reload; systemctl enable --now k3s-firstboot.service" ]
+  - [ sh, "-lc", "systemctl start k3s-ensure.service; systemctl enable --now k3s-ensure.timer" ]
 
 power_state:
   mode: reboot
