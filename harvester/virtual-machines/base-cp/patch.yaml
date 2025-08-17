@@ -17,7 +17,6 @@ spec:
           sockets: 1
           cores: 2
           threads: 1
-          dedicatedCpuPlacement: true
         memory:
           guest: 16Gi
         resources:
@@ -25,8 +24,8 @@ spec:
             cpu: "2"
             memory: 16Gi
           requests:
-            cpu: "2"
-            memory: 16Gi
+            cpu: "125m"
+            memory: 10922Mi
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
