@@ -14,13 +14,6 @@ chpasswd:
     root:$6$MA6v7JyQGJABpN4F$eNXET.twXmaFBetvuqbxR5Vd7TjZkKrbE33keFr.XygHjyq220/cUyvIVFWp9hUhG66oh4lFum9V1jdQt4A/6.
 
 write_files:
-  # Optional: ensure bootstrap name resolves even if DNS isn’t ready yet
-  - path: /etc/hosts.d/k3s-bootstrap
-    permissions: '0644'
-    owner: root:root
-    content: |
-      172.30.0.10  c1.kng.house c1
-
   - path: /usr/local/sbin/k3s-firstboot.sh
     permissions: '0755'
     owner: root:root

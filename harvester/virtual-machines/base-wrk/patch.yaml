@@ -22,14 +22,14 @@ spec:
       domain:
         cpu:
           sockets: 1
-          cores: 6
+          cores: 4
           threads: 1
         memory:
-          guest: 24Gi
+          guest: 24576Mi
         resources:
-          requests:
-            cpu: "6"
-            memory: 24Gi
           limits:
-            cpu: "6"
-            memory: 24Gi
+            cpu: "6000m"
+            memory: 24576Mi
+          requests:
+            cpu: "6000m"
+            memory: 24576Mi
