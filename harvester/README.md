@@ -87,18 +87,28 @@ kubectl apply --dry-run=server -k harvester/
 ```
 ---
 
-## Tips & conventions
+## Resources
 
-* **UI edits vs. GitOps:** If you edit VMs/NADs in the UI and Fleet manages the same objects, Fleet will revert your changes on the next sync. Prefer PRs to this folder.
-* **Requests/Limits:** Ensure VM request values satisfy any cluster LimitRanger/Quota. If the `virt-launcher` Pod can’t be scheduled, inspect `kubectl describe vm/<name>` and the corresponding Pod events.
-* **Images:** To avoid re‑downloading cloud images repeatedly, consider defining `VirtualMachineImage` or pre‑seeded `DataVolume` templates and referencing them in your VMs.
-* **Labels:** Use \[Kubernetes recommended app labels] consistently across both VM and template.
+### Vms
 
----
+| VM | Role          | vCPU (cores×threads×sockets = total) | Guest RAM | **Requests** (CPU / Mem) | **Limits** (CPU / Mem) |
+| -- | ------------- | ------------------------------------ | --------- | ------------------------ | ---------------------- |
+| c1 | control-plane | 2×1×1 = **2**                        | **16Gi**  | **125m / 10922Mi**       | **2 / 16Gi**           |
+| c2 | control-plane | 2×1×1 = **2**                        | **16Gi**  | **125m / 10922Mi**       | **2 / 16Gi**           |
+| c3 | control-plane | 2×1×1 = **2**                        | **16Gi**  | **125m / 10922Mi**       | **2 / 16Gi**           |
+| w1 | worker-node   | 6×1×1 = **6**                        | **24Gi**  | **6 / 24Gi**             | **6 / 24Gi**           |
+| w2 | worker-node   | 6×1×1 = **6**                        | **24Gi**  | **6 / 24Gi**             | **6 / 24Gi**           |
+| w3 | worker-node   | 6×1×1 = **6**                        | **24Gi**  | **6 / 24Gi**             | **6 / 24Gi**           |
 
-## References
+### Storage and Networking
 
-* Harvester docs – Networking & Cluster Networks
-* Harvester docs – VM management
-* Harvester docs – Storage Network (NAD created automatically by setting)
-* Rancher Fleet docs – GitRepo, structure, and Kustomize/Helm support
+| VM | Disk PVC (boot) | Disk Size | StorageClass                 | VolMode / AccessModes | Network (NAD)              | MAC                 |
+| -- | --------------- | --------- | ---------------------------- | --------------------- | -------------------------- | ------------------- |
+| c1 | `c1`            | **64Gi**  | `longhorn-microos-openstack` | **Block / RWX**       | `kng-cluster/kng-internal` | `02:00:00:00:10:01` |
+| c2 | `c2`            | **64Gi**  | `longhorn-microos-openstack` | **Block / RWX**       | `kng-cluster/kng-internal` | `02:00:00:00:10:02` |
+| c3 | `c3`            | **64Gi**  | `longhorn-microos-openstack` | **Block / RWX**       | `kng-cluster/kng-internal` | `02:00:00:00:10:03` |
+| w1 | `w1`            | **128Gi** | `longhorn-microos-openstack` | **Block / RWX**       | `kng-cluster/kng-internal` | `02:00:00:00:10:04` |
+| w2 | `w2`            | **128Gi** | `longhorn-microos-openstack` | **Block / RWX**       | `kng-cluster/kng-internal` | `02:00:00:00:10:05` |
+| w3 | `w3`            | **128Gi** | `longhorn-microos-openstack` | **Block / RWX**       | `kng-cluster/kng-internal` | `02:00:00:00:10:06` |
+
+
