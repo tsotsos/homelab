@@ -7,7 +7,7 @@ env:
   vip_cidr: "32"
   vip_leaderelection: "true"
   vip_interface: "enp1s0"
-  lb_enable: "true"
+  lb_enable: "false"
   lb_port: "6443"
   vip_ddns: "false"
   svc_election: "true"

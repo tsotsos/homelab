@@ -119,7 +119,7 @@ write_files:
         printf '  - %s\n' "${BOOTSTRAP_FQDN}" >> "${CFG}"
         printf '  - %s\n' "${FQDN}" >> "${CFG}"
         if [ -n "${VIP_IP}" ]; then printf '  - %s\n' "${VIP_IP}" >> "${CFG}"; fi
-        printf 'disable:\n  - traefik\n' >> "${CFG}"
+        printf 'disable:\n  - traefik\n - servicelb\n' >> "${CFG}"
         printf 'kube-controller-manager-arg:\n  - cloud-provider=external\n' >> "${CFG}"
         printf 'kubelet-arg:\n  - cloud-provider=external\n' >> "${CFG}"
         if [[ "${HN}" = "${BOOTSTRAP}" ]]; then
