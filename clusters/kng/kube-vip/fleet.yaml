@@ -1,4 +1,4 @@
-namespace: kube-system
+defaultNamespace: kube-system
 labels:
   bundle: kube-vip
 helm:
