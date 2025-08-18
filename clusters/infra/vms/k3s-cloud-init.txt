@@ -22,18 +22,18 @@ write_files:
       set -euo pipefail
       exec > >(tee -a /var/log/k3s-firstboot.log) 2>&1
 
-      # ---- Your values ----
+      # ----
       DOMAIN="kng.house"
       VIP_DNS="cluster.kng.house"
       VIP_IP="172.30.0.20"
       BOOTSTRAP="c1"
-      BOOTSTRAP_IP="172.30.0.10"     # fallback if DNS not ready
+      BOOTSTRAP_IP="172.30.0.10"
       RANCHER_URL="https://rancher.kng.house"
       RANCHER_CLUSTER="local"
       TOKEN_SECRET_NS="local"
       TOKEN_SECRET_NAME="token-k3s"
       RANCHER_TOKEN="token-tl9ps:rc7jg5d8swgzz4mgjmkkrkqx9lqknpjxgf5bhwbbgx558sr98cs7w7"
-      # ---------------------
+      # ----
 
       HN="$(hostname -s)"
       FQDN="${HN}.${DOMAIN}"
@@ -152,6 +152,21 @@ write_files:
       install -d /var/lib/rancher/k3s
       : > /var/lib/rancher/k3s/.firstboot-done
 
+      # ---- stage Sealed Secrets into k3s manifests (server nodes only) ----
+      if [[ "${ROLE}" = "server" ]]; then
+        MAN_DIR="/var/lib/rancher/k3s/server/manifests"
+        install -d -m0755 "${MAN_DIR}"
+
+        # Only the bootstrap server needs to drop these, but harmless elsewhere.
+        # Copy staged files atomically so k3s sees complete files.
+        for f in /opt/k3s-bootstrap/manifests/*.yaml; do
+          [ -f "$f" ] || continue
+          base="$(basename "$f")"
+          tmp="${MAN_DIR}/.${base}.tmp"
+          cp -f "$f" "$tmp"
+          mv -f "$tmp" "${MAN_DIR}/${base}"
+        done
+      fi
   - path: /etc/systemd/system/k3s-firstboot.service
     permissions: '0644'
     owner: root:root
@@ -170,6 +185,23 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
+
+  - path: /opt/k3s-bootstrap/manifests/10-sealed-secrets.helmchart.yaml
+    permissions: '0644'
+    owner: root:root
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: sealed-secrets
+        namespace: kube-system
+      spec:
+        repo: https://bitnami-labs.github.io/sealed-secrets
+        chart: sealed-secrets
+        version: 2.17.3
+        targetNamespace: kube-system
+        valuesContent: |
+          fullnameOverride: sealed-secrets
 
 runcmd:
   - [ /usr/sbin/transactional-update, "-n", "run", "sh", "-c",
