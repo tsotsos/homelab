@@ -68,7 +68,7 @@ spec:
       networks:
         - name: default
           multus:
-            networkName: kng-cluster/kng-internal
+            networkName: default/kng-internal
       volumes:
         - name: disk-0
           persistentVolumeClaim:
