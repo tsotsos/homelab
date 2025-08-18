@@ -26,10 +26,3 @@ spec:
           threads: 1
         memory:
           guest: 24Gi
-        resources:
-          limits:
-            cpu: "6"
-            memory: 24Gi
-          requests:
-            cpu: "6"
-            memory: 24Gi
