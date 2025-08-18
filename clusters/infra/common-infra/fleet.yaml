@@ -2,5 +2,11 @@ labels:
   vms.kng.house/bundle: infra-common
 
 defaultNamespace: default
-kustomize:
-  dir: .
+targetCustomizations:
+  - name: local-only
+    clusterSelector:
+      matchLabels:
+        management.cattle.io/cluster-name: local
+    kustomize:
+      dir: .
+

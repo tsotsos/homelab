@@ -4,5 +4,10 @@ dependsOn:
         vms.kng.house/bundle: infra-common
 
 defaultNamespace: kng-vms
-kustomize:
-  dir: .
+targetCustomizations:
+  - name: local-only
+    clusterSelector:
+      matchLabels:
+        management.cattle.io/cluster-name: local
+    kustomize:
+      dir: .
