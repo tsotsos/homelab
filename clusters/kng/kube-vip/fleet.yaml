@@ -1,4 +1,5 @@
 defaultNamespace: kube-system
+name: kube-vip
 labels:
   bundle: kube-vip
 helm:
