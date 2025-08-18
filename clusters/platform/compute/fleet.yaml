@@ -1,7 +1,7 @@
 dependsOn:
   - selector:
       matchLabels:
-        vms.kng.house/bundle: infra-common
+        vms.kng.house/bundle: common-platform
 
 defaultNamespace: kng-vms
 targetCustomizations:
