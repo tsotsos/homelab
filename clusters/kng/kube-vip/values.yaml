@@ -1,0 +1,20 @@
+config:
+  address: "172.30.0.20"
+env:
+  cp_enable: "true"
+  svc_enable: "false"
+  vip_arp: "true"
+  vip_cidr: "32"
+  vip_leaderelection: "true"
+  vip_interface: "enp1s0"
+  lb_enable: "true"
+  lb_port: "6443"
+  vip_ddns: "false"
+  svc_election: "true"
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+
