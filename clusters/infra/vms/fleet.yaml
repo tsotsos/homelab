@@ -1,4 +1,3 @@
-# Deploy VMs only after the "common" bundle is Ready
 dependsOn:
   - selector:
       matchLabels:

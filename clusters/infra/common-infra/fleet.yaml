@@ -1,4 +1,3 @@
-# Labels help the other bundle select this one as a dependency
 labels:
   vms.kng.house/bundle: infra-common
 
