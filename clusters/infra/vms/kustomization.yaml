@@ -1,0 +1,18 @@
+namespace: kng-vms
+secretGenerator:
+  - name: cloudinit-secret
+    namespace: kng-vms
+    files:
+      - userdata=k3s-cloud-init.txt
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+  - c1
+  - c2
+  - c3
+  - w1
+  - w2
+  - w3
+  

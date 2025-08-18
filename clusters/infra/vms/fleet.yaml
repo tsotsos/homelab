@@ -1,0 +1,9 @@
+# Deploy VMs only after the "common" bundle is Ready
+dependsOn:
+  - selector:
+      matchLabels:
+        vms.kng.house/bundle: infra-common
+
+defaultNamespace: kng-vms
+kustomize:
+  dir: .

@@ -1,0 +1,17 @@
+apiVersion: loadbalancer.harvesterhci.io/v1beta1
+kind: IPPool
+metadata:
+  name: kng-ip-pool
+  labels:
+    loadbalancer.harvesterhci.io/global-ip-pool: "false"
+    loadbalancer.harvesterhci.io/vid: "8"
+spec:
+  ranges:
+    - gateway: 10.0.2.1
+      rangeStart: 10.0.2.200
+      rangeEnd: 10.0.2.240
+      subnet: 10.0.2.0/24
+  selector:
+    network: kng-cluster/kng-internal
+    scope:
+      - namespace: "*"
