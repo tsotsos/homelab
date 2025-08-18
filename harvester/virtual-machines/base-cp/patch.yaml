@@ -18,14 +18,14 @@ spec:
           cores: 2
           threads: 1
         memory:
-          guest: 16384Mi
+          guest: 16Gi
         resources:
           limits:
-            cpu: "2000m"
-            memory: 16384Mi
+            cpu: "2"
+            memory: 16Gi
           requests:
-            cpu: "2000m"
-            memory: 16384Mi
+            cpu: "2"
+            memory: 16Gi
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
