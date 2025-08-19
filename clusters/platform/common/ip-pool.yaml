@@ -4,7 +4,7 @@ metadata:
   name: kng-ip-pool
   namespace: default
   labels:
-    loadbalancer.harvesterhci.io/global-ip-pool: "false"
+    loadbalancer.harvesterhci.io/global-ip-pool: "true"
     loadbalancer.harvesterhci.io/vid: "8"
 spec:
   ranges:
@@ -15,6 +15,6 @@ spec:
   selector:
     network: default/kng-internal
     scope:
-      - guestCluster: "kubernetes"
-        namespace: "kng-vms"
-        project: "c-qk74j/p-5sjdh"
+      - guestCluster: "*"
+        namespace: "*"
+        project: "*"
