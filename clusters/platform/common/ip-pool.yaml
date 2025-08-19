@@ -15,4 +15,6 @@ spec:
   selector:
     network: default/kng-internal
     scope:
-      - namespace: "*"
+      - namespace: "kng-vms"
+        project: "*"
+        guestCluster: "kubernetes"
