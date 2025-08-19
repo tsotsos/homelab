@@ -2,4 +2,4 @@ resources:
   - keys.yaml
   - images.yaml
   - nad.yaml
-  - ip-pool.yaml
+#  - ip-pool.yaml
