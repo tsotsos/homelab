@@ -13,7 +13,7 @@ spec:
       rangeEnd: 10.0.2.240
       subnet: 10.0.2.0/24
   selector:
-    network: default/kng-internal
+    network: default/global
     scope:
       - guestCluster: "*"
         namespace: "*"
