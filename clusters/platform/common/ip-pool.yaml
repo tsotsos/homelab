@@ -5,7 +5,6 @@ metadata:
   namespace: default
   labels:
     loadbalancer.harvesterhci.io/global-ip-pool: "true"
-    loadbalancer.harvesterhci.io/vid: "8"
 spec:
   ranges:
     - gateway: 10.0.2.1
