@@ -1,0 +1,3 @@
+cloudConfigPath: /etc/kubernetes/cloud-config
+kube-vip:
+  enabled: false

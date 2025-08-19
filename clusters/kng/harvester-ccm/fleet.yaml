@@ -1,0 +1,15 @@
+defaultNamespace: kube-system
+name: harvester-ccm
+labels:
+  bundle: harvester-ccm
+dependsOn:
+  - selector:
+      matchLabels:
+        bundle: kube-vip
+helm:
+  releaseName: harvester-cloud-provider
+  chart: harvester-cloud-provider
+  repo: https://charts.harvesterhci.io
+  version: 0.2.10
+  valuesFiles:
+    - values.yaml
