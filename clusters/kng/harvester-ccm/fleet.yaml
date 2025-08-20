@@ -3,9 +3,9 @@ name: harvester-ccm
 labels:
   bundle: harvester-ccm
 dependsOn:
-  - selector:
-      matchLabels:
-        bundle: kube-vip
+  # - selector:
+  #     matchLabels:
+  #       bundle: kube-vip
 helm:
   releaseName: harvester-cloud-provider
   chart: harvester-cloud-provider
