@@ -10,7 +10,7 @@ env:
   lb_enable: "false"
   lb_port: "6443"
   vip_ddns: "false"
-  svc_election: "true"
+  svc_election: "false"
 nodeSelector:
   node-role.kubernetes.io/control-plane: "true"
 tolerations:
