@@ -1,11 +1,11 @@
-defaultNamespace: kube-system
-name: kube-vip
-labels:
-  bundle: kube-vip
-helm:
-  releaseName: kube-vip
-  chart: kube-vip
-  repo: https://kube-vip.github.io/helm-charts
-  version: 0.7.1
-  valuesFiles:
-    - values.yaml
+# defaultNamespace: kube-system
+# name: kube-vip
+# labels:
+#   bundle: kube-vip
+# helm:
+#   releaseName: kube-vip
+#   chart: kube-vip
+#   repo: https://kube-vip.github.io/helm-charts
+#   version: 0.7.1
+#   valuesFiles:
+#     - values.yaml
