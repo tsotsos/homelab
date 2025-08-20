@@ -12,7 +12,7 @@ kube-vip:
     repository: rancher/mirrored-kube-vip-kube-vip-iptables
     tag: v0.8.7
   env:
-    vip_interface: ""
+    vip_interface: "enp1s0"
     vip_arp: "true"
     lb_enable: "true"
     lb_port: "6443"
