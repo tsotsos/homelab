@@ -1,0 +1,150 @@
+# =============================================================================
+# HOMELAB CLUSTER CONFIGURATION
+# =============================================================================
+# This file serves as the single source of truth for cluster configuration
+# Used by both Terraform (via locals) and deployment scripts
+
+cluster:
+  name: "kng-cluster"
+  endpoint: "https://10.0.2.100:6443"
+  vip: "10.0.2.100"
+  cni: "flannel"
+  
+network:
+  gateway: "10.0.2.1"
+  cidr: "24"
+  dns_servers:
+    - "10.0.2.1"
+    - "10.0.1.1"
+  bridge: "vmbr1"
+  vlan_id: null
+
+proxmox:
+  endpoint: "https://10.0.1.21:8006/api2/json"
+  nodes: ["s01", "s02", "s03"]
+  storage:
+    primary: "local-lvm"
+    secondary: "zfs-pool"
+  iso_file_id: "local:iso/talosOS-1.11.5.iso"
+  ssh_username: "terraform"
+
+versions:
+  talos: "v1.11.5"
+  kubernetes: "v1.31.1"
+  
+defaults:
+  vm:
+    cpu_cores: 4
+    memory_mb: 8192
+    disk_size: "50G"
+  control_plane:
+    count: 3
+    memory_mb: 8192  # Override if needed
+    disk_size: "50G" # Override if needed
+    etcd_disk_gb: 400
+  worker:
+    count_per_node: 2
+    memory_mb: 8192  # Override if needed
+    disk_size: "50G" # Override if needed
+    storage_disk_gb: 400
+
+# Node-specific configurations (overrides defaults)
+nodes:
+  # Control plane nodes
+  "kng-cp-1":
+    vm_id: 801
+    ip_address: "10.0.2.101"
+    mac_address: "02:00:00:00:01:01"
+    proxmox_node: "s01"
+    role: "controlplane"
+    # memory_mb: 16384    # Uncomment to override
+    # disk_size: "100G"   # Uncomment to override
+    # cpu_cores: 8        # Uncomment to override
+    # etcd_disk_gb: 500   # Uncomment to override
+    
+  "kng-cp-2":
+    vm_id: 802
+    ip_address: "10.0.2.102"
+    mac_address: "02:00:00:00:01:02"
+    proxmox_node: "s02"
+    role: "controlplane"
+    
+  "kng-cp-3":
+    vm_id: 803
+    ip_address: "10.0.2.103"
+    mac_address: "02:00:00:00:01:03"
+    proxmox_node: "s03"
+    role: "controlplane"
+    
+  # Worker nodes
+  "kng-worker-1":
+    vm_id: 811
+    ip_address: "10.0.2.104"
+    mac_address: "02:00:00:00:02:01"
+    proxmox_node: "s01"
+    role: "worker"
+    
+  "kng-worker-2":
+    vm_id: 812
+    ip_address: "10.0.2.105"
+    mac_address: "02:00:00:00:02:02"
+    proxmox_node: "s02"
+    role: "worker"
+    
+  "kng-worker-3":
+    vm_id: 813
+    ip_address: "10.0.2.106"
+    mac_address: "02:00:00:00:02:03"
+    proxmox_node: "s03"
+    role: "worker"
+    
+  "kng-worker-4":
+    vm_id: 814
+    ip_address: "10.0.2.107"
+    mac_address: "02:00:00:00:02:04"
+    proxmox_node: "s01"
+    role: "worker"
+    
+  "kng-worker-5":
+    vm_id: 815
+    ip_address: "10.0.2.108"
+    mac_address: "02:00:00:00:02:05"
+    proxmox_node: "s02"
+    role: "worker"
+    
+  "kng-worker-6":
+    vm_id: 816
+    ip_address: "10.0.2.109"
+    mac_address: "02:00:00:00:02:06"
+    proxmox_node: "s03"
+    role: "worker"
+
+# External nodes configuration
+external_nodes:
+  # Example external node configuration
+  # "kng-edge-1":
+  #   ip_address: "10.0.2.120"
+  #   role: "worker"
+  #   location: "edge"
+  #   arch: "arm64"
+  #   resources:
+  #     memory_gb: 4
+  #     cpu_cores: 4
+
+ssh:
+  public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE4SrYkfM8Xu/9cFpqIOb8Y4OJ3WyPYJRB1zMOoTPJQN george@Georgioss-MacBook-Pro.local"
+
+# Deployment settings
+deployment:
+  parallel:
+    enabled: true
+    max_concurrent_nodes: 3
+    wait_between_phases: 30
+  timeouts:
+    node_boot: 600      # 10 minutes
+    api_ready: 600      # 10 minutes
+    config_apply: 180   # 3 minutes
+    cluster_ready: 900  # 15 minutes
+  retries:
+    max_attempts: 3
+    delay_seconds: 30

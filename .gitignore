@@ -1,25 +1,91 @@
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfplan
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+!terraform.tfvars.example
+
+# Talos
+talos-config/
+*.talosconfig
+machineconfig-*.yaml
+
+# Kubernetes
+k3s.yaml
+k3s-s01.yaml
+rke2.yaml
+kubeconfig*
+*.kubeconfig
+
+# Helm
+charts/
+*.tgz
+helm-charts/
+Chart.lock
+
+# Secrets and Sensitive Data
 *.env
-*.lock
-*.terraform
-*.asc
+secrets.env
+secrets-un/
+unsealed-*
 *.key
+*.pem
+*.crt
+*.asc
+*.p12
+*.pfx
+gitops_key
+gitops_key.pub
+*secret*.yaml
+*Secret*.yaml
+
+# Logs and temporary files
+*.log
+.deployment-logs/
+*.tmp
+*.bak
+*.backup
+.terraform-logs
+
+# Configuration files with sensitive data
 **/hosts.ini
 **/hosts.yaml
 **/hosts.yml
-**/.terraform.lock.hcl
-.terraform
-.vscode
-ansible/nomad-cluster/keys/
-deprecated/
-gitops_key
-gitops_key.pub
-secrets.env
-network.puml
-rke2.yaml
-k3s.yaml
-k3s-s01.yaml
-un.yaml
-secrets-un/
-unsealed-*
 .config.yaml
+udm_dhcp_reservations.csv
+
+# Development and deprecated
+deprecated/
+*.lock
+.terraform.d/
+
+# Network diagrams (may contain sensitive topology)
+network.puml
+*.puml
+
+# Unsealed secrets
+un.yaml
+*-unsealed.yaml
+
+# Build artifacts
+dist/
+build/
+target/
+*.tar.gz
+*.zip
+
+# Cache directories
+.cache/
+node_modules/
+.npm/

@@ -1,0 +1,139 @@
+# =============================================================================
+# PROXMOX CONNECTION CONFIGURATION
+# =============================================================================
+# These values will be sourced from secrets.env via environment variables
+
+proxmox_ve_endpoint     = ""  # Set via TF_VAR_proxmox_ve_endpoint
+proxmox_ve_username     = ""  # Set via TF_VAR_proxmox_ve_username  
+proxmox_ve_password     = ""  # Set via TF_VAR_proxmox_ve_password
+proxmox_ve_insecure     = true
+proxmox_ve_ssh_username = "root"
+
+# =============================================================================
+# CLUSTER CONFIGURATION
+# =============================================================================
+
+cluster_name                       = "kng-cluster"
+cluster_endpoint                   = "https://10.0.2.100:6443"
+cluster_vip                       = "10.0.2.100"
+cluster_cni                       = "flannel"  # Options: flannel, cilium, calico
+allow_scheduling_on_control_planes = false
+
+# =============================================================================
+# NETWORK CONFIGURATION  
+# =============================================================================
+
+network_gateway = "10.0.2.1"
+network_cidr    = "24"
+dns_servers     = ["8.8.8.8", "1.1.1.1"]
+
+# =============================================================================
+# NODE CONFIGURATION
+# =============================================================================
+
+control_plane_count              = 3
+worker_count_per_proxmox_node   = 2
+proxmox_nodes                   = ["pve-node-1", "pve-node-2", "pve-node-3"]
+
+# =============================================================================
+# VM CONFIGURATION
+# =============================================================================
+
+# Template and Storage
+talos_template_name     = "talos-template"
+vm_storage             = "local-lvm"
+vm_storage_secondary   = "zfs-pool"
+
+# Network
+vm_bridge  = "vmbr1"
+vm_vlan_id = null  # Set to a number for VLAN tagging, null for untagged
+
+# Resources
+vm_cpu_cores = 4
+vm_memory    = 8192  # 8GB
+vm_disk_size = "30G"
+
+# Additional Storage
+control_plane_etcd_disk_size = 10   # GB for etcd data
+worker_storage_disk_size     = 50   # GB for container storage
+
+# VM Defaults (used during initialization, ignored after Talos boots)
+vm_default_username = "talos"
+vm_default_password = "changeme"
+
+# =============================================================================
+# MAC ADDRESS CONFIGURATION (Optional)
+# =============================================================================
+# Leave empty for auto-generation, or specify custom MAC addresses
+
+control_plane_mac_addresses = [
+  # "52:54:00:12:34:01",
+  # "52:54:00:12:34:02", 
+  # "52:54:00:12:34:03"
+]
+
+worker_mac_addresses = [
+  # "52:54:00:12:34:11",
+  # "52:54:00:12:34:12",
+  # "52:54:00:12:34:13",
+  # "52:54:00:12:34:14",
+  # "52:54:00:12:34:15",
+  # "52:54:00:12:34:16"
+]
+
+# =============================================================================
+# SSH CONFIGURATION
+# =============================================================================
+
+# IMPORTANT: Add your SSH public key for emergency access
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQ... your-ssh-key-here"
+
+# =============================================================================
+# TALOS & KUBERNETES VERSIONS
+# =============================================================================
+
+talos_version      = "v1.8.0"
+kubernetes_version = "v1.31.1"
+talos_install_disk = "/dev/vda"
+
+# =============================================================================
+# SYSTEM TUNING (Advanced Configuration)
+# =============================================================================
+
+# Control Plane Sysctls
+control_plane_sysctls = {
+  "net.core.somaxconn"                     = "65535"
+  "net.core.netdev_max_backlog"            = "4096"
+  "net.ipv4.ip_forward"                    = "1"
+  "net.bridge.bridge-nf-call-iptables"     = "1"
+  "net.ipv4.conf.all.forwarding"           = "1"
+  "kernel.pid_max"                         = "4194304"
+}
+
+# Worker Node Sysctls  
+worker_sysctls = {
+  "net.core.somaxconn"                     = "65535"
+  "net.core.netdev_max_backlog"            = "4096" 
+  "net.ipv4.ip_forward"                    = "1"
+  "net.bridge.bridge-nf-call-iptables"     = "1"
+  "net.ipv4.conf.all.forwarding"           = "1"
+  "kernel.pid_max"                         = "4194304"
+  "fs.inotify.max_user_watches"            = "524288"
+  "fs.inotify.max_user_instances"          = "8192"
+}
+
+# Kubelet Extra Arguments
+control_plane_kubelet_extra_args = {
+  "rotate-server-certificates" = "true"
+  "protect-kernel-defaults"    = "true" 
+  "read-only-port"            = "0"
+  "event-qps"                 = "50"
+}
+
+worker_kubelet_extra_args = {
+  "rotate-server-certificates" = "true"
+  "protect-kernel-defaults"    = "true"
+  "read-only-port"            = "0"
+  "event-qps"                 = "50"
+  "max-pods"                  = "250"
+}
