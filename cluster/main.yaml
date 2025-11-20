@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: management
+  name: kng-cluster
   namespace: argocd
 spec:
-  description: Project for homelab management cluster
+  description: Project for kng-cluster
   sourceRepos:
     - https://github.com/tsotsos/homelab
   destinations:
@@ -17,7 +17,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: management-cluster
+  name: kng-cluster
   namespace: argocd
 spec:
   generators:
@@ -25,12 +25,12 @@ spec:
         repoURL: https://github.com/tsotsos/homelab
         revision: HEAD
         directories:
-          - path: clusters/management/*
+          - path: cluster/*
   template:
     metadata:
-      name: '{{path.basename}}-management'
+      name: '{{path.basename}}-kng-cluster'
     spec:
-      project: management
+      project: kng-cluster
       source:
         repoURL: https://github.com/tsotsos/homelab
         targetRevision: HEAD

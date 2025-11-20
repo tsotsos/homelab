@@ -9,7 +9,7 @@ output "talos_config_path" {
 
 output "kubeconfig_path" {
   description = "Path to the Kubernetes configuration file"
-  value       = var.control_plane_count > 0 ? "${path.module}/talos-config/kubeconfig" : null
+  value       = length(local.control_plane_nodes) > 0 ? "${path.module}/talos-config/kubeconfig" : null
 }
 
 output "cluster_config_directory" {
@@ -23,17 +23,17 @@ output "cluster_config_directory" {
 
 output "cluster_name" {
   description = "Name of the deployed Talos cluster"
-  value       = var.cluster_name
+  value       = local.cluster_config.name
 }
 
 output "cluster_endpoint" {
   description = "Kubernetes API server endpoint URL"
-  value       = var.cluster_endpoint
+  value       = local.cluster_config.endpoint
 }
 
 output "cluster_vip" {
   description = "Virtual IP address for control plane load balancing"
-  value       = var.cluster_vip
+  value       = local.cluster_config.vip
 }
 
 # =============================================================================
@@ -116,22 +116,22 @@ output "deployment_summary" {
   description = "Summary of the deployed infrastructure"
   value = {
     cluster = {
-      name               = var.cluster_name
-      endpoint           = var.cluster_endpoint
-      talos_version      = var.talos_version
-      kubernetes_version = var.kubernetes_version
+      name               = local.cluster_config.name
+      endpoint           = local.cluster_config.endpoint
+      talos_version      = local.versions_config.talos
+      kubernetes_version = local.versions_config.kubernetes
     }
     nodes = {
-      control_plane_count = var.control_plane_count
-      worker_count       = length(local.worker_nodes)
-      total_nodes        = var.control_plane_count + length(local.worker_nodes)
+      control_plane_count = length(local.control_plane_nodes)
+      worker_count        = length(local.worker_nodes)
+      total_nodes         = length(local.control_plane_nodes) + length(local.worker_nodes)
     }
     proxmox = {
-      nodes_used = var.proxmox_nodes
-      vm_bridge  = var.vm_bridge
+      nodes_used = local.proxmox_config.nodes
+      vm_bridge  = local.network_config_yaml.bridge
       storage = {
-        primary   = var.vm_storage
-        secondary = var.vm_storage_secondary
+        primary   = local.proxmox_config.storage.primary
+        secondary = local.proxmox_config.storage.secondary
       }
     }
   }
@@ -143,7 +143,7 @@ output "deployment_summary" {
 
 output "bootstrap_instructions" {
   description = "Step-by-step instructions for bootstrapping the Talos cluster"
-  value = <<-EOT
+  value       = <<-EOT
     
     ╔════════════════════════════════════════════════════════════════════════════════╗
     ║                         TALOS CLUSTER BOOTSTRAP GUIDE                         ║
@@ -153,10 +153,10 @@ output "bootstrap_instructions" {
     
     📋 CLUSTER INFORMATION:
     ────────────────────────────────────────────────────────────────────────────────
-    • Cluster Name:     ${var.cluster_name}
-    • API Endpoint:     ${var.cluster_endpoint}
-    • Control Plane IP: ${var.cluster_vip}
-    • Node Count:       ${var.control_plane_count} control plane + ${length(local.worker_nodes)} workers
+    • Cluster Name:     ${local.cluster_config.name}
+    • API Endpoint:     ${local.cluster_config.endpoint}
+    • Control Plane IP: ${local.cluster_config.vip}
+    • Node Count:       ${length(local.control_plane_nodes)} control plane + ${length(local.worker_nodes)} workers
     
     🚀 BOOTSTRAP STEPS:
     ────────────────────────────────────────────────────────────────────────────────

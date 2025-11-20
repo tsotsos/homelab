@@ -4,4 +4,4 @@ metadata:
   name: kube-vip-cloud-provider
   namespace: kube-system
 data:
-  range-global: "10.0.1.30-10.0.1.40"
+  range-global: "10.0.2.75-10.0.2.99"

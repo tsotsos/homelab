@@ -11,6 +11,7 @@ Enterprise-grade, production-ready Talos Kubernetes deployment system with advan
 - **🔧 Single Source of Truth**: YAML configuration drives both Terraform and deployment
 - **🏥 Built-in Diagnostics**: Comprehensive health checks and troubleshooting
 - **🛡️ Professional Grade**: Enterprise error handling, logging, and recovery
+- **🚀 Modern CNI**: Cilium for high-performance networking with eBPF
 
 ## 🏗️ Cluster Architecture
 
@@ -87,6 +88,11 @@ cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
 ```
 
+**Default Software Versions (configured in cluster-config.yaml):**
+- **Talos Linux**: v1.11.5  
+- **Kubernetes**: v1.34.1
+- **CNI**: Cilium (high-performance eBPF networking)
+
 ### 3. Advanced Configuration (Optional)
 
 Create `cluster-config.yaml` for advanced features:
@@ -115,25 +121,22 @@ nodes:
 
 ## 🚀 Deployment
 
-### Unified Deployment Script
+### Streamlined Deployment Script
 
-Use the single deployment script for all operations:
+Use the deployment script for all operations:
 
 ```bash
 # Full deployment (infrastructure + cluster)
-./deploy-talos-cluster.sh
-
-# Infrastructure only
-./deploy-talos-cluster.sh deploy
-
-# Quick status check
-./deploy-talos-cluster.sh status
-
-# Comprehensive diagnostics
-./deploy-talos-cluster.sh diagnostics
+cd ../scripts
+./deploy.sh deploy
 
 # View all available commands
-./deploy-talos-cluster.sh help
+./deploy.sh
+
+# Step-by-step deployment
+./deploy.sh init          # Generate configs
+./deploy.sh apply         # Install Talos
+./deploy.sh bootstrap     # Start Kubernetes
 ```
 
 ### Manual Step-by-Step
@@ -152,16 +155,15 @@ terraform plan
 terraform apply
 
 # 2. Deploy Talos cluster
-export TALOSCONFIG="$(pwd)/talos-config/talosconfig"
-
-# Wait for VMs to boot
-./deploy-talos-cluster.sh status
-
-# Bootstrap cluster
-talosctl bootstrap --nodes 10.0.2.101
+cd ../scripts
+./deploy.sh deploy
 
 # Verify deployment
-./deploy-talos-cluster.sh diagnostics
+export KUBECONFIG="$PWD/../infra/talos-config/kubeconfig"
+kubectl get nodes
+
+# 3. Bootstrap core services
+./bootstrap.sh
 ```
 
 ## 🎯 Post-Deployment
@@ -487,23 +489,25 @@ worker_storage_disk_size     = 50   # GB for containers
 
 ### Using the Deploy Script (Recommended)
 
-The `deploy.sh` script handles environment variable sourcing automatically:
+The `deploy.sh` script is located in the `scripts/` folder:
 
 ```bash
-# Initialize Terraform
+cd ../scripts
+
+# Initialize and generate configs
 ./deploy.sh init
 
-# Plan the deployment
-./deploy.sh plan
-
-# Apply the configuration  
+# Apply configurations (install Talos)
 ./deploy.sh apply
 
-# Show deployment summary
-./deploy.sh output deployment_summary
+# Bootstrap Kubernetes cluster
+./deploy.sh bootstrap
 
-# View bootstrap instructions
-./deploy.sh output bootstrap_instructions
+# Or full deployment in one command
+./deploy.sh deploy
+
+# Check cluster status
+./deploy.sh status
 ```
 
 ### Manual Deployment

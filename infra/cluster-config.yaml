@@ -3,12 +3,21 @@
 # =============================================================================
 # This file serves as the single source of truth for cluster configuration
 # Used by both Terraform (via locals) and deployment scripts
+#
+# IMAGE EXTENSIONS NOTICE:
+# This configuration leverages a custom Talos image with the following extensions:
+# - crun, iscsi-tools, nut-client, qemu-guest-agent, util-linux-tools
+# 
+# When upgrading Talos images, ensure the Factory configuration includes
+# these extensions and update the iso_file_id below accordingly.
 
 cluster:
   name: "kng-cluster"
   endpoint: "https://10.0.2.100:6443"
   vip: "10.0.2.100"
-  cni: "flannel"
+  cni: "none"  # Disabled - using Cilium instead
+  use_static_ips: true  # Use static IPs instead of DHCP
+  use_talos_vip: true   # Use Talos built-in VIP instead of kube-vip
   
 network:
   gateway: "10.0.2.1"
@@ -25,28 +34,68 @@ proxmox:
   storage:
     primary: "local-lvm"
     secondary: "zfs-pool"
-  iso_file_id: "local:iso/talosOS-1.11.5.iso"
+  iso_file_id: "nfs:iso/talos-1.11.5.iso" # Talos ISO location hash: 971ccc8ced807f3a576c1fb9fb7110b07b61423abf3ed202ec3d79f61c8d84df
   ssh_username: "terraform"
 
 versions:
   talos: "v1.11.5"
-  kubernetes: "v1.31.1"
-  
+  kubernetes: "v1.34.1"
+  cilium: "1.18.4"
+  # Talos Factory installer image (with custom extensions)
+  talos_installer: "factory.talos.dev/installer/971ccc8ced807f3a576c1fb9fb7110b07b61423abf3ed202ec3d79f61c8d84df:v1.11.5"
+
 defaults:
   vm:
-    cpu_cores: 4
+    cpu_cores: 3
     memory_mb: 8192
-    disk_size: "50G"
+    disk_size: "150G"  # Increased from 50G to 150G for all VMs
   control_plane:
     count: 3
     memory_mb: 8192  # Override if needed
-    disk_size: "50G" # Override if needed
-    etcd_disk_gb: 400
+    disk_size: "150G" # Increased from 50G to 150G
+    etcd_disk_gb: 20  # Reduced from 100GB - 20GB is plenty for etcd
   worker:
     count_per_node: 2
-    memory_mb: 8192  # Override if needed
-    disk_size: "50G" # Override if needed
-    storage_disk_gb: 400
+    memory_mb: 12288  # Override if needed
+    disk_size: "150G" # Increased from 50G to 150G
+    storage_disk_gb: 1500  # 1.5TB for storage nodes (workers 4, 5, 6)
+  talos:
+    install_disk: "/dev/vda"  # virtio0 maps to /dev/vda
+    sysctls:
+      # VM performance optimizations
+      vm.swappiness: "1"                    # Minimize swap usage
+      net.core.somaxconn: "65535"          # Increase max connections
+      net.core.netdev_max_backlog: "30000" # Network performance
+      net.ipv4.tcp_fin_timeout: "15"       # Faster TCP cleanup
+      net.ipv4.tcp_keepalive_time: "300"   # TCP keepalive optimization
+      # Network buffer optimizations
+      net.core.rmem_default: "262144"      # Default receive buffer
+      net.core.rmem_max: "16777216"        # Max receive buffer
+      net.core.wmem_default: "262144"      # Default send buffer
+      net.core.wmem_max: "16777216"        # Max send buffer
+      # File system optimizations
+      fs.inotify.max_user_watches: "1048576"   # File watching capacity
+      fs.inotify.max_user_instances: "8192"    # Inotify instances
+    kubelet_extra_args:
+      # Kubelet optimizations
+      feature-gates: "RotateKubeletServerCertificate=true"
+      max-pods: "250"
+    kernel_args:
+      - "mitigations=off"       # Disable CPU vulnerability mitigations for better performance
+      - "clocksource=tsc"       # Use Time Stamp Counter for efficient timekeeping
+      - "tsc=reliable"          # Trust TSC as stable clock source
+    features:
+      # Talos features
+      rbac: true
+      stableHostname: true
+      apidCheckExtKeyUsage: true
+    disabled_services:
+      # Services to disable (will be enabled later when needed)
+      - "ext-nut-client"
+  network:
+    mac_addresses:
+      control_plane: []  # Automatic assignment if empty
+      worker: []         # Automatic assignment if empty
 
 # Node-specific configurations (overrides defaults)
 nodes:
@@ -57,9 +106,11 @@ nodes:
     mac_address: "02:00:00:00:01:01"
     proxmox_node: "s01"
     role: "controlplane"
+    cpu_cores: 4
+    labels:
+      topology.kubernetes.io/zone: "s01"
     # memory_mb: 16384    # Uncomment to override
     # disk_size: "100G"   # Uncomment to override
-    # cpu_cores: 8        # Uncomment to override
     # etcd_disk_gb: 500   # Uncomment to override
     
   "kng-cp-2":
@@ -68,6 +119,8 @@ nodes:
     mac_address: "02:00:00:00:01:02"
     proxmox_node: "s02"
     role: "controlplane"
+    labels:
+      topology.kubernetes.io/zone: "s02"
     
   "kng-cp-3":
     vm_id: 803
@@ -75,14 +128,23 @@ nodes:
     mac_address: "02:00:00:00:01:03"
     proxmox_node: "s03"
     role: "controlplane"
+    labels:
+      topology.kubernetes.io/zone: "s03"
     
-  # Worker nodes
+  # Worker nodes - Infrastructure + Apps (s01, s02, s03)
   "kng-worker-1":
     vm_id: 811
     ip_address: "10.0.2.104"
     mac_address: "02:00:00:00:02:01"
     proxmox_node: "s01"
     role: "worker"
+    cpu_cores: 4
+    storage_disk_gb: 0  # No second disk for infra nodes
+    labels:
+      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node.kng/workload-apps: "true"
+      node.kng/workload-infra: "true"
+      topology.kubernetes.io/zone: "s01"
     
   "kng-worker-2":
     vm_id: 812
@@ -90,6 +152,12 @@ nodes:
     mac_address: "02:00:00:00:02:02"
     proxmox_node: "s02"
     role: "worker"
+    storage_disk_gb: 0  # No second disk for infra nodes
+    labels:
+      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node.kng/workload-apps: "true"
+      node.kng/workload-infra: "true"
+      topology.kubernetes.io/zone: "s02"
     
   "kng-worker-3":
     vm_id: 813
@@ -97,13 +165,27 @@ nodes:
     mac_address: "02:00:00:00:02:03"
     proxmox_node: "s03"
     role: "worker"
+    storage_disk_gb: 0  # No second disk for infra nodes
+    labels:
+      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node.kng/workload-apps: "true"
+      node.kng/workload-infra: "true"
+      topology.kubernetes.io/zone: "s03"
     
+  # Worker nodes - Storage + Apps (one per physical host)
   "kng-worker-4":
     vm_id: 814
     ip_address: "10.0.2.107"
     mac_address: "02:00:00:00:02:04"
     proxmox_node: "s01"
     role: "worker"
+    cpu_cores: 4
+    storage_disk_gb: 1000  # 1.5TB storage disk
+    labels:
+      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node.kng/workload-apps: "true"
+      node.kng/workload-storage: "true"
+      topology.kubernetes.io/zone: "s01"
     
   "kng-worker-5":
     vm_id: 815
@@ -111,6 +193,13 @@ nodes:
     mac_address: "02:00:00:00:02:05"
     proxmox_node: "s02"
     role: "worker"
+    cpu_cores: 4
+    storage_disk_gb: 1000  # 1.5TB storage disk
+    labels:
+      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node.kng/workload-apps: "true"
+      node.kng/workload-storage: "true"
+      topology.kubernetes.io/zone: "s02"
     
   "kng-worker-6":
     vm_id: 816
@@ -118,6 +207,13 @@ nodes:
     mac_address: "02:00:00:00:02:06"
     proxmox_node: "s03"
     role: "worker"
+    cpu_cores: 4
+    storage_disk_gb: 1000  # 1.5TB storage disk
+    labels:
+      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node.kng/workload-apps: "true"
+      node.kng/workload-storage: "true"
+      topology.kubernetes.io/zone: "s03"
 
 # External nodes configuration
 external_nodes:

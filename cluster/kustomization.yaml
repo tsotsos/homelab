@@ -3,9 +3,7 @@ kind: Kustomization
 namespace: argocd
 resources:
     - sealed-secrets
-    - kube-vip
     - kube-vip-cloud-provider
     - argocd
     - cert-manager
     - external-dns
-    - rancher

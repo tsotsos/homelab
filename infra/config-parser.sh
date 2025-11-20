@@ -232,6 +232,53 @@ get_proxmox_storage_secondary() {
     yq '.proxmox.storage.secondary' "$CONFIG_FILE"
 }
 
+# =============================================================================
+# CILIUM CONFIGURATION FUNCTIONS
+# =============================================================================
+
+# Get Cilium version
+get_cilium_version() {
+    yq '.versions.cilium' "$CONFIG_FILE"
+}
+
+# Get Cilium configuration value with fallback
+get_cilium_config() {
+    local config_path=$1
+    local default_value=${2:-"null"}
+    
+    # Replace dots with yq path syntax
+    local yq_path=$(echo "$config_path" | sed 's/\./\./g')
+    
+    local value=$(yq ".cilium.$yq_path" "$CONFIG_FILE" 2>/dev/null || echo "null")
+    
+    if [ "$value" = "null" ] || [ -z "$value" ]; then
+        echo "$default_value"
+    else
+        echo "$value"
+    fi
+}
+
+# Get specific Cilium configurations
+get_cilium_enabled() {
+    get_cilium_config "enabled" "true"
+}
+
+get_cilium_kube_proxy_replacement() {
+    get_cilium_config "kubeProxyReplacement" "false"
+}
+
+get_cilium_ipam_mode() {
+    get_cilium_config "ipam.mode" "kubernetes"
+}
+
+get_cilium_operator_replicas() {
+    get_cilium_config "operator.replicas" "1"
+}
+
+get_cilium_hubble_enabled() {
+    get_cilium_config "hubble.enabled" "true"
+}
+
 # Generate node maps for scripts
 generate_node_map() {
     echo "# Node IP mappings (generated from cluster-config.yaml)"
@@ -332,6 +379,26 @@ main() {
             echo "  generate-terraform              - Generate Terraform locals"
             ;;
     esac
+}
+
+# =============================================================================
+# TALOS CONFIGURATION HELPERS
+# =============================================================================
+
+get_talos_sysctls() {
+    yq -o=json '.defaults.talos.sysctls' "$CONFIG_FILE"
+}
+
+get_talos_kubelet_args() {
+    yq -o=json '.defaults.talos.kubelet_extra_args' "$CONFIG_FILE"
+}
+
+get_talos_kernel_args() {
+    yq -o=json '.defaults.talos.kernel_args' "$CONFIG_FILE"
+}
+
+get_talos_features() {
+    yq -o=json '.defaults.talos.features' "$CONFIG_FILE"
 }
 
 # Run main function if script is executed directly

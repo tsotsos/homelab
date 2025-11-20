@@ -47,8 +47,11 @@ unsealed-*
 *.pfx
 gitops_key
 gitops_key.pub
-*secret*.yaml
-*Secret*.yaml
+# Note: *secret*.yaml would block Helm chart templates
+# Only ignore unsealed secrets in root/secrets-un directories
+/secrets/
+/secret*.yaml
+/Secret*.yaml
 
 # Logs and temporary files
 *.log

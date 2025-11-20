@@ -19,114 +19,117 @@ provider "talos" {}
 # =============================================================================
 
 locals {
-  # Network configuration
+  # Load configuration from YAML file
+  cluster_config_yaml = yamldecode(file("${path.module}/cluster-config.yaml"))
+
+  # Extract configuration from YAML
+  cluster_config      = local.cluster_config_yaml.cluster
+  versions_config     = local.cluster_config_yaml.versions
+  network_config_yaml = local.cluster_config_yaml.network
+  proxmox_config      = local.cluster_config_yaml.proxmox
+  defaults_config     = local.cluster_config_yaml.defaults
+
+  # Make defaults available as 'defaults' local
+  defaults = local.defaults_config
+
+  # SSH configuration from YAML
+  ssh_config = local.cluster_config_yaml.ssh
+
+  # Network configuration from YAML
   network_config = {
-    subnet_cidr = "10.0.2.0/24"
-    gateway     = var.network_gateway
-    dns_servers = var.dns_servers
-    vip_address = var.cluster_vip
+    subnet_cidr = "${local.network_config_yaml.gateway}/${local.network_config_yaml.cidr}"
+    gateway     = local.network_config_yaml.gateway
+    dns_servers = local.network_config_yaml.dns_servers
+    vip_address = local.cluster_config.vip
   }
 
-  # Cluster configuration
-  cluster_config = {
-    name              = var.cluster_name
-    endpoint          = var.cluster_endpoint
-    talos_version     = var.talos_version
-    kubernetes_version = var.kubernetes_version
-  }
-
-  # VM configuration templates
+  # VM configuration templates from YAML defaults
   vm_defaults = {
     cpu = {
-      cores   = var.vm_cpu_cores
+      cores   = local.defaults_config.vm.cpu_cores
       sockets = 1
       type    = "host"
     }
     memory = {
-      dedicated = var.vm_memory
+      dedicated = local.defaults_config.vm.memory_mb
     }
     disk = {
-      interface = "virtio0"
-      size      = parseint(regex("(\\d+)", var.vm_disk_size)[0], 10)
-      format    = "raw"
-      datastore_id = var.vm_storage
+      interface    = "virtio0"
+      size         = parseint(regex("(\\d+)", local.defaults_config.vm.disk_size)[0], 10)
+      format       = "raw"
+      datastore_id = local.proxmox_config.storage.primary
     }
     network = {
-      bridge    = var.vm_bridge
-      vlan_id   = var.vm_vlan_id
+      bridge  = local.network_config_yaml.bridge
+      vlan_id = local.network_config_yaml.vlan_id
     }
   }
 
-  # Function to get VM configuration for a specific node
+  # Extract nodes from YAML configuration
+  yaml_nodes = local.cluster_config_yaml.nodes
+
+  # Function to get VM configuration for a specific node from YAML
   get_vm_config = {
-    for node_key, node in merge(local.control_plane_nodes, local.worker_nodes) : node_key => {
-      memory_mb = lookup(var.per_vm_config, node.name, {}).memory_mb != null ? (
-        lookup(var.per_vm_config, node.name, {}).memory_mb
-      ) : (
-        node.role == "controlplane" && var.control_plane_memory != null ? var.control_plane_memory : (
-          node.role == "worker" && var.worker_memory != null ? var.worker_memory : var.vm_memory
-        )
+    for node_name, node_config in local.yaml_nodes : node_name => {
+      memory_mb = try(node_config.memory_mb, null) != null ? (
+        node_config.memory_mb
+        ) : (
+        node_config.role == "controlplane" ? local.defaults_config.control_plane.memory_mb : local.defaults_config.worker.memory_mb
       )
-      
-      cpu_cores = lookup(var.per_vm_config, node.name, {}).cpu_cores != null ? (
-        lookup(var.per_vm_config, node.name, {}).cpu_cores
-      ) : var.vm_cpu_cores
-      
-      disk_size = lookup(var.per_vm_config, node.name, {}).disk_size != null ? (
-        lookup(var.per_vm_config, node.name, {}).disk_size
-      ) : (
-        node.role == "controlplane" && var.control_plane_disk_size != null ? var.control_plane_disk_size : (
-          node.role == "worker" && var.worker_disk_size != null ? var.worker_disk_size : var.vm_disk_size
-        )
+
+      cpu_cores = try(node_config.cpu_cores, null) != null ? (
+        node_config.cpu_cores
+      ) : local.defaults_config.vm.cpu_cores
+
+      disk_size = try(node_config.disk_size, null) != null ? (
+        node_config.disk_size
+        ) : (
+        node_config.role == "controlplane" ? local.defaults_config.control_plane.disk_size : local.defaults_config.worker.disk_size
       )
-      
-      etcd_disk_gb = lookup(var.per_vm_config, node.name, {}).etcd_disk_gb != null ? (
-        lookup(var.per_vm_config, node.name, {}).etcd_disk_gb
-      ) : (
-        node.role == "controlplane" ? var.control_plane_etcd_disk_size : null
+
+      etcd_disk_gb = try(node_config.etcd_disk_gb, null) != null ? (
+        node_config.etcd_disk_gb
+        ) : (
+        node_config.role == "controlplane" ? local.defaults_config.control_plane.etcd_disk_gb : null
       )
-      
-      storage_disk_gb = lookup(var.per_vm_config, node.name, {}).storage_disk_gb != null ? (
-        lookup(var.per_vm_config, node.name, {}).storage_disk_gb
-      ) : (
-        node.role == "worker" ? var.worker_storage_disk_size : null
+
+      storage_disk_gb = try(node_config.storage_disk_gb, null) != null ? (
+        node_config.storage_disk_gb
+        ) : (
+        node_config.role == "worker" ? local.defaults_config.worker.storage_disk_gb : null
       )
     }
   }
 
-  # Generate control plane nodes configuration
+  # Generate control plane nodes from YAML
+  control_plane_nodes_list = [for node_name, node_config in local.yaml_nodes : merge(node_config, {
+    name = node_name
+  }) if node_config.role == "controlplane"]
+
   control_plane_nodes = {
-    for i in range(var.control_plane_count) : "cp-${i + 1}" => {
-      name         = "kng-cp-${i + 1}"
-      vm_id        = 800 + i + 1
-      ip_address   = "10.0.2.${101 + i}"  # Updated for DHCP reservations: 10.0.2.101-103
-      proxmox_node = var.proxmox_nodes[i % length(var.proxmox_nodes)]
-      role         = "controlplane"
-      index        = i
-      mac_address  = length(var.control_plane_mac_addresses) > i ? var.control_plane_mac_addresses[i] : null
-    }
+    for idx, node in local.control_plane_nodes_list : node.name => merge(node, {
+      index = idx
+    })
   }
 
-  # Generate worker nodes configuration
+  # Generate worker nodes from YAML  
+  worker_nodes_list = [for node_name, node_config in local.yaml_nodes : merge(node_config, {
+    name = node_name
+  }) if node_config.role == "worker"]
+
   worker_nodes = {
-    for i in range(var.worker_count_per_proxmox_node * length(var.proxmox_nodes)) : "worker-${i + 1}" => {
-      name         = "kng-worker-${i + 1}"
-      vm_id        = 810 + i + 1
-      ip_address   = "10.0.2.${104 + i}"  # Updated for DHCP reservations: 10.0.2.104-109
-      proxmox_node = var.proxmox_nodes[i % length(var.proxmox_nodes)]
-      role         = "worker"
-      index        = i
-      mac_address  = length(var.worker_mac_addresses) > i ? var.worker_mac_addresses[i] : null
-    }
+    for idx, node in local.worker_nodes_list : node.name => merge(node, {
+      index = idx
+    })
   }
 
   # Combined nodes for easier iteration
-  all_nodes = merge(local.control_plane_nodes, local.worker_nodes)
+  all_nodes = local.yaml_nodes
 
   # Extract IPs for easier reference
-  control_plane_ips = [for node in local.control_plane_nodes : node.ip_address]
-  worker_ips       = [for node in local.worker_nodes : node.ip_address]
-  all_ips          = [for node in local.all_nodes : node.ip_address]
+  control_plane_ips = [for node_name, node in local.control_plane_nodes : node.ip_address]
+  worker_ips        = [for node_name, node in local.worker_nodes : node.ip_address]
+  all_ips           = [for node in local.all_nodes : node.ip_address]
 }
 
 # =============================================================================
@@ -153,22 +156,17 @@ data "talos_client_configuration" "cluster_client_config" {
 data "talos_machine_configuration" "control_plane" {
   for_each = local.control_plane_nodes
 
-  cluster_name     = local.cluster_config.name
-  cluster_endpoint = local.cluster_config.endpoint
-  machine_type     = "controlplane"
-  machine_secrets  = talos_machine_secrets.cluster_secrets.machine_secrets
-  talos_version    = local.cluster_config.talos_version
-  kubernetes_version = local.cluster_config.kubernetes_version
+  cluster_name       = local.cluster_config.name
+  cluster_endpoint   = local.cluster_config.endpoint
+  machine_type       = "controlplane"
+  machine_secrets    = talos_machine_secrets.cluster_secrets.machine_secrets
+  talos_version      = local.versions_config.talos
+  kubernetes_version = local.versions_config.kubernetes
 
   config_patches = [
     yamlencode({
-      cluster = {
-        allowSchedulingOnControlPlanes = var.allow_scheduling_on_control_planes
-        network = {
-          cni = {
-            name = var.cluster_cni
-          }
-        }
+      cluster = merge({
+        allowSchedulingOnControlPlanes = false # Set in YAML if needed
         controlPlane = {
           endpoint = local.cluster_config.endpoint
         }
@@ -181,7 +179,13 @@ data "talos_machine_configuration" "control_plane" {
         etcd = {
           advertisedSubnets = [local.network_config.subnet_cidr]
         }
-      }
+        # CNI configuration - explicitly disable if set to "none"
+        network = {
+          cni = {
+            name = local.cluster_config.cni
+          }
+        }
+      })
       machine = {
         certSANs = [
           local.network_config.vip_address,
@@ -192,8 +196,13 @@ data "talos_machine_configuration" "control_plane" {
           interfaces = [
             {
               interface = "ens18"
-              dhcp      = true  # Use DHCP instead of static IP
-              vip = each.value.index == 0 ? {
+              dhcp      = !local.cluster_config.use_static_ips
+              addresses = local.cluster_config.use_static_ips ? ["${each.value.ip_address}/${local.network_config_yaml.cidr}"] : null
+              routes = local.cluster_config.use_static_ips ? [{
+                network = "0.0.0.0/0"
+                gateway = local.network_config.gateway
+              }] : null
+              vip = local.cluster_config.use_talos_vip && each.value.index == 0 ? {
                 ip = local.network_config.vip_address
               } : null
             }
@@ -201,10 +210,11 @@ data "talos_machine_configuration" "control_plane" {
           nameservers = local.network_config.dns_servers
         }
         install = {
-          disk       = var.talos_install_disk
-          image      = "ghcr.io/siderolabs/installer:${local.cluster_config.talos_version}"
-          wipe       = true
-          bootloader = true
+          disk            = local.defaults.talos.install_disk
+          image           = "${local.versions_config.talos_installer}"
+          wipe            = true
+          bootloader      = true
+          extraKernelArgs = local.defaults.talos.kernel_args
         }
         disks = [
           {
@@ -217,8 +227,8 @@ data "talos_machine_configuration" "control_plane" {
           }
         ]
         features = {
-          rbac           = true
-          stableHostname = true
+          rbac                 = true
+          stableHostname       = true
           apidCheckExtKeyUsage = true
           diskQuotaSupport     = true
           kubePrism = {
@@ -226,21 +236,22 @@ data "talos_machine_configuration" "control_plane" {
             port    = 7445
           }
         }
-        sysctls = var.control_plane_sysctls
+        sysctls = local.defaults.talos.sysctls
         kubelet = {
-          image = "ghcr.io/siderolabs/kubelet:${local.cluster_config.kubernetes_version}"
-          extraArgs = var.control_plane_kubelet_extra_args
+          image                     = "ghcr.io/siderolabs/kubelet:${local.versions_config.kubernetes}"
+          extraArgs                 = local.defaults.talos.kubelet_extra_args
           disableManifestsDirectory = false
         }
+        nodeLabels = try(local.yaml_nodes[each.key].labels, {})
       }
     }),
-    var.ssh_public_key != "" ? yamlencode({
+    local.ssh_config.public_key != "" ? yamlencode({
       machine = {
         files = [
           {
-            content     = var.ssh_public_key
+            content     = local.ssh_config.public_key
             path        = "/var/home/root/.ssh/authorized_keys"
-            permissions = 384  # 0600 in octal = 384 in decimal
+            permissions = 384 # 0600 in octal = 384 in decimal
             op          = "create"
           }
         ]
@@ -257,8 +268,8 @@ data "talos_machine_configuration" "worker" {
   cluster_endpoint   = local.cluster_config.endpoint
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.cluster_secrets.machine_secrets
-  talos_version      = local.cluster_config.talos_version
-  kubernetes_version = local.cluster_config.kubernetes_version
+  talos_version      = local.versions_config.talos
+  kubernetes_version = local.versions_config.kubernetes
 
   config_patches = [
     yamlencode({
@@ -268,42 +279,59 @@ data "talos_machine_configuration" "worker" {
           interfaces = [
             {
               interface = "ens18"
-              dhcp      = true  # Use DHCP instead of static IP
+              dhcp      = !local.cluster_config.use_static_ips
+              addresses = local.cluster_config.use_static_ips ? ["${each.value.ip_address}/${local.network_config_yaml.cidr}"] : null
+              routes = local.cluster_config.use_static_ips ? [{
+                network = "0.0.0.0/0"
+                gateway = local.network_config.gateway
+              }] : null
             }
           ]
           nameservers = local.network_config.dns_servers
         }
         install = {
-          disk       = var.talos_install_disk
-          image      = "ghcr.io/siderolabs/installer:${local.cluster_config.talos_version}"
-          wipe       = true
-          bootloader = true
+          disk            = local.defaults.talos.install_disk
+          image           = "${local.versions_config.talos_installer}"
+          wipe            = true
+          bootloader      = true
+          extraKernelArgs = local.defaults.talos.kernel_args
         }
+        disks = local.get_vm_config[each.key].storage_disk_gb != null && local.get_vm_config[each.key].storage_disk_gb > 0 ? [
+          {
+            device = "/dev/vdb"
+            partitions = [
+              {
+                mountpoint = "/var/lib/longhorn"
+              }
+            ]
+          }
+        ] : []
         features = {
-          rbac               = true
-          stableHostname     = true
+          rbac                 = true
+          stableHostname       = true
           apidCheckExtKeyUsage = true
-          diskQuotaSupport   = true
+          diskQuotaSupport     = true
           kubePrism = {
             enabled = true
             port    = 7445
           }
         }
-        sysctls = var.worker_sysctls
+        sysctls = local.defaults.talos.sysctls
         kubelet = {
-          image = "ghcr.io/siderolabs/kubelet:${local.cluster_config.kubernetes_version}"
-          extraArgs = var.worker_kubelet_extra_args
+          image     = "ghcr.io/siderolabs/kubelet:${local.versions_config.kubernetes}"
+          extraArgs = local.defaults.talos.kubelet_extra_args
         }
+        nodeLabels = try(local.yaml_nodes[each.key].labels, {})
       }
     }),
-    var.ssh_public_key != "" ? yamlencode({
+    local.ssh_config.public_key != "" ? yamlencode({
       machine = {
         files = [
           {
-            content = var.ssh_public_key
-            path    = "/var/home/root/.ssh/authorized_keys"
-            permissions = 384  # 0600 in octal = 384 in decimal
-            op      = "create"
+            content     = local.ssh_config.public_key
+            path        = "/var/home/root/.ssh/authorized_keys"
+            permissions = 384 # 0600 in octal = 384 in decimal
+            op          = "create"
           }
         ]
       }
@@ -326,7 +354,7 @@ resource "local_file" "talosconfig" {
   content         = data.talos_client_configuration.cluster_client_config.talos_config
   filename        = "${path.module}/talos-config/talosconfig"
   file_permission = "0600"
-  
+
   depends_on = [local_file.talos_config_dir]
 }
 
@@ -337,7 +365,7 @@ resource "local_file" "control_plane_configs" {
   content         = data.talos_machine_configuration.control_plane[each.key].machine_configuration
   filename        = "${path.module}/talos-config/controlplane-${each.value.name}.yaml"
   file_permission = "0600"
-  
+
   depends_on = [local_file.talos_config_dir]
 }
 
@@ -348,7 +376,7 @@ resource "local_file" "worker_configs" {
   content         = data.talos_machine_configuration.worker[each.key].machine_configuration
   filename        = "${path.module}/talos-config/worker-${each.value.name}.yaml"
   file_permission = "0600"
-  
+
   depends_on = [local_file.talos_config_dir]
 }
 
@@ -365,16 +393,27 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   tags        = ["kubernetes", "talos", "control-plane"]
   node_name   = each.value.proxmox_node
   vm_id       = each.value.vm_id
-  
+
   started = true
   on_boot = true
 
-  # Boot from disk first, then CD-ROM (after installation)
+  # BIOS Configuration for modern VMs
+  bios = "ovmf" # Use UEFI instead of legacy BIOS
+
+  # EFI disk for UEFI boot
+  efi_disk {
+    datastore_id = local.vm_defaults.disk.datastore_id
+    file_format  = "raw"
+    type         = "4m"
+  }
+
+  # Boot from disk first, then CD-ROM
+  # Note: CD-ROM will be ejected by deployment script after installation
   boot_order = ["virtio0", "ide2"]
 
   # Add Talos ISO to CD-ROM
   cdrom {
-    file_id   = var.talos_iso_file_id
+    file_id   = local.proxmox_config.iso_file_id
     interface = "ide2"
   }
 
@@ -391,7 +430,7 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   network_device {
     bridge      = local.vm_defaults.network.bridge
     vlan_id     = local.vm_defaults.network.vlan_id
-    mac_address = length(var.control_plane_mac_addresses) > each.value.index ? var.control_plane_mac_addresses[each.value.index] : null
+    mac_address = length(local.defaults.network.mac_addresses.control_plane) > each.value.index ? local.defaults.network.mac_addresses.control_plane[each.value.index] : each.value.mac_address
   }
 
   disk {
@@ -403,7 +442,7 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
 
   # Additional disk for etcd data
   disk {
-    datastore_id = var.vm_storage_secondary
+    datastore_id = local.proxmox_config.storage.secondary
     file_format  = "raw"
     interface    = "virtio1"
     size         = local.get_vm_config[each.key].etcd_disk_gb
@@ -411,6 +450,10 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
 
   operating_system {
     type = "l26"
+  }
+
+  agent {
+    enabled = true
   }
 
   # Talos will be configured via machine config, not cloud-init
@@ -430,16 +473,26 @@ resource "proxmox_virtual_environment_vm" "worker" {
   tags        = ["kubernetes", "talos", "worker"]
   node_name   = each.value.proxmox_node
   vm_id       = each.value.vm_id
-  
+
   started = true
   on_boot = true
+
+  # BIOS Configuration for modern VMs
+  bios = "ovmf" # Use UEFI instead of legacy BIOS
+
+  # EFI disk for UEFI boot
+  efi_disk {
+    datastore_id = local.vm_defaults.disk.datastore_id
+    file_format  = "raw"
+    type         = "4m"
+  }
 
   # Boot from disk first, then CD-ROM (after installation)
   boot_order = ["virtio0", "ide2"]
 
   # Add Talos ISO to CD-ROM
   cdrom {
-    file_id   = var.talos_iso_file_id
+    file_id   = local.proxmox_config.iso_file_id
     interface = "ide2"
   }
 
@@ -456,7 +509,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
   network_device {
     bridge      = local.vm_defaults.network.bridge
     vlan_id     = local.vm_defaults.network.vlan_id
-    mac_address = length(var.worker_mac_addresses) > each.value.index ? var.worker_mac_addresses[each.value.index] : null
+    mac_address = length(local.defaults.network.mac_addresses.worker) > each.value.index ? local.defaults.network.mac_addresses.worker[each.value.index] : each.value.mac_address
   }
 
   disk {
@@ -466,16 +519,23 @@ resource "proxmox_virtual_environment_vm" "worker" {
     file_format  = local.vm_defaults.disk.format
   }
 
-  # Additional disk for container storage
-  disk {
-    datastore_id = var.vm_storage_secondary
-    file_format  = "raw"
-    interface    = "virtio1"
-    size         = local.get_vm_config[each.key].storage_disk_gb
+  # Additional disk for container storage (only for storage nodes)
+  dynamic "disk" {
+    for_each = local.get_vm_config[each.key].storage_disk_gb != null && local.get_vm_config[each.key].storage_disk_gb > 0 ? [1] : []
+    content {
+      datastore_id = local.proxmox_config.storage.secondary
+      file_format  = "raw"
+      interface    = "virtio1"
+      size         = local.get_vm_config[each.key].storage_disk_gb
+    }
   }
 
   operating_system {
     type = "l26"
+  }
+
+  agent {
+    enabled = true
   }
 
   # Talos will be configured via machine config, not cloud-init
@@ -513,3 +573,25 @@ resource "proxmox_virtual_environment_vm" "worker" {
 #   
 #   depends_on = [local_file.talos_config_dir]
 # }
+
+# =============================================================================
+# CLEANUP ON DESTROY
+# =============================================================================
+
+# Clean up talos-config directory on destroy
+resource "null_resource" "cleanup_talos_config" {
+  triggers = {
+    config_dir = "${path.module}/talos-config"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "rm -rf ${self.triggers.config_dir}"
+  }
+
+  depends_on = [
+    local_file.talosconfig,
+    local_file.control_plane_configs,
+    local_file.worker_configs
+  ]
+}
