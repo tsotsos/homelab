@@ -1,5 +1,10 @@
 fullnameOverride: external-dns-unifi
 logLevel: &logLevel info
+
+# DNS automation - runs on infrastructure nodes
+nodeSelector:
+  node.kng/workload-infra: "true"
+
 provider:
   name: webhook
   webhook:

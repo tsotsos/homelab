@@ -371,10 +371,3 @@ kubectl get events -A --sort-by='.lastTimestamp'
 # Pod logs
 kubectl logs -n kube-system -l k8s-app=cilium
 kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server
-```
-
----
-
-**🎉 Ready to deploy your enterprise-grade homelab!**
-
-Start with the [Infrastructure Documentation](./infra/README.md) for complete setup instructions.

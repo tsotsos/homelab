@@ -2,7 +2,21 @@ installCRDs: true
 extraArgs:
   - --dns01-recursive-nameservers-only
   - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
+
+# Certificate management - runs on infrastructure nodes
+nodeSelector:
+  node.kng/workload-infra: "true"
+
 webhook:
+  nodeSelector:
+    node.kng/workload-infra: "true"
   securePort: 10260
+
 cainjector:
   enabled: true
+  nodeSelector:
+    node.kng/workload-infra: "true"
+
+startupapicheck:
+  nodeSelector:
+    node.kng/workload-infra: "true"

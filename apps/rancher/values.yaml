@@ -1,6 +1,0 @@
-replicas: 1
-ingress:
-  enabled: true
-  ingressClassName: nginx
-  tls:
-    source: letsEncrypt

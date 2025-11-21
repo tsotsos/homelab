@@ -1,2 +1,12 @@
 controller:
   allowSnippetAnnotations: true
+  
+  # Ingress controller - runs on infrastructure nodes
+  nodeSelector:
+    node.kng/workload-infra: "true"
+  
+  # Use host network for better performance
+  hostNetwork: true
+  
+  # DaemonSet ensures one per infra node
+  kind: DaemonSet

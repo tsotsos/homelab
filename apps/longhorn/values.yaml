@@ -3,3 +3,6 @@ persistence:
 defaultSettings:
   defaultReplicaCount: 2
   #backupTarget: nfs://nas.kng.house:/mnt/backups/longhorn
+
+nodeSelector:
+  node.kng/workload-storage: "true"

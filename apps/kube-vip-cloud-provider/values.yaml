@@ -1,3 +1,7 @@
+# LoadBalancer IP provider - runs on infrastructure nodes
+nodeSelector:
+  node.kng/workload-infra: "true"
+
 cm:
   data:
     range-global: "10.0.2.75-10.0.2.99"
