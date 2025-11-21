@@ -6,5 +6,6 @@ resources:
     - sealed-secrets
     - kube-vip-cloud-provider
     - cert-manager
+    - ingress-nginx
     - external-dns
     - longhorn
