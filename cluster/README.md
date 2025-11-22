@@ -92,7 +92,7 @@ Ingress controller:
 
 ### kube-vip-cloud-provider/
 LoadBalancer IPs:
-- **Patch**: IP pool range (10.0.2.75-99)
+- **Patch**: IP pool range (configured per environment)
 - Provides LoadBalancer IPs for services
 - Namespace: `kube-system`
 

@@ -18,17 +18,15 @@ Enterprise-grade, production-ready Talos Kubernetes deployment system with advan
 ```
 High-Availability Talos Kubernetes Cluster
 ├── Control Plane (3 nodes)
-│   ├── kng-cp-1 (10.0.2.101) - Proxmox node pve1
-│   ├── kng-cp-2 (10.0.2.102) - Proxmox node pve2  
-│   └── kng-cp-3 (10.0.2.103) - Proxmox node pve3
+│   ├── Node 1 - Distributed across physical hosts
+│   ├── Node 2 - for high availability
+│   └── Node 3
 ├── Worker Nodes (6 nodes)
-│   ├── kng-worker-1 (10.0.2.104) - Proxmox node pve1
-│   ├── kng-worker-2 (10.0.2.105) - Proxmox node pve2
-│   ├── kng-worker-3 (10.0.2.106) - Proxmox node pve3
-│   ├── kng-worker-4 (10.0.2.107) - Proxmox node pve1
-│   ├── kng-worker-5 (10.0.2.108) - Proxmox node pve2
-│   └── kng-worker-6 (10.0.2.109) - Proxmox node pve3
-└── Virtual IP: 10.0.2.100 (HA load balancer)
+│   ├── Infrastructure Tier (3 nodes)
+│   │   └── Core services: ArgoCD, Ingress, Cert-Manager
+│   └── Storage Tier (3 nodes)
+│       └── Longhorn distributed storage
+└── Virtual IP: High-availability load balancer
 ```
 
 ## 📋 Prerequisites
@@ -95,13 +93,13 @@ nano terraform.tfvars
 
 ### 3. Advanced Configuration (Optional)
 
-Create `cluster-config.yaml` for advanced features:
+Create `cluster-config.yaml` from the provided example:
 
 ```yaml
 cluster:
-  name: "kng-cluster"
-  vip: "10.0.2.100"
-  endpoint: "https://10.0.2.100:6443"
+  name: "my-cluster"
+  vip: "192.168.1.100"                     # Your VIP
+  endpoint: "https://192.168.1.100:6443"  # Your endpoint
 
 deployment:
   parallel: true
@@ -109,8 +107,8 @@ deployment:
   timeout_minutes: 30
 
 nodes:
-  - name: "kng-cp-1"
-    ip: "10.0.2.101"
+  - name: "cp-1"
+    ip: "192.168.1.101"                    # Your IP range
     role: "controlplane"
     # Optional per-node overrides
     memory: 16384  # 16GB for this node
@@ -244,12 +242,12 @@ tar czf talos-backup-$(date +%Y%m%d).tar.gz talos-config/
 ./deploy-talos-cluster.sh diagnostics
 
 # Check specific node
-talosctl -n 10.0.2.101 version
-talosctl -n 10.0.2.101 logs -f
+talosctl -n <NODE_IP> version
+talosctl -n <NODE_IP> logs -f
 
 # Network connectivity
-ping 10.0.2.100  # VIP
-ping 10.0.2.101  # Control plane
+ping <VIP_ADDRESS>    # VIP
+ping <NODE_IP>        # Control plane node
 ```
 
 ### Common Issues
@@ -275,10 +273,10 @@ ip addr show vmbr1
 **Bootstrap Problems:**
 ```bash
 # Check Talos API
-talosctl version --nodes 10.0.2.101
+talosctl version --nodes <NODE_IP>
 
 # View bootstrap logs
-talosctl logs --follow --nodes 10.0.2.101
+talosctl logs --follow --nodes <NODE_IP>
 ```
 
 ## 🔒 Security Features
@@ -303,7 +301,7 @@ talosctl logs --follow --nodes 10.0.2.101
 ./deploy-talos-cluster.sh diagnostics
 
 # Node-specific checks
-talosctl health --nodes 10.0.2.101,10.0.2.102,10.0.2.103
+talosctl health --nodes <NODE_IP>,<CP2_IP>,<CP3_IP>
 ```
 
 ### Integration Points
@@ -549,7 +547,7 @@ talos-config/
 
 2. **Wait for VMs to boot**:
    ```bash
-   for ip in 10.0.2.101 10.0.2.102 10.0.2.103; do
+   for ip in <NODE_IP> <CP2_IP> <CP3_IP>; do
      until ping -c1 $ip >/dev/null 2>&1; do 
        echo "Waiting for $ip..."
        sleep 5
@@ -561,18 +559,18 @@ talos-config/
 3. **Bootstrap the cluster**:
    ```bash
    talosctl bootstrap \\
-     --nodes 10.0.2.101 \\
-     --endpoints 10.0.2.101,10.0.2.102,10.0.2.103
+     --nodes <NODE_IP> \\
+     --endpoints <NODE_IP>,<CP2_IP>,<CP3_IP>
    ```
 
 4. **Verify cluster health**:
    ```bash
-   talosctl health --nodes 10.0.2.101,10.0.2.102,10.0.2.103
+   talosctl health --nodes <NODE_IP>,<CP2_IP>,<CP3_IP>
    ```
 
 5. **Retrieve kubeconfig**:
    ```bash
-   talosctl kubeconfig --nodes 10.0.2.101
+   talosctl kubeconfig --nodes <NODE_IP>
    ```
 
 6. **Verify Kubernetes cluster**:
@@ -674,7 +672,7 @@ talosctl upgrade --image ghcr.io/siderolabs/installer:v1.8.0
 2. **Network Connectivity**:
    ```bash
    # Test VM network
-   ping 10.0.2.101
+   ping <NODE_IP>
    
    # Check bridge configuration  
    ip addr show vmbr1
@@ -683,10 +681,10 @@ talosctl upgrade --image ghcr.io/siderolabs/installer:v1.8.0
 3. **Bootstrap Issues**:
    ```bash
    # Check Talos logs
-   talosctl logs -f --nodes 10.0.2.101
+   talosctl logs -f --nodes <NODE_IP>
    
    # Verify API access
-   talosctl version --nodes 10.0.2.101
+   talosctl version --nodes <NODE_IP>
    ```
 
 ### Log Analysis
@@ -696,7 +694,7 @@ talosctl upgrade --image ghcr.io/siderolabs/installer:v1.8.0
 tail -f /var/log/pve/tasks/active
 
 # Talos system logs
-talosctl logs --follow --nodes 10.0.2.101
+talosctl logs --follow --nodes <NODE_IP>
 
 # Kubernetes events
 kubectl get events --all-namespaces

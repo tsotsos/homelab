@@ -103,51 +103,51 @@ homelab/
 ## 📋 Architecture
 
 **Cluster:** 9 VMs across 3 Proxmox hosts
-- **Control Plane**: 3 nodes (10.0.2.101-103) - 4 vCPU, 8GB RAM, 150GB disk, 20GB etcd
-- **Workers**: 6 nodes (10.0.2.104-109) - 3-4 vCPU, 8-12GB RAM, 150GB disk
+- **Control Plane**: 3 nodes - 4 vCPU, 8GB RAM, 150GB disk, 20GB etcd
+- **Workers**: 6 nodes - 3-4 vCPU, 8-12GB RAM, 150GB disk
   - Workers 1-3: Infrastructure & apps workloads
-  - Workers 4-6: Storage nodes with 1TB additional disk for Longhorn
+  - Workers 4-6: Storage nodes with additional disk for Longhorn
 
 **Network:**
-- VLAN: vmbr1 (10.0.2.0/24)
-- VIP: 10.0.2.100 (Talos built-in HA)
-- LoadBalancer Pool: 10.0.2.75-99
-- DNS: Cloudflare (1.1.1.1, 8.8.8.8)
+- VLAN: Configured on Proxmox bridge
+- VIP: High availability via Talos built-in VIP
+- LoadBalancer Pool: Kube-VIP cloud provider
+- DNS: Configured per environment
 
 ## 📋 Prerequisites
 
-- **Proxmox VE**: 3-node cluster (s01, s02, s03) with 16 cores, 62GB RAM each
-- **Talos ISO**: v1.11.5 uploaded to Proxmox storage
-- **Network**: VLAN on vmbr1, 10.0.2.0/24 subnet configured
-- **Storage**: `local-lvm` (826GB) + `zfs-pool` per host
+- **Proxmox VE**: 3-node cluster with sufficient resources
+- **Talos ISO**: v1.11.5 with required extensions (see cluster-config.yaml)
+- **Network**: VLAN configured with static IP range
+- **Storage**: Local storage + optional shared storage
 - **Tools**: terraform, talosctl, kubectl, helm, kustomize, yq, jq
 
 ## 🚀 Getting Started
 
 ### 1. Configure Cluster
 
-Edit `infra/cluster-config.yaml` (single source of truth):
+Copy and edit `infra/cluster-config.yaml.example` to `infra/cluster-config.yaml`:
 
 ```yaml
 cluster:
-  name: "kng-cluster"
-  vip: "10.0.2.100"
+  name: "my-cluster"
+  vip: "192.168.1.100"       # Your VIP address
   use_talos_vip: true        # Built-in HA
   use_static_ips: true       # Not DHCP
   cni: "none"                # Cilium installed post-bootstrap
 
 nodes:
-  "kng-cp-1":
-    vm_id: 801
-    ip_address: "10.0.2.101"
-    mac_address: "02:00:00:00:01:01"
-    proxmox_node: "s01"
+  "cp-1":
+    vm_id: 101
+    ip_address: "192.168.1.101"  # Your IP range
+    mac_address: "AA:BB:CC:DD:01:01"
+    proxmox_node: "pve1"          # Your Proxmox node name
     role: "controlplane"
     cpu_cores: 4
     # ... more nodes ...
 ```
 
-Also create `infra/terraform.tfvars` with Proxmox credentials (see `terraform.tfvars.example`).
+Also create `infra/terraform.tfvars` from `terraform.tfvars.example` with your Proxmox credentials.
 
 ### 2. Deploy Infrastructure
 
@@ -266,17 +266,18 @@ git commit -m "Update sealed secrets"
 export TALOSCONFIG="infra/talos-config/talosconfig"
 
 # Check node status
-talosctl --nodes 10.0.2.101 version
-talosctl --nodes 10.0.2.101,10.0.2.102,10.0.2.103 health
+talosctl --nodes <NODE_IP> version
+talosctl --nodes <CP1_IP>,<CP2_IP>,<CP3_IP> health
 
 # View logs
-talosctl --nodes 10.0.2.101 logs
-talosctl --nodes 10.0.2.101 dmesg
+talosctl --nodes <NODE_IP> logs
+talosctl --nodes <NODE_IP> dmesg
 
 # Node operations
-talosctl --nodes 10.0.2.101 reboot
-talosctl --nodes 10.0.2.101 shutdown
-talosctl --nodes 10.0.2.101 reset  # ⚠️ Destructive!
+talosctl --nodes <NODE_IP> reboot
+talosctl --nodes <NODE_IP> shutdown
+talosctl --nodes <NODE_IP> reset  # ⚠️ Destructive!
+
 
 # Check etcd cluster
 talosctl --nodes 10.0.2.101 etcd members
