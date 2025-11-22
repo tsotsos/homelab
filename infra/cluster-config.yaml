@@ -1,24 +1,27 @@
 # =============================================================================
 # HOMELAB CLUSTER CONFIGURATION
 # =============================================================================
-# This file serves as the single source of truth for cluster configuration
-# Used by both Terraform (via locals) and deployment scripts
+# Single source of truth for cluster configuration
+# Used by: Terraform, deployment scripts, and label management
 #
-# IMAGE EXTENSIONS NOTICE:
-# This configuration leverages a custom Talos image with the following extensions:
-# - crun, iscsi-tools, nut-client, qemu-guest-agent, util-linux-tools
-# 
-# When upgrading Talos images, ensure the Factory configuration includes
-# these extensions and update the iso_file_id below accordingly.
+# TALOS IMAGE EXTENSIONS:
+# Custom Talos image includes: crun, iscsi-tools, nut-client, qemu-guest-agent, util-linux-tools
+# When upgrading Talos, update iso_file_id to include these extensions from Factory
 
+# =============================================================================
+# CLUSTER SETTINGS
+# =============================================================================
 cluster:
   name: "kng-cluster"
   endpoint: "https://10.0.2.100:6443"
   vip: "10.0.2.100"
-  cni: "none"  # Disabled - using Cilium instead
-  use_static_ips: true  # Use static IPs instead of DHCP
-  use_talos_vip: true   # Use Talos built-in VIP instead of kube-vip
-  
+  cni: "none"              # Using Cilium CNI
+  use_static_ips: true     # Static IPs instead of DHCP
+  use_talos_vip: true      # Talos built-in VIP (not kube-vip)
+
+# =============================================================================
+# NETWORK CONFIGURATION
+# =============================================================================
 network:
   gateway: "10.0.2.1"
   cidr: "24"
@@ -28,29 +31,54 @@ network:
   bridge: "vmbr1"
   vlan_id: null
 
+# =============================================================================
+# PROXMOX CONFIGURATION
+# =============================================================================
 proxmox:
   endpoint: "https://10.0.1.21:8006/api2/json"
   nodes: ["s01", "s02", "s03"]
   storage:
     primary: "local-lvm"
     secondary: "zfs-pool"
-  iso_file_id: "nfs:iso/talos-1.11.5.iso" # Talos ISO location hash: 971ccc8ced807f3a576c1fb9fb7110b07b61423abf3ed202ec3d79f61c8d84df
+  iso_file_id: "nfs:iso/talos-1.11.5.iso"
   ssh_username: "terraform"
 
+# =============================================================================
+# SOFTWARE VERSIONS
+# =============================================================================
 versions:
   talos: "v1.11.5"
   kubernetes: "v1.34.1"
   cilium: "1.18.4"
-  # Talos Factory installer image (with custom extensions)
-  talos_installer: "factory.talos.dev/installer/971ccc8ced807f3a576c1fb9fb7110b07b61423abf3ed202ec3d79f61c8d84df:v1.11.5"
+  talos_installer: "factory.talos.dev/installer/d61d93b6df604f5b0e89ebaa8792aa98b098c6fc5c666cbddc5b7904a0f1564d:v1.11.5"
 
+# =============================================================================
+# NODE LABELS STRATEGY
+# =============================================================================
+# Labels are applied AFTER successful bootstrap via label-nodes.sh
+# 
+# Workload Distribution:
+#   - Infrastructure nodes (workers 1-3): Core services (ArgoCD, Ingress, Cert-Manager, etc.)
+#   - Storage nodes (workers 4-6): Longhorn storage + application workloads
+#   - All workers: General application workloads
+#
+# Label Hierarchy:
+#   - node-role.kubernetes.io/worker: Applied to all workers (protected, set post-bootstrap)
+#   - node.kng/workload-infra: Infrastructure services (workers 1-3)
+#   - node.kng/workload-storage: Storage services (workers 4-6)
+#   - node.kng/workload-apps: Application workloads (all workers)
+#   - topology.kubernetes.io/zone: Physical host location (HA distribution)
+
+# =============================================================================
+# VM DEFAULTS
+# =============================================================================
 defaults:
   vm:
-    cpu_cores: 3
+    cpu_cores: 4
     memory_mb: 8192
     disk_size: "150G"  # Increased from 50G to 150G for all VMs
   control_plane:
-    count: 3
+    count: 4
     memory_mb: 8192  # Override if needed
     disk_size: "150G" # Increased from 50G to 150G
     etcd_disk_gb: 20  # Reduced from 100GB - 20GB is plenty for etcd
@@ -97,9 +125,16 @@ defaults:
       control_plane: []  # Automatic assignment if empty
       worker: []         # Automatic assignment if empty
 
-# Node-specific configurations (overrides defaults)
+# =============================================================================
+# NODE DEFINITIONS
+# =============================================================================
+# Labels defined here are applied via label-nodes.sh after bootstrap
+# Note: node-role.kubernetes.io/* labels are protected and set post-bootstrap
+
 nodes:
-  # Control plane nodes
+  # -------------------------
+  # Control Plane Nodes
+  # -------------------------
   "kng-cp-1":
     vm_id: 801
     ip_address: "10.0.2.101"
@@ -109,9 +144,6 @@ nodes:
     cpu_cores: 4
     labels:
       topology.kubernetes.io/zone: "s01"
-    # memory_mb: 16384    # Uncomment to override
-    # disk_size: "100G"   # Uncomment to override
-    # etcd_disk_gb: 500   # Uncomment to override
     
   "kng-cp-2":
     vm_id: 802
@@ -130,8 +162,10 @@ nodes:
     role: "controlplane"
     labels:
       topology.kubernetes.io/zone: "s03"
-    
-  # Worker nodes - Infrastructure + Apps (s01, s02, s03)
+  
+  # -------------------------
+  # Worker Nodes - Infrastructure Tier
+  # -------------------------  
   "kng-worker-1":
     vm_id: 811
     ip_address: "10.0.2.104"
@@ -139,9 +173,9 @@ nodes:
     proxmox_node: "s01"
     role: "worker"
     cpu_cores: 4
-    storage_disk_gb: 0  # No second disk for infra nodes
+    storage_disk_gb: 0
     labels:
-      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node-role.kubernetes.io/worker: "worker"
       node.kng/workload-apps: "true"
       node.kng/workload-infra: "true"
       topology.kubernetes.io/zone: "s01"
@@ -152,9 +186,9 @@ nodes:
     mac_address: "02:00:00:00:02:02"
     proxmox_node: "s02"
     role: "worker"
-    storage_disk_gb: 0  # No second disk for infra nodes
+    storage_disk_gb: 0
     labels:
-      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node-role.kubernetes.io/worker: "worker"
       node.kng/workload-apps: "true"
       node.kng/workload-infra: "true"
       topology.kubernetes.io/zone: "s02"
@@ -165,14 +199,16 @@ nodes:
     mac_address: "02:00:00:00:02:03"
     proxmox_node: "s03"
     role: "worker"
-    storage_disk_gb: 0  # No second disk for infra nodes
+    storage_disk_gb: 0
     labels:
-      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node-role.kubernetes.io/worker: "worker"
       node.kng/workload-apps: "true"
       node.kng/workload-infra: "true"
       topology.kubernetes.io/zone: "s03"
-    
-  # Worker nodes - Storage + Apps (one per physical host)
+  
+  # -------------------------
+  # Worker Nodes - Storage Tier
+  # -------------------------
   "kng-worker-4":
     vm_id: 814
     ip_address: "10.0.2.107"
@@ -180,9 +216,9 @@ nodes:
     proxmox_node: "s01"
     role: "worker"
     cpu_cores: 4
-    storage_disk_gb: 1000  # 1.5TB storage disk
+    storage_disk_gb: 1200
     labels:
-      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node-role.kubernetes.io/worker: "worker"
       node.kng/workload-apps: "true"
       node.kng/workload-storage: "true"
       topology.kubernetes.io/zone: "s01"
@@ -194,9 +230,9 @@ nodes:
     proxmox_node: "s02"
     role: "worker"
     cpu_cores: 4
-    storage_disk_gb: 1000  # 1.5TB storage disk
+    storage_disk_gb: 1200
     labels:
-      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node-role.kubernetes.io/worker: "worker"
       node.kng/workload-apps: "true"
       node.kng/workload-storage: "true"
       topology.kubernetes.io/zone: "s02"
@@ -208,9 +244,9 @@ nodes:
     proxmox_node: "s03"
     role: "worker"
     cpu_cores: 4
-    storage_disk_gb: 1000  # 1.5TB storage disk
+    storage_disk_gb: 1200
     labels:
-      # node-role.kubernetes.io/worker: ""  # Applied manually after bootstrap
+      node-role.kubernetes.io/worker: "worker"
       node.kng/workload-apps: "true"
       node.kng/workload-storage: "true"
       topology.kubernetes.io/zone: "s03"
