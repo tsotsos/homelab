@@ -5,8 +5,9 @@
 # Used by: Terraform, deployment scripts, and label management
 #
 # TALOS IMAGE EXTENSIONS:
-# Custom Talos image includes: crun, iscsi-tools, nut-client, qemu-guest-agent, util-linux-tools
-# When upgrading Talos, update iso_file_id to include these extensions from Factory
+# Custom Talos image includes: iscsi-tools, qemu-guest-agent, util-linux-tools
+# Kernel args: mitigations=off, clocksource=tsc, tsc=reliable
+# When upgrading Talos, update iso_file_id and talos_installer to include these extensions from Factory
 
 # =============================================================================
 # CLUSTER SETTINGS
@@ -108,10 +109,7 @@ defaults:
       # Kubelet optimizations
       feature-gates: "RotateKubeletServerCertificate=true"
       max-pods: "250"
-    kernel_args:
-      - "mitigations=off"       # Disable CPU vulnerability mitigations for better performance
-      - "clocksource=tsc"       # Use Time Stamp Counter for efficient timekeeping
-      - "tsc=reliable"          # Trust TSC as stable clock source
+    # Note: Kernel args are now in the Factory ISO image (mitigations=off, clocksource=tsc, tsc=reliable)
     features:
       # Talos features
       rbac: true
@@ -168,7 +166,7 @@ nodes:
   # -------------------------  
   "kng-worker-1":
     vm_id: 811
-    ip_address: "10.0.2.104"
+    ip_address: "10.0.2.111"
     mac_address: "02:00:00:00:02:01"
     proxmox_node: "s01"
     role: "worker"
@@ -182,7 +180,7 @@ nodes:
     
   "kng-worker-2":
     vm_id: 812
-    ip_address: "10.0.2.105"
+    ip_address: "10.0.2.112"
     mac_address: "02:00:00:00:02:02"
     proxmox_node: "s02"
     role: "worker"
@@ -195,7 +193,7 @@ nodes:
     
   "kng-worker-3":
     vm_id: 813
-    ip_address: "10.0.2.106"
+    ip_address: "10.0.2.113"
     mac_address: "02:00:00:00:02:03"
     proxmox_node: "s03"
     role: "worker"
@@ -211,7 +209,7 @@ nodes:
   # -------------------------
   "kng-worker-4":
     vm_id: 814
-    ip_address: "10.0.2.107"
+    ip_address: "10.0.2.114"
     mac_address: "02:00:00:00:02:04"
     proxmox_node: "s01"
     role: "worker"
@@ -225,7 +223,7 @@ nodes:
     
   "kng-worker-5":
     vm_id: 815
-    ip_address: "10.0.2.108"
+    ip_address: "10.0.2.115"
     mac_address: "02:00:00:00:02:05"
     proxmox_node: "s02"
     role: "worker"
@@ -239,7 +237,7 @@ nodes:
     
   "kng-worker-6":
     vm_id: 816
-    ip_address: "10.0.2.109"
+    ip_address: "10.0.2.116"
     mac_address: "02:00:00:00:02:06"
     proxmox_node: "s03"
     role: "worker"

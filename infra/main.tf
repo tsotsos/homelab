@@ -210,11 +210,11 @@ data "talos_machine_configuration" "control_plane" {
           nameservers = local.network_config.dns_servers
         }
         install = {
-          disk            = local.defaults.talos.install_disk
-          image           = "${local.versions_config.talos_installer}"
-          wipe            = true
-          bootloader      = true
-          extraKernelArgs = local.defaults.talos.kernel_args
+          disk       = local.defaults.talos.install_disk
+          image      = "${local.versions_config.talos_installer}"
+          wipe       = true
+          bootloader = true
+          # Kernel args are baked into the Factory ISO (mitigations=off, clocksource=tsc, tsc=reliable)
         }
         disks = [
           {
@@ -290,11 +290,11 @@ data "talos_machine_configuration" "worker" {
           nameservers = local.network_config.dns_servers
         }
         install = {
-          disk            = local.defaults.talos.install_disk
-          image           = "${local.versions_config.talos_installer}"
-          wipe            = true
-          bootloader      = true
-          extraKernelArgs = local.defaults.talos.kernel_args
+          disk       = local.defaults.talos.install_disk
+          image      = "${local.versions_config.talos_installer}"
+          wipe       = true
+          bootloader = true
+          # Kernel args are baked into the Factory ISO (mitigations=off, clocksource=tsc, tsc=reliable)
         }
         disks = local.get_vm_config[each.key].storage_disk_gb != null && local.get_vm_config[each.key].storage_disk_gb > 0 ? [
           {
