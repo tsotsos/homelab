@@ -1,0 +1,146 @@
+# PostgreSQL HA Configuration with Longhorn Storage
+# Architecture: 1 primary + 2 read replicas across 3 physical zones
+
+global:
+  storageClass: longhorn
+
+# PostgreSQL architecture mode
+architecture: replication
+
+# Authentication configuration
+auth:
+  enablePostgresUser: true
+  existingSecret: postgresql-secrets
+  secretKeys:
+    adminPasswordKey: postgres-password
+    userPasswordKey: password
+    replicationPasswordKey: replication-password
+
+# Primary configuration
+primary:
+  # Pod Anti-Affinity: Distribute across zones
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: postgresql
+                app.kubernetes.io/component: primary
+            topologyKey: topology.kubernetes.io/zone
+  
+  # Node selector for storage nodes
+  nodeSelector:
+    node.kng/workload-storage: "true"
+  
+  # Persistence with Longhorn
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 50Gi
+    accessModes:
+      - ReadWriteOnce
+  
+  # Resources
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+  
+  # PostgreSQL configuration
+  extendedConfiguration: |
+    max_connections = 200
+    shared_buffers = 256MB
+    effective_cache_size = 1GB
+    maintenance_work_mem = 128MB
+    checkpoint_completion_target = 0.9
+    wal_buffers = 16MB
+    default_statistics_target = 100
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    work_mem = 2621kB
+    min_wal_size = 1GB
+    max_wal_size = 4GB
+
+# Read Replicas configuration (2 replicas across remaining zones)
+readReplicas:
+  replicaCount: 2
+  
+  # Pod Anti-Affinity: Distribute replicas across zones
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: postgresql
+                app.kubernetes.io/component: read
+            topologyKey: topology.kubernetes.io/zone
+        - weight: 50
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: postgresql
+            topologyKey: kubernetes.io/hostname
+  
+  # Node selector for storage nodes
+  nodeSelector:
+    node.kng/workload-storage: "true"
+  
+  # Persistence with Longhorn
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 50Gi
+    accessModes:
+      - ReadWriteOnce
+  
+  # Resources
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+# Metrics (optional - for monitoring)
+metrics:
+  enabled: true
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 100m
+
+# Backup configuration (optional)
+backup:
+  enabled: false
+  # Can be configured later with:
+  # cronjob.schedule: "0 2 * * *"
+  # cronjob.storage.size: 20Gi
+  # cronjob.storage.storageClass: longhorn
+
+# Service configuration
+service:
+  type: ClusterIP
+  ports:
+    postgresql: 5432
+
+# Volume Permissions (for Longhorn compatibility)
+volumePermissions:
+  enabled: true
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 100m
