@@ -27,6 +27,8 @@ ingress:
   enabled: true
   ingressClassName: cilium
   host: longhorn.kng.house
+  path: /
+  pathType: Prefix
   tls: true
   tlsSecret: longhorn-tls
   annotations:
