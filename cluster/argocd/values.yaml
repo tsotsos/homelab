@@ -9,3 +9,14 @@ configs:
 server:
   ingress:
     enabled: true
+    ingressClassName: cilium
+    hostname: argocd.kng.house
+    tls: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-dns
+      external-dns.alpha.kubernetes.io/hostname: argocd.kng.house
+      external-dns.alpha.kubernetes.io/target: 10.0.2.75
+    extraTls:
+      - hosts:
+          - argocd.kng.house
+        secretName: argocd-tls
