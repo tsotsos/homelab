@@ -1,5 +1,9 @@
 persistence:
   defaultClass: true
+
+preUpgradeChecker:
+  jobEnabled: false
+
 defaultSettings:
   defaultReplicaCount: 2
   #backupTarget: nfs://nas.kng.house:/mnt/backups/longhorn
