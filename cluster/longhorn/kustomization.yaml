@@ -3,6 +3,9 @@ kind: Kustomization
 
 namespace: longhorn-system
 
+resources:
+  - ns.yaml
+
 helmCharts:
   - name: longhorn
     repo: https://charts.longhorn.io
