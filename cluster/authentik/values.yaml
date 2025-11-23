@@ -124,10 +124,3 @@ redis:
 # External PostgreSQL (using our HA cluster)
 postgresql:
   enabled: false
-
-# Prometheus metrics
-prometheus:
-  serviceMonitor:
-    create: false
-  rules:
-    create: false
