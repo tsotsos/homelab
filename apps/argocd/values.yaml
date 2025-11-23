@@ -6,33 +6,6 @@ configs:
     admin.enabled: true
     kustomize.buildOptions: "--enable-helm"
 
-# GitOps controller - runs on infrastructure nodes
 server:
-  nodeSelector:
-    node.kng/workload-infra: "true"
   ingress:
     enabled: true
-
-controller:
-  nodeSelector:
-    node.kng/workload-infra: "true"
-
-repoServer:
-  nodeSelector:
-    node.kng/workload-infra: "true"
-
-applicationSet:
-  nodeSelector:
-    node.kng/workload-infra: "true"
-
-notifications:
-  nodeSelector:
-    node.kng/workload-infra: "true"
-
-redis:
-  nodeSelector:
-    node.kng/workload-infra: "true"
-
-dex:
-  nodeSelector:
-    node.kng/workload-infra: "true"

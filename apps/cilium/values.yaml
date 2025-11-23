@@ -1,0 +1,51 @@
+# Cilium CNI Configuration for Talos Linux
+# https://docs.cilium.io/en/stable/installation/k8s-install-helm/
+
+# IPAM mode
+ipam:
+  mode: kubernetes
+
+# Replace kube-proxy
+kubeProxyReplacement: true
+
+# Talos VIP for API server
+k8sServiceHost: 10.0.2.100
+k8sServicePort: 6443
+
+# Security context for Talos
+securityContext:
+  capabilities:
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+
+# Talos cgroup configuration
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+
+# BPF optimization
+bpf:
+  preallocateMaps: true
+
+# Ingress Controller
+ingressController:
+  enabled: true
+  default: true
+  loadbalancerMode: shared
+  service:
+    type: LoadBalancer

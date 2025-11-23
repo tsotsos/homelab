@@ -4,9 +4,9 @@ kind: Kustomization
 namespace: kube-system
 
 helmCharts:
-  - name: kube-vip-cloud-provider
-    repo: https://kube-vip.github.io/helm-charts
-    version: 0.2.9
-    releaseName: kube-vip-cloud-provider
+  - name: cilium
+    repo: https://helm.cilium.io/
+    version: 1.18.4
+    releaseName: cilium
     namespace: kube-system
     valuesFile: values.yaml

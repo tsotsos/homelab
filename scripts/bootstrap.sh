@@ -54,26 +54,12 @@ install_cilium() {
     helm repo add cilium https://helm.cilium.io/ 2>/dev/null || true
     helm repo update cilium
     
-    # Install Cilium with Talos-specific configuration + Ingress Controller
+    # Install Cilium using apps/cilium configuration
     log "Installing Cilium $cilium_version..."
-    helm install cilium cilium/cilium \
-        --version "$cilium_version" \
-        --namespace kube-system \
-        --set ipam.mode=kubernetes \
-        --set kubeProxyReplacement=true \
-        --set k8sServiceHost="$vip" \
-        --set k8sServicePort=6443 \
-        --set securityContext.capabilities.ciliumAgent='{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}' \
-        --set securityContext.capabilities.cleanCiliumState='{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}' \
-        --set cgroup.autoMount.enabled=false \
-        --set cgroup.hostRoot=/sys/fs/cgroup \
-        --set bpf.preallocateMaps=true \
-        --set ingressController.enabled=true \
-        --set ingressController.default=true \
-        --set ingressController.loadbalancerMode=shared \
-        --set ingressController.service.type=LoadBalancer \
-        --wait \
-        --timeout 10m
+    kustomize build --enable-helm "$PROJECT_ROOT/apps/cilium" | kubectl apply -f -
+    
+    # Clean up helm charts cache
+    rm -rf "$PROJECT_ROOT/apps/cilium/charts" 2>/dev/null || true
     
     success "Cilium installed"
     
@@ -109,12 +95,12 @@ install_argocd() {
         error "ArgoCD manifests not found in $CLUSTER_DIR/argocd"
     fi
     
-    # Install using kustomize
+    # Install using apps/argocd configuration
     log "Applying ArgoCD manifests..."
-    kustomize build --enable-helm "$CLUSTER_DIR/argocd" | kubectl apply -f -
+    kustomize build --enable-helm "$PROJECT_ROOT/apps/argocd" | kubectl apply -f -
     
-    # Clean up helm charts
-    rm -rf "$CLUSTER_DIR/argocd/charts" 2>/dev/null || true
+    # Clean up helm charts cache
+    rm -rf "$PROJECT_ROOT/apps/argocd/charts" 2>/dev/null || true
     
     log "Waiting for ArgoCD to be ready..."
     kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s

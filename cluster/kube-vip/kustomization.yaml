@@ -4,9 +4,9 @@ kind: Kustomization
 namespace: kube-system
 
 resources:
-  - ../../apps/kube-vip-cloud-provider
+  - ../../apps/kube-vip
 
-# Deploy after kube-vip daemonset
+# Deploy after Cilium but before kube-vip-cloud-provider
 metadata:
   annotations:
-    argocd.argoproj.io/sync-wave: "-4"
+    argocd.argoproj.io/sync-wave: "-5"

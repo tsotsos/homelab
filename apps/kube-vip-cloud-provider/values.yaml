@@ -1,8 +1,6 @@
-# LoadBalancer IP provider - runs on infrastructure nodes
-nodeSelector:
-  node.kng/workload-infra: "true"
+# kube-vip-cloud-provider configuration
+# IP range for LoadBalancer services: 10.0.2.75-10.0.2.99
+# Talos VIP is 10.0.2.100 (reserved for control plane HA)
 
-cm:
-  data:
-    range-global: "10.0.2.75-10.0.2.99"
-
+config:
+  range-global: 10.0.2.75-10.0.2.99
