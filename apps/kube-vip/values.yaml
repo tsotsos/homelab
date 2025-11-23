@@ -1,0 +1,26 @@
+# kube-vip configuration for LoadBalancer services
+# Handles IP announcements via ARP on worker nodes
+
+config:
+  address: ""  # No address needed for services-only mode
+
+env:
+  vip_interface: ens18
+  vip_arp: "true"
+  vip_cidr: "32"
+  cp_enable: "false"  # Control plane managed by Talos VIP
+  svc_enable: "true"  # Enable LoadBalancer service support
+  svc_election: "true"
+  vip_leaderelection: "true"
+  bgp_enable: "false"
+
+# Run on all worker nodes
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: DoesNotExist
+
+tolerations: []

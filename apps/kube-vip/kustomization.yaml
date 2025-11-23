@@ -3,5 +3,10 @@ kind: Kustomization
 
 namespace: kube-system
 
-resources:
-  - daemonset.yaml
+helmCharts:
+  - name: kube-vip
+    repo: https://kube-vip.github.io/helm-charts
+    version: 0.5.0
+    releaseName: kube-vip
+    namespace: kube-system
+    valuesFile: values.yaml
