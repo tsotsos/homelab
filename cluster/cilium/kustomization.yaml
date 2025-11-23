@@ -6,6 +6,9 @@ namespace: kube-system
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-10"
 
+resources:
+  - cilium-secrets-rbac.yaml
+
 helmCharts:
   - name: cilium
     repo: https://helm.cilium.io/
