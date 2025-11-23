@@ -28,7 +28,7 @@ spec:
           - path: cluster/*
   template:
     metadata:
-      name: '{{path.basename}}-kng-cluster'
+      name: '{{path.basename}}'
     spec:
       project: kng-cluster
       source:

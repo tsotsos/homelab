@@ -54,7 +54,7 @@ install_cilium() {
     helm repo add cilium https://helm.cilium.io/ 2>/dev/null || true
     helm repo update cilium
     
-    # Install Cilium with Talos-specific configuration
+    # Install Cilium with Talos-specific configuration + Ingress Controller
     log "Installing Cilium $cilium_version..."
     helm install cilium cilium/cilium \
         --version "$cilium_version" \
@@ -68,6 +68,10 @@ install_cilium() {
         --set cgroup.autoMount.enabled=false \
         --set cgroup.hostRoot=/sys/fs/cgroup \
         --set bpf.preallocateMaps=true \
+        --set ingressController.enabled=true \
+        --set ingressController.default=true \
+        --set ingressController.loadbalancerMode=shared \
+        --set ingressController.service.type=LoadBalancer \
         --wait \
         --timeout 10m
     

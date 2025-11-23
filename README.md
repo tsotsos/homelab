@@ -57,16 +57,13 @@ homelab/
 │   ├── argocd/                    # GitOps controller
 │   ├── cert-manager/              # Certificate management
 │   ├── external-dns/              # DNS automation
-│   ├── ingress-nginx/             # Ingress controller
 │   ├── kube-vip-cloud-provider/   # LoadBalancer provider
 │   ├── longhorn/                  # Storage solution
-│   ├── rancher/                   # Kubernetes management
 │   └── sealed-secrets/            # Secret encryption
 ├── 🎯 cluster/                     # Cluster-specific manifests
 │   ├── argocd/                    # ArgoCD config overlays
 │   ├── cert-manager/              # Cert-Manager + ClusterIssuer
 │   ├── external-dns/              # External-DNS config
-│   ├── ingress-nginx/             # Ingress config overlays
 │   ├── kube-vip-cloud-provider/   # LoadBalancer IP pool
 │   ├── sealed-secrets/            # Sealed secret overlays
 │   ├── kustomization.yaml         # Root kustomization
@@ -94,10 +91,9 @@ homelab/
 |-----------|---------|---------|--------|
 | **Talos Linux** | Immutable OS | v1.11.5 | ✅ |
 | **Kubernetes** | Orchestration | v1.34.1 | ✅ |
-| **Cilium** | CNI + networking | 1.18.4 | ✅ |
+| **Cilium** | CNI + Ingress | 1.18.4 | ✅ |
 | **ArgoCD** | GitOps | 8.2.5 | ✅ |
 | **Cert-Manager** | TLS certificates | Latest | ✅ |
-| **Ingress-NGINX** | Load balancing | Latest | ✅ |
 | **Sealed-Secrets** | Secret encryption | 2.17.9 | ✅ |
 
 ## 📋 Architecture

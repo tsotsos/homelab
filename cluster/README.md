@@ -22,8 +22,6 @@ cluster/
 ├── external-dns/                    # External-DNS customizations
 │   ├── sealed-secret.yaml           # UniFi credentials (sealed)
 │   └── kustomization.yaml
-├── ingress-nginx/                   # Ingress-NGINX customizations
-│   └── kustomization.yaml
 ├── kube-vip-cloud-provider/         # LoadBalancer customizations
 │   ├── patch.yaml                   # IP pool configuration
 │   └── kustomization.yaml
@@ -84,11 +82,6 @@ DNS automation:
 - **Sealed Secret**: UniFi controller credentials
 - **Patch**: Domain filter (`kng.house`)
 - Namespace: `external-dns`
-
-### ingress-nginx/
-Ingress controller:
-- No customizations needed (uses base from `apps/`)
-- Namespace: `ingress-nginx`
 
 ### kube-vip-cloud-provider/
 LoadBalancer IPs:

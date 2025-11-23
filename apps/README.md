@@ -26,10 +26,10 @@ Each application directory contains:
 
 ### Networking
 
-- **ingress-nginx/** - NGINX Ingress Controller
-  - Chart: `ingress-nginx` v4.13.0
-  - Namespace: `ingress-nginx`
-  - Purpose: HTTP/HTTPS traffic routing and load balancing
+- **Cilium Ingress** - Native Cilium Ingress Controller (installed via bootstrap)
+  - Integrated with Cilium CNI
+  - Namespace: `kube-system`
+  - Purpose: eBPF-based HTTP/HTTPS traffic routing and load balancing
 
 - **external-dns/** - External DNS automation
   - Chart: `external-dns` (latest)
