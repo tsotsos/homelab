@@ -1,12 +1,39 @@
+# Persistence settings
 persistence:
   defaultClass: true
+  defaultFsType: ext4
+  defaultClassReplicaCount: 2
+  defaultDataLocality: disabled
 
+# Disable pre-upgrade checker for GitOps (ArgoCD)
 preUpgradeChecker:
   jobEnabled: false
+  upgradeVersionCheck: false
 
+# Default settings
 defaultSettings:
   defaultReplicaCount: 2
   #backupTarget: nfs://nas.kng.house:/mnt/backups/longhorn
-
+  
+  # Optimize for your Cilium setup
+  guaranteedInstanceManagerCPU: 12
+  
+# Node selector for storage workloads
 nodeSelector:
   node.kng/workload-storage: "true"
+
+# Ingress configuration for Cilium Ingress Controller
+ingress:
+  enabled: true
+  ingressClassName: cilium
+  host: longhorn.kng.house
+  tls: true
+  tlsSecret: longhorn-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+
+# Service configuration
+service:
+  ui:
+    type: ClusterIP
+
