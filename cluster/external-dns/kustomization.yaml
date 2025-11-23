@@ -3,6 +3,9 @@ kind: Kustomization
 
 namespace: external-dns
 
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "-1"
+
 helmCharts:
   - name: external-dns
     repo: https://kubernetes-sigs.github.io/external-dns/

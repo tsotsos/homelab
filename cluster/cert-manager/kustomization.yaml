@@ -3,6 +3,9 @@ kind: Kustomization
 
 namespace: cert-manager
 
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "-2"
+
 helmCharts:
   - name: cert-manager
     repo: https://charts.jetstack.io
