@@ -1,21 +1,28 @@
 global:
   storageClass: longhorn
-
-authentik:
-  # Secret key for Authentik
-  secret_key: ""  # Will be provided via secret
   
-  # Error reporting
-  error_reporting:
-    enabled: false
-  
-  # PostgreSQL configuration
-  postgresql:
-    host: "postgresql-primary.postgresql.svc.cluster.local"
-    port: 5432
-    name: "authentik"
-    user: "authentik"
-    password: ""  # Will be provided via secret
+  # Environment variables (new format)
+  env:
+    - name: AUTHENTIK_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: secret-key
+    - name: AUTHENTIK_POSTGRESQL__HOST
+      value: "postgresql-primary.postgresql.svc.cluster.local"
+    - name: AUTHENTIK_POSTGRESQL__PORT
+      value: "5432"
+    - name: AUTHENTIK_POSTGRESQL__NAME
+      value: "authentik"
+    - name: AUTHENTIK_POSTGRESQL__USER
+      value: "authentik"
+    - name: AUTHENTIK_POSTGRESQL__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: authentik-secrets
+          key: postgresql-password
+    - name: AUTHENTIK_ERROR_REPORTING__ENABLED
+      value: "false"
 
 # Server configuration
 server:
@@ -124,33 +131,3 @@ prometheus:
     create: false
   rules:
     create: false
-
-# Volume for media
-volumeMounts:
-  - name: media
-    mountPath: /media
-
-volumes:
-  - name: media
-    persistentVolumeClaim:
-      claimName: authentik-media
-
-# PVC for media storage
-persistence:
-  media:
-    enabled: true
-    storageClass: longhorn
-    accessMode: ReadWriteOnce
-    size: 10Gi
-
-# Environment variables from secret
-envFrom:
-  - secretRef:
-      name: authentik-secrets
-
-# Additional environment variables
-env:
-  AUTHENTIK_POSTGRESQL__HOST: "postgresql-primary.postgresql.svc.cluster.local"
-  AUTHENTIK_POSTGRESQL__PORT: "5432"
-  AUTHENTIK_POSTGRESQL__NAME: "authentik"
-  AUTHENTIK_POSTGRESQL__USER: "authentik"
