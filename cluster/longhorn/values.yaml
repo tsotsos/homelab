@@ -18,6 +18,15 @@ defaultSettings:
   # Optimize for your Cilium setup
   guaranteedInstanceManagerCPU: 12
   
+  # HA across physical nodes (zones: s01, s02, s03)
+  # Ensures replicas are distributed across different physical Proxmox hosts
+  replicaSoftAntiAffinity: true
+  replicaZoneSoftAntiAffinity: true
+  replicaDiskSoftAntiAffinity: true
+  
+  # Storage optimization
+  storageMinimalAvailablePercentage: 10
+  
 # Node selector for storage workloads
 nodeSelector:
   node.kng/workload-storage: "true"
