@@ -3,13 +3,11 @@ kind: Kustomization
 
 namespace: kube-system
 
-configurations:
-  - kustomizeconfig.yaml
-
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-10"
 
 resources:
+  - cilium-secrets-ns.yaml
   - cilium-secrets-rbac.yaml
 
 helmCharts:
