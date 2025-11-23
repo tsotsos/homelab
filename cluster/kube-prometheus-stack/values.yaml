@@ -15,7 +15,7 @@ grafana:
     enabled: true
     ingressClassName: cilium
     annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-production
+      cert-manager.io/cluster-issuer: letsencrypt-dns
     hosts:
       - grafana.kng.house
     tls:
@@ -87,7 +87,7 @@ prometheus:
     enabled: true
     ingressClassName: cilium
     annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-production
+      cert-manager.io/cluster-issuer: letsencrypt-dns
     hosts:
       - prometheus.kng.house
     tls:
@@ -117,7 +117,7 @@ alertmanager:
     enabled: true
     ingressClassName: cilium
     annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-production
+      cert-manager.io/cluster-issuer: letsencrypt-dns
     hosts:
       - alertmanager.kng.house
     tls:
