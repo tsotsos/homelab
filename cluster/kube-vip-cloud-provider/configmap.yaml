@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kube-vip-cloud-provider
-  namespace: kube-system
-data:
-  range-global: 10.0.2.75-10.0.2.99

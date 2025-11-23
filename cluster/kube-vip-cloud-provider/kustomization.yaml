@@ -3,10 +3,13 @@ kind: Kustomization
 
 namespace: kube-system
 
-resources:
-  - ../../apps/kube-vip-cloud-provider
-  - configmap.yaml
-
-# Deploy after kube-vip daemonset
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-4"
+
+helmCharts:
+  - name: kube-vip-cloud-provider
+    repo: https://kube-vip.github.io/helm-charts
+    version: 0.2.9
+    releaseName: kube-vip-cloud-provider
+    namespace: kube-system
+    valuesFile: values.yaml

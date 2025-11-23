@@ -3,10 +3,13 @@ kind: Kustomization
 
 namespace: kube-system
 
-resources:
-  - ../../apps/cilium
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "-10"
 
-# Cilium must be deployed first (before any workloads)
-metadata:
-  annotations:
-    argocd.argoproj.io/sync-wave: "-10"
+helmCharts:
+  - name: cilium
+    repo: https://helm.cilium.io/
+    version: 1.18.4
+    releaseName: cilium
+    namespace: kube-system
+    valuesFile: values.yaml

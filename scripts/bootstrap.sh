@@ -54,12 +54,12 @@ install_cilium() {
     helm repo add cilium https://helm.cilium.io/ 2>/dev/null || true
     helm repo update cilium
     
-    # Install Cilium using apps/cilium configuration
+    # Install Cilium using cluster/cilium configuration
     log "Installing Cilium $cilium_version..."
-    kustomize build --enable-helm "$PROJECT_ROOT/apps/cilium" | kubectl apply -f -
+    kustomize build --enable-helm "$CLUSTER_DIR/cilium" | kubectl apply -f -
     
     # Clean up helm charts cache
-    rm -rf "$PROJECT_ROOT/apps/cilium/charts" 2>/dev/null || true
+    rm -rf "$CLUSTER_DIR/cilium/charts" 2>/dev/null || true
     
     success "Cilium installed"
     
@@ -95,12 +95,12 @@ install_argocd() {
         error "ArgoCD manifests not found in $CLUSTER_DIR/argocd"
     fi
     
-    # Install using apps/argocd configuration
+    # Install using cluster/argocd configuration
     log "Applying ArgoCD manifests..."
-    kustomize build --enable-helm "$PROJECT_ROOT/apps/argocd" | kubectl apply -f -
+    kustomize build --enable-helm "$CLUSTER_DIR/argocd" | kubectl apply -f -
     
     # Clean up helm charts cache
-    rm -rf "$PROJECT_ROOT/apps/argocd/charts" 2>/dev/null || true
+    rm -rf "$CLUSTER_DIR/argocd/charts" 2>/dev/null || true
     
     log "Waiting for ArgoCD to be ready..."
     kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s

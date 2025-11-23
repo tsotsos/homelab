@@ -3,8 +3,16 @@ kind: Kustomization
 
 namespace: external-dns
 
+helmCharts:
+  - name: external-dns
+    repo: https://kubernetes-sigs.github.io/external-dns/
+    version: 1.15.0
+    releaseName: external-dns
+    namespace: external-dns
+    valuesFile: values.yaml
+
 resources:
-  - ../../../apps/external-dns
+  - ns.yaml
   - sealed-secret.yaml
 
 patches:

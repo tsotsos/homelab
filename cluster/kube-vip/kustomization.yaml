@@ -3,10 +3,13 @@ kind: Kustomization
 
 namespace: kube-system
 
-resources:
-  - ../../apps/kube-vip
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "-5"
 
-# Deploy after Cilium but before kube-vip-cloud-provider
-metadata:
-  annotations:
-    argocd.argoproj.io/sync-wave: "-5"
+helmCharts:
+  - name: kube-vip
+    repo: https://kube-vip.github.io/helm-charts
+    version: 0.5.0
+    releaseName: kube-vip
+    namespace: kube-system
+    valuesFile: values.yaml
