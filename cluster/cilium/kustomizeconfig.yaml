@@ -1,0 +1,6 @@
+# Kustomize configuration to prevent namespace transformation on Namespace resources
+# This fixes: "id exists; behavior must be merge or replace" error
+namespace:
+  - path: metadata/name
+    kind: Namespace
+    skip: true

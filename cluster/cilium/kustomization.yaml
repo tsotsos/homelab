@@ -3,6 +3,9 @@ kind: Kustomization
 
 namespace: kube-system
 
+configurations:
+  - kustomizeconfig.yaml
+
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-10"
 
