@@ -1,0 +1,156 @@
+global:
+  storageClass: longhorn
+
+authentik:
+  # Secret key for Authentik
+  secret_key: ""  # Will be provided via secret
+  
+  # Error reporting
+  error_reporting:
+    enabled: false
+  
+  # PostgreSQL configuration
+  postgresql:
+    host: "postgresql-primary.postgresql.svc.cluster.local"
+    port: 5432
+    name: "authentik"
+    user: "authentik"
+    password: ""  # Will be provided via secret
+
+# Server configuration
+server:
+  replicas: 2
+  
+  # Pod Anti-Affinity: Distribute across zones
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: authentik
+                app.kubernetes.io/component: server
+            topologyKey: topology.kubernetes.io/zone
+        - weight: 50
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: authentik
+                app.kubernetes.io/component: server
+            topologyKey: kubernetes.io/hostname
+  
+  # Resources
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    ingressClassName: cilium
+    hosts:
+      - authentik.kng.house
+    tls:
+      - hosts:
+          - authentik.kng.house
+        secretName: authentik-tls
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-dns
+      external-dns.alpha.kubernetes.io/hostname: authentik.kng.house
+
+# Worker configuration
+worker:
+  replicas: 2
+  
+  # Pod Anti-Affinity: Distribute across zones
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: authentik
+                app.kubernetes.io/component: worker
+            topologyKey: topology.kubernetes.io/zone
+        - weight: 50
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: authentik
+                app.kubernetes.io/component: worker
+            topologyKey: kubernetes.io/hostname
+  
+  # Resources
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+# Redis (included with chart)
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+# External PostgreSQL (using our HA cluster)
+postgresql:
+  enabled: false
+
+# Prometheus metrics
+prometheus:
+  serviceMonitor:
+    create: false
+  rules:
+    create: false
+
+# Volume for media
+volumeMounts:
+  - name: media
+    mountPath: /media
+
+volumes:
+  - name: media
+    persistentVolumeClaim:
+      claimName: authentik-media
+
+# PVC for media storage
+persistence:
+  media:
+    enabled: true
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+# Environment variables from secret
+envFrom:
+  - secretRef:
+      name: authentik-secrets
+
+# Additional environment variables
+env:
+  AUTHENTIK_POSTGRESQL__HOST: "postgresql-primary.postgresql.svc.cluster.local"
+  AUTHENTIK_POSTGRESQL__PORT: "5432"
+  AUTHENTIK_POSTGRESQL__NAME: "authentik"
+  AUTHENTIK_POSTGRESQL__USER: "authentik"
