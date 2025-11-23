@@ -1,4 +1,10 @@
 installCRDs: true
+
+# Leader election in cert-manager namespace (not kube-system)
+global:
+  leaderElection:
+    namespace: cert-manager
+
 extraArgs:
   - --dns01-recursive-nameservers-only
   - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
@@ -14,6 +20,8 @@ webhook:
 
 cainjector:
   enabled: true
+  extraArgs:
+    - --leader-election-namespace=cert-manager
   nodeSelector:
     node.kng/workload-infra: "true"
 
