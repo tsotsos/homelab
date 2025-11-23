@@ -4,15 +4,15 @@ metadata:
   name: argocd-server
   namespace: argocd
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-dns
+    #cert-manager.io/cluster-issuer: letsencrypt-dns
     external-dns.alpha.kubernetes.io/hostname: argocd.kng.house
     external-dns.alpha.kubernetes.io/target: 10.0.2.75
 spec:
   ingressClassName: cilium
-  tls:
-    - hosts:
-        - argocd.kng.house
-      secretName: argocd-tls
+  #tls:
+  #  - hosts:
+  #      - argocd.kng.house
+  #    secretName: argocd-tls
   rules:
     - host: argocd.kng.house
       http:
