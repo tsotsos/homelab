@@ -70,6 +70,14 @@ primary:
 readReplicas:
   replicaCount: 2
   
+  # Extended configuration to match primary
+  extendedConfiguration: |
+    max_connections = 200
+    shared_buffers = 256MB
+    effective_cache_size = 1GB
+    work_mem = 4MB
+    maintenance_work_mem = 128MB
+  
   # Pod Anti-Affinity: Distribute replicas across zones
   affinity:
     podAntiAffinity:
