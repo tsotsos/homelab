@@ -29,29 +29,6 @@ grafana:
     storageClassName: longhorn
     size: 10Gi
   
-  # HA configuration across zones
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                    - grafana
-            topologyKey: topology.kubernetes.io/zone
-        - weight: 50
-          podAffinityTerm:
-            labelSelector:
-              matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                    - grafana
-            topologyKey: kubernetes.io/hostname
-  
   # Authentik OAuth2 integration
   grafana.ini:
     server:
@@ -97,29 +74,6 @@ prometheus:
     retention: 30d
     retentionSize: 45GB
     
-    # HA configuration across zones
-    affinity:
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                      - prometheus
-              topologyKey: topology.kubernetes.io/zone
-          - weight: 50
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                      - prometheus
-              topologyKey: kubernetes.io/hostname
-    
     # Resources
     resources:
       requests:
@@ -157,18 +111,6 @@ alertmanager:
           resources:
             requests:
               storage: 10Gi
-    
-    # HA configuration - one per zone
-    affinity:
-      podAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                    - alertmanager
-            topologyKey: topology.kubernetes.io/zone
   
   # Ingress for Alertmanager
   ingress:
@@ -186,19 +128,6 @@ alertmanager:
 # Prometheus Operator
 prometheusOperator:
   enabled: true
-  
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                    - prometheus-operator
-            topologyKey: topology.kubernetes.io/zone
 
 # Node Exporter
 nodeExporter:
