@@ -1,2 +1,6 @@
+crds:
+  install: true
+  keep: true
+
 nodeSelector:
   node.kng/workload-infra: "true"
