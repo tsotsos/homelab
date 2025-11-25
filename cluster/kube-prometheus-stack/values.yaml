@@ -52,6 +52,22 @@ grafana:
       defaultMode: 0440
       mountPath: /etc/secrets
       readOnly: true
+  
+  # Additional datasources
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki-gateway.logging.svc.cluster.local
+      jsonData:
+        maxLines: 1000
+        derivedFields:
+          - datasourceUid: prometheus
+            matcherRegex: "traceID=(\\w+)"
+            name: TraceID
+            url: "$${__value.raw}"
+      isDefault: false
+      editable: false
 
 # Prometheus Configuration
 prometheus:

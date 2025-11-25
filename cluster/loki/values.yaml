@@ -1,0 +1,183 @@
+# Loki Configuration - HA deployment with Longhorn storage
+# Deployment: Simple Scalable mode (3 replicas across zones)
+
+loki:
+  # Authentication - disabled for internal use
+  auth_enabled: false
+  
+  # Storage configuration - Longhorn for filesystem
+  storage:
+    type: filesystem
+  
+  # Schema configuration
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  
+  # Limits configuration
+  limits_config:
+    retention_period: 744h  # 31 days
+    max_query_series: 10000
+    max_query_lookback: 744h
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+
+# Deployment mode - SimpleScalable for HA
+deploymentMode: SimpleScalable
+
+# Backend configuration (read/write path)
+backend:
+  replicas: 3
+  
+  # Pod Anti-Affinity: Distribute across zones
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: loki
+                app.kubernetes.io/component: backend
+            topologyKey: topology.kubernetes.io/zone
+  
+  # Node selector for infra workloads
+  nodeSelector:
+    node.kng/workload-infra: "true"
+  
+  # Persistence with Longhorn
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 50Gi
+    selector: null
+  
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Read configuration
+read:
+  replicas: 3
+  
+  # Pod Anti-Affinity: Distribute across zones
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: loki
+                app.kubernetes.io/component: read
+            topologyKey: topology.kubernetes.io/zone
+  
+  # Node selector for infra workloads
+  nodeSelector:
+    node.kng/workload-infra: "true"
+  
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Write configuration
+write:
+  replicas: 3
+  
+  # Pod Anti-Affinity: Distribute across zones
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: loki
+                app.kubernetes.io/component: write
+            topologyKey: topology.kubernetes.io/zone
+  
+  # Node selector for infra workloads
+  nodeSelector:
+    node.kng/workload-infra: "true"
+  
+  # Persistence with Longhorn
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 10Gi
+  
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Gateway configuration (query frontend)
+gateway:
+  enabled: true
+  replicas: 2
+  
+  # Pod Anti-Affinity
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: loki
+                app.kubernetes.io/component: gateway
+            topologyKey: topology.kubernetes.io/zone
+  
+  # Node selector
+  nodeSelector:
+    node.kng/workload-infra: "true"
+  
+  # Ingress via Cilium
+  ingress:
+    enabled: true
+    ingressClassName: cilium
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-dns
+    hosts:
+      - host: loki.kng.house
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: loki-tls
+        hosts:
+          - loki.kng.house
+
+# Monitoring integration
+monitoring:
+  serviceMonitor:
+    enabled: true
+  
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+
+# Disable test components
+test:
+  enabled: false

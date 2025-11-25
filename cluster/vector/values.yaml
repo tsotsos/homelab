@@ -1,0 +1,137 @@
+# Vector Configuration - Log collector DaemonSet
+# Collects logs from all nodes and sends to Loki
+
+# Role for Vector
+role: Agent
+
+# Custom configuration for Vector
+customConfig:
+  data_dir: /vector-data-dir
+  
+  api:
+    enabled: true
+    address: 0.0.0.0:8686
+  
+  # Sources: Collect logs from Kubernetes
+  sources:
+    kubernetes_logs:
+      type: kubernetes_logs
+      auto_partial_merge: true
+      self_node_name: ${VECTOR_SELF_NODE_NAME}
+      
+  # Transforms: Parse and enrich logs
+  transforms:
+    # Parse container logs
+    parse_logs:
+      type: remap
+      inputs:
+        - kubernetes_logs
+      source: |
+        # Parse JSON logs if possible
+        if is_string(.message) {
+          parsed, err = parse_json(.message)
+          if err == null {
+            . = merge(., parsed)
+          }
+        }
+        
+        # Add standard labels
+        .cluster = "kng"
+        
+        # Namespace-based filtering
+        .job = .kubernetes.pod_namespace
+        
+    # Add node labels
+    add_node_labels:
+      type: remap
+      inputs:
+        - parse_logs
+      source: |
+        .node = .kubernetes.pod_node_name
+        .zone = get_env_var!("VECTOR_SELF_ZONE")
+  
+  # Sinks: Send logs to Loki
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - add_node_labels
+      endpoint: http://loki-gateway.logging.svc.cluster.local
+      encoding:
+        codec: json
+      labels:
+        cluster: "{{ cluster }}"
+        namespace: "{{ kubernetes.pod_namespace }}"
+        node: "{{ node }}"
+        zone: "{{ zone }}"
+        pod: "{{ kubernetes.pod_name }}"
+        container: "{{ kubernetes.container_name }}"
+        job: "{{ job }}"
+      # Buffer configuration for reliability
+      buffer:
+        type: disk
+        max_size: 268435488  # 256 MiB
+      request:
+        retry_attempts: 5
+        retry_initial_backoff_secs: 1
+        retry_max_duration_secs: 10
+
+# Pod configuration
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8686"
+
+# Environment variables
+env:
+  - name: VECTOR_SELF_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: VECTOR_SELF_ZONE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.labels['topology.kubernetes.io/zone']
+
+# Resources
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Tolerations to run on all nodes including control plane
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+# Service for metrics
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 8686
+      protocol: TCP
+      targetPort: 8686
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: kube-prometheus-stack
+
+# Persistence for buffer
+persistence:
+  enabled: true
+  storageClassName: longhorn
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+# Update strategy
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
