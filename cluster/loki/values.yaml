@@ -40,19 +40,7 @@ deploymentMode: SingleBinary
 
 # SingleBinary configuration
 singleBinary:
-  replicas: 3
-  
-  # Pod Anti-Affinity: Distribute across zones
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/name: loki
-                app.kubernetes.io/component: single-binary
-            topologyKey: topology.kubernetes.io/zone
+  replicas: 1  # Multiple replicas require object storage
   
   # Node selector for infra workloads
   nodeSelector:
