@@ -6,8 +6,8 @@ namespace: monitoring
 resources:
   - ns.yaml
   - sealed-secret.yaml
-  # CRDs managed separately via server-side apply to avoid annotation size limits
-  # Apply with: kustomize build crds | kubectl apply --server-side -f - --force-conflicts
+  - crds
+  - application.yaml
 
 helmCharts:
   - name: kube-prometheus-stack
