@@ -7,7 +7,6 @@ resources:
   - ns.yaml
   - sealed-secret.yaml
   - crds
-  - application.yaml
 
 helmCharts:
   - name: kube-prometheus-stack
