@@ -1,7 +1,7 @@
 # Grafana Configuration
 grafana:
   enabled: true
-  replicas: 2
+  replicas: 1  # Single replica due to RWO storage constraint
   
   # Admin credentials
   adminPassword: ""  # Will use secret
