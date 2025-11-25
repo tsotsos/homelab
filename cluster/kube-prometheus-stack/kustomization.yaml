@@ -6,6 +6,7 @@ namespace: monitoring
 resources:
   - ns.yaml
   - sealed-secret.yaml
+  - crds
 
 helmCharts:
   - name: kube-prometheus-stack
@@ -14,4 +15,4 @@ helmCharts:
     releaseName: kube-prometheus-stack
     namespace: monitoring
     valuesFile: values.yaml
-    includeCRDs: true
+    includeCRDs: false
