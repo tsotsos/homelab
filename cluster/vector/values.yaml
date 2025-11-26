@@ -31,7 +31,7 @@ customConfig:
         if is_string(.message) {
           parsed, err = parse_json(.message)
           if err == null {
-            . = merge(., parsed)
+            . = merge(., parsed) ?? .
           }
         }
         
