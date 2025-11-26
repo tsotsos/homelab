@@ -60,13 +60,13 @@ customConfig:
       encoding:
         codec: json
       labels:
-        cluster: "{{ cluster }}"
-        namespace: "{{ kubernetes.pod_namespace }}"
-        node: "{{ node }}"
-        zone: "{{ zone }}"
-        pod: "{{ kubernetes.pod_name }}"
-        container: "{{ kubernetes.container_name }}"
-        job: "{{ job }}"
+        cluster: "{{`{{ cluster }}`}}"
+        namespace: "{{`{{ kubernetes.pod_namespace }}`}}"
+        node: "{{`{{ node }}`}}"
+        zone: "{{`{{ zone }}`}}"
+        pod: "{{`{{ kubernetes.pod_name }}`}}"
+        container: "{{`{{ kubernetes.container_name }}`}}"
+        job: "{{`{{ job }}`}}"
       # Buffer configuration for reliability
       buffer:
         type: disk
