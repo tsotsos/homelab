@@ -184,8 +184,10 @@ customConfig:
         }
 
         # ---- 3. Common enrichment for all cases ----
-        hostname = to_string(.hostname) ?? "unknown"
-        .hostname = hostname
+        if !exists(.hostname) {
+          .hostname = "unknown"
+        }
+        hostname = to_string(.hostname)
         .job = hostname
 
         # Simple device_type by naming convention, no per-device config:
