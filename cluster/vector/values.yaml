@@ -83,22 +83,23 @@ customConfig:
       source: |
         .cluster = "kng"
         
-        # Extract hostname as job
-        .job = .hostname ?? "syslog"
+        # Extract hostname as job (hostname is always present in syslog)
+        .job = .hostname
         
         # Detect device type from hostname
-        if starts_with!(.hostname, "udm") || starts_with!(.hostname, "UDM") {
+        hostname = .hostname
+        if starts_with(hostname, "udm") || starts_with(hostname, "UDM") {
           .device_type = "udm"
-        } else if starts_with!(.hostname, "USW") || starts_with!(.hostname, "usw") {
+        } else if starts_with(hostname, "USW") || starts_with(hostname, "usw") {
           .device_type = "unifi_switch"
-        } else if starts_with!(.hostname, "UAP") || starts_with!(.hostname, "uap") {
+        } else if starts_with(hostname, "UAP") || starts_with(hostname, "uap") {
           .device_type = "unifi_ap"
         } else {
           .device_type = "network_device"
         }
         
-        # Extract severity as level
-        .detected_level = downcase!(.severity) ?? "unknown"
+        # Extract severity as level (use to_string to handle severity)
+        .detected_level = to_string(.severity) ?? "unknown"
     
     # Parse HTTP logs from external applications
     http_logs_parsed:
@@ -108,15 +109,26 @@ customConfig:
       source: |
         .cluster = "kng"
         
-        # Extract device info from payload
-        .job = .device ?? .hostname ?? "external"
-        .device_type = .device ?? "app"
+        # Extract device info from payload (handle missing fields)
+        if exists(.device) {
+          .job = .device
+        } else if exists(.hostname) {
+          .job = .hostname
+        } else {
+          .job = "external"
+        }
+        
+        if exists(.device) {
+          .device_type = .device
+        } else {
+          .device_type = "app"
+        }
         
         # Preserve or detect log level
         if exists(.level) {
-          .detected_level = downcase!(.level)
+          .detected_level = downcase(.level) ?? "unknown"
         } else if exists(.severity) {
-          .detected_level = downcase!(.severity)
+          .detected_level = downcase(.severity) ?? "unknown"
         } else {
           .detected_level = "unknown"
         }
