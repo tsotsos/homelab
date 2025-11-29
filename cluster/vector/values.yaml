@@ -130,11 +130,11 @@ customConfig:
 
         # ---- 2. Classic syslog (with or without <PRI>) ----
         } else {
-          # Named capture groups: timestamp, host, body
-          # Make day field more flexible: \s* for optional leading space
+          # First try: full format with optional priority
+          # <PRI>TIMESTAMP HOSTNAME MESSAGE
           syslog = parse_regex(
             message_text,
-            r'^(?:<\d+>)?(?P<ts>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<host>\S+)\s+(?P<body>.*)$'
+            r'^<\d+>(?P<ts>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<host>\S+)\s+(?P<body>.*)$'
           ) ?? {}
 
           if exists(syslog.host) {
@@ -142,16 +142,37 @@ customConfig:
             .hostname = syslog.host
             .message = syslog.body
           } else {
-            # Fallback: first token after priority as hostname
-            # Strip <PRI> if present, then take first word
-            cleaned = replace(message_text, r'^<\d+>', "")
-            parts = split(cleaned, " ", limit: 2)
-            if length(parts) >= 2 {
-              .hostname = parts[0]
-              .message = parts[1]
+            # Second try: without priority
+            syslog = parse_regex(
+              message_text,
+              r'^(?P<ts>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<host>\S+)\s+(?P<body>.*)$'
+            ) ?? {}
+            
+            if exists(syslog.host) {
+              .timestamp = syslog.ts
+              .hostname = syslog.host
+              .message = syslog.body
             } else {
-              .hostname = "unknown"
-              .message = message_text
+              # Final fallback: strip priority and take hostname after timestamp
+              # Format: <PRI>Mon DD HH:MM:SS HOSTNAME
+              cleaned = replace(message_text, r'^<\d+>', "")
+              # Skip timestamp (3 chars month + space + up to 2 digit day + space + 8 char time + space)
+              parts = parse_regex(cleaned, r'^[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+(?P<hostname>\S+)\s+(?P<rest>.*)$') ?? {}
+              
+              if exists(parts.hostname) {
+                .hostname = parts.hostname
+                .message = parts.rest
+              } else {
+                # Ultimate fallback: first word
+                words = split(cleaned, " ")
+                if length(words) > 0 {
+                  .hostname = words[0]
+                  .message = cleaned
+                } else {
+                  .hostname = "unknown"
+                  .message = message_text
+                }
+              }
             }
           }
 
