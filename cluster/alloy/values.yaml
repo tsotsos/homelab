@@ -90,7 +90,6 @@ alloy:
           protocol = "udp"
           labels   = {
             cluster = "kng",
-            job     = "unifi",
             source  = "syslog-udp",
           }
         }
@@ -103,7 +102,6 @@ alloy:
           protocol = "tcp"
           labels   = {
             cluster = "kng",
-            job     = "unifi",
             source  = "syslog-tcp",
           }
         }
@@ -111,6 +109,13 @@ alloy:
       }
 
       loki.process "unifi" {
+        // Add job label first
+        stage.static_labels {
+          values = {
+            job = "unifi",
+          }
+        }
+        
         // Parse CEF format: CEF:version|vendor|product|version|signature|name|severity|extensions
         stage.regex {
           expression = "CEF:(?P<cef_version>\\d+)\\|(?P<vendor>[^|]*)\\|(?P<product>[^|]*)\\|(?P<product_version>[^|]*)\\|(?P<signature>[^|]*)\\|(?P<event_name>[^|]*)\\|(?P<severity>[^|]*)\\|(?P<extensions>.*)"
