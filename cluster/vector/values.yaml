@@ -114,7 +114,7 @@ customConfig:
         
         # Extract hostname or use source IP as fallback
         hostname = if syslog_parts.hostname != null {
-          syslog_parts.hostname
+          to_string!(syslog_parts.hostname)
         } else if exists(.host) {
           to_string!(.host)
         } else {
@@ -125,12 +125,12 @@ customConfig:
         
         # Use the parsed message or original
         .message = if syslog_parts.rest != null {
-          syslog_parts.rest
+          to_string!(syslog_parts.rest)
         } else {
           message_text
         }
         
-        # Detect device type from hostname
+        # Detect device type from hostname (hostname is always a string now)
         if starts_with(hostname, "udm") || starts_with(hostname, "UDM") {
           .device_type = "udm"
         } else if starts_with(hostname, "USW") || starts_with(hostname, "usw") {
