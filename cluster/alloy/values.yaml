@@ -335,13 +335,7 @@ alloy:
       // ============================================================================
       loki.write "default" {
         endpoint {
-          url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
-          
-          // Retry configuration
-          retry_on_http_429 = true
-          min_backoff       = "100ms"
-          max_backoff       = "10s"
-          max_retries       = 3
+          url = "http://loki-gateway.logging.svc.cluster.local/loki/api/v1/push"
         }
         
         // External labels applied to all logs
