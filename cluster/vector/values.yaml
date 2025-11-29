@@ -156,7 +156,10 @@ customConfig:
         }
         
         # Ensure hostname is always a string (never null)
-        hostname = to_string(hostname) ?? "unknown"
+        if hostname == null {
+          hostname = "unknown"
+        }
+        hostname = to_string(hostname)
         .job = hostname
         .hostname = hostname
         
