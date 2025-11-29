@@ -229,11 +229,14 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-dns
   hosts:
-    - host: vector.kng.house
+    - host: logs.kng.house
       paths:
         - path: /
           pathType: Prefix
+          port:
+            name: http-logs
+            number: 8080
   tls:
-    - secretName: vector-tls
+    - secretName: vector-logs-tls
       hosts:
-        - vector.kng.house
+        - logs.kng.house
