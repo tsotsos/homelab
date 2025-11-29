@@ -120,6 +120,8 @@ customConfig:
         } else {
           "unknown"
         }
+        # Ensure hostname is never null
+        hostname = hostname ?? "unknown"
         .job = hostname
         .hostname = hostname
         
