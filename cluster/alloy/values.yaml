@@ -254,17 +254,7 @@ service:
       protocol: TCP
 
 ingress:
-  enabled: true
-  ingressClassName: cilium
-  hosts:
-    - host: logs.kng.house
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: logs-kng-house-tls
-      hosts:
-        - logs.kng.house
+  enabled: false
 
 serviceMonitor:
   enabled: true
