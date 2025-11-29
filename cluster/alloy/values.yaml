@@ -1,0 +1,272 @@
+alloy:
+  configMap:
+    create: true
+    content: |
+      // Kubernetes pod logs
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+        
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+        
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "app"
+        }
+      }
+
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.process.pods.receiver]
+      }
+
+      loki.process "pods" {
+        stage.static_labels {
+          values = {
+            cluster      = "kng",
+            device_type  = "kubernetes",
+            service_name = "kubernetes",
+          }
+        }
+        
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // Syslog receiver (UDP)
+      loki.source.syslog "syslog_udp" {
+        listener {
+          address  = "0.0.0.0:514"
+          protocol = "udp"
+          labels   = {
+            cluster      = "kng",
+            device_type  = "syslog",
+            service_name = "syslog",
+          }
+        }
+        forward_to = [loki.process.syslog.receiver]
+      }
+
+      // Syslog receiver (TCP)
+      loki.source.syslog "syslog_tcp" {
+        listener {
+          address  = "0.0.0.0:1514"
+          protocol = "tcp"
+          labels   = {
+            cluster      = "kng",
+            device_type  = "syslog",
+            service_name = "syslog",
+          }
+        }
+        forward_to = [loki.process.syslog.receiver]
+      }
+
+      loki.process "syslog" {
+        // Extract hostname from syslog
+        stage.regex {
+          expression = "^(?:<\\d+>)?(?P<timestamp>[A-Za-z]{3}\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2})\\s+(?P<hostname>\\S+)\\s+(?P<message>.*)$"
+        }
+        
+        stage.labels {
+          values = {
+            hostname = "",
+          }
+        }
+        
+        // Detect device type from hostname prefix
+        stage.match {
+          selector = "{hostname=~\"udm.*\"}"
+          stage.static_labels {
+            values = {
+              device_type = "udm",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{hostname=~\"usw.*\"}"
+          stage.static_labels {
+            values = {
+              device_type = "usw",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{hostname=~\"uap.*|u6.*\"}"
+          stage.static_labels {
+            values = {
+              device_type = "uap",
+            }
+          }
+        }
+        
+        // Extract severity from priority
+        stage.regex {
+          expression = "^<(?P<priority>\\d+)>"
+        }
+        
+        stage.template {
+          source   = "priority"
+          template = "{{ .Value | int | mod 8 }}"
+        }
+        
+        stage.match {
+          selector = "{priority=\"0\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "emergency",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{priority=\"1\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "alert",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{priority=\"2\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "critical",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{priority=\"3\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "error",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{priority=\"4\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "warning",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{priority=\"5\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "notice",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{priority=\"6\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "info",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{priority=\"7\"}"
+          stage.static_labels {
+            values = {
+              detected_level = "debug",
+            }
+          }
+        }
+        
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // HTTP receiver for application logs
+      loki.source.api "http" {
+        http {
+          listen_address = "0.0.0.0"
+          listen_port    = 8080
+        }
+        forward_to = [loki.process.http.receiver]
+      }
+
+      loki.process "http" {
+        stage.static_labels {
+          values = {
+            cluster      = "kng",
+            device_type  = "http",
+            service_name = "http",
+          }
+        }
+        
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // Write to Loki
+      loki.write "default" {
+        endpoint {
+          url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
+        }
+      }
+
+controller:
+  type: "daemonset"
+
+service:
+  type: LoadBalancer
+  ports:
+    - name: syslog-udp
+      port: 514
+      targetPort: 514
+      protocol: UDP
+    - name: syslog-tcp
+      port: 1514
+      targetPort: 1514
+      protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+
+ingress:
+  enabled: true
+  ingressClassName: cilium
+  hosts:
+    - host: logs.kng.house
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 8080
+  tls:
+    - secretName: logs-kng-house-tls
+      hosts:
+        - logs.kng.house
+
+serviceMonitor:
+  enabled: true
+  namespace: alloy
