@@ -131,6 +131,7 @@ customConfig:
         # ---- 2. Classic syslog (with or without <PRI>) ----
         } else {
           # Named capture groups: timestamp, host, body
+          # Make day field more flexible: \s* for optional leading space
           syslog = parse_regex(
             message_text,
             r'^(?:<\d+>)?(?P<ts>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<host>\S+)\s+(?P<body>.*)$'
@@ -141,14 +142,16 @@ customConfig:
             .hostname = syslog.host
             .message = syslog.body
           } else {
-            # Fallback: first token as hostname
-            parts = split(message_text, " ", limit: 2)
-            if length(parts) == 2 {
+            # Fallback: first token after priority as hostname
+            # Strip <PRI> if present, then take first word
+            cleaned = replace(message_text, r'^<\d+>', "")
+            parts = split(cleaned, " ", limit: 2)
+            if length(parts) >= 2 {
               .hostname = parts[0]
-              .message  = parts[1]
+              .message = parts[1]
             } else {
               .hostname = "unknown"
-              .message  = message_text
+              .message = message_text
             }
           }
 
