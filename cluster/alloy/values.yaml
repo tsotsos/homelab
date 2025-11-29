@@ -261,7 +261,6 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-          port: 8080
   tls:
     - secretName: logs-kng-house-tls
       hosts:
