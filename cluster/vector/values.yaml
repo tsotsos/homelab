@@ -155,7 +155,8 @@ customConfig:
           .detected_level = "info"
         }
         
-        # Ensure hostname is set
+        # Ensure hostname is always a string (never null)
+        hostname = to_string(hostname) ?? "unknown"
         .job = hostname
         .hostname = hostname
         
