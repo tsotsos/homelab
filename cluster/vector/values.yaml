@@ -114,7 +114,7 @@ customConfig:
         
         # Extract hostname or use source IP as fallback
         hostname = if syslog_parts.hostname != null {
-          to_string!(syslog_parts.hostname)
+          syslog_parts.hostname
         } else if exists(.host) {
           to_string!(.host)
         } else {
@@ -125,7 +125,7 @@ customConfig:
         
         # Use the parsed message or original
         .message = if syslog_parts.rest != null {
-          to_string!(syslog_parts.rest)
+          syslog_parts.rest
         } else {
           message_text
         }
