@@ -24,19 +24,23 @@ customConfig:
       self_node_name: ${VECTOR_SELF_NODE_NAME}
     
     # Syslog UDP for network devices (UDM, switches, etc)
+    # Using socket type to accept any format, parse manually in transform
     syslog_udp:
-      type: syslog
+      type: socket
       address: 0.0.0.0:514
       mode: udp
-      # Accept both RFC3164 and RFC5424 formats (UniFi uses RFC3164)
       max_length: 102400
+      decoding:
+        codec: bytes
     
     # Syslog TCP (optional, more reliable)
     syslog_tcp:
-      type: syslog
+      type: socket
       address: 0.0.0.0:1514
       mode: tcp
       max_length: 102400
+      decoding:
+        codec: bytes
     
     # HTTP endpoint for applications that can send JSON
     http_logs:
@@ -87,11 +91,36 @@ customConfig:
       source: |
         .cluster = "kng"
         
-        # Extract hostname as job (hostname is always present in syslog)
-        .job = to_string(.hostname) ?? "unknown"
+        # Convert bytes to string for parsing
+        message_text = to_string!(.message)
+        
+        # Try to parse standard syslog format: <PRI>TIMESTAMP HOSTNAME MESSAGE
+        # Example: <14>Nov 29 01:40:00 udm-pro test: message here
+        syslog_parts = parse_regex(message_text, r'^<(?P<pri>\d+)>(?P<timestamp>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>[^\s:]+)[\s:](?P<rest>.*)$') ?? {}
+        
+        # If standard format fails, try without priority
+        if syslog_parts.hostname == null {
+          syslog_parts = parse_regex(message_text, r'^(?P<timestamp>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>[^\s:]+)[\s:](?P<rest>.*)$') ?? {}
+        }
+        
+        # If still no hostname, try just splitting on first space
+        if syslog_parts.hostname == null {
+          parts = split(message_text, " ", limit: 2) ?? []
+          if length(parts) == 2 {
+            syslog_parts.hostname = parts[0]
+            syslog_parts.rest = parts[1]
+          }
+        }
+        
+        # Extract hostname or use source IP as fallback
+        hostname = syslog_parts.hostname ?? to_string(.host) ?? "unknown"
+        .job = hostname
+        .hostname = hostname
+        
+        # Use the parsed message or original
+        .message = syslog_parts.rest ?? message_text
         
         # Detect device type from hostname
-        hostname = to_string(.hostname) ?? ""
         if starts_with(hostname, "udm") || starts_with(hostname, "UDM") {
           .device_type = "udm"
         } else if starts_with(hostname, "USW") || starts_with(hostname, "usw") {
@@ -102,8 +131,21 @@ customConfig:
           .device_type = "network_device"
         }
         
-        # Extract severity as level (use to_string to handle severity)
-        .detected_level = to_string(.severity) ?? "unknown"
+        # Extract severity from priority if available
+        if syslog_parts.pri != null {
+          pri = to_int!(syslog_parts.pri)
+          severity = mod(pri, 8)
+          if severity == 0 { .detected_level = "emergency" }
+          else if severity == 1 { .detected_level = "alert" }
+          else if severity == 2 { .detected_level = "critical" }
+          else if severity == 3 { .detected_level = "error" }
+          else if severity == 4 { .detected_level = "warning" }
+          else if severity == 5 { .detected_level = "notice" }
+          else if severity == 6 { .detected_level = "info" }
+          else { .detected_level = "debug" }
+        } else {
+          .detected_level = "info"
+        }
         
         # Set empty values for Kubernetes-specific fields to prevent Loki errors
         .namespace = "none"
