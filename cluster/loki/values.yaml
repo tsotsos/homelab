@@ -46,6 +46,10 @@ chunksCache:
 resultsCache:
   enabled: false
 
+# Disable query scheduler for SingleBinary mode
+queryScheduler:
+  enabled: false
+
 # SingleBinary configuration
 singleBinary:
   replicas: 1  # Multiple replicas require object storage
