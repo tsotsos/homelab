@@ -50,6 +50,7 @@ customConfig:
         - kubernetes_logs
       source: |
         .cluster = "kng"
+        .device_type = "kubernetes"
         
         # Parse Kubernetes metadata
         if exists(.kubernetes) {
@@ -213,8 +214,8 @@ service:
       protocol: TCP
       targetPort: 8686
 
-# ServiceMonitor for Prometheus
-serviceMonitor:
+# PodMonitor for Prometheus
+podMonitor:
   enabled: true
   additionalLabels:
     release: kube-prometheus-stack
