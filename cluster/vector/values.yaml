@@ -194,8 +194,7 @@ tolerations:
 service:
   enabled: true
   type: LoadBalancer
-  annotations:
-    io.cilium/lb-ipam-ips: "10.0.2.70"
+  # IP will be automatically assigned from kube-vip range (10.0.2.75-10.0.2.99)
   ports:
     - name: syslog-udp
       protocol: UDP
