@@ -158,10 +158,10 @@ customConfig:
             r'^<(?P<pri>\d+)>'
           ) ?? {}
 
-          if exists(pri_match.pri) {
+          .detected_level = if exists(pri_match.pri) {
             pri = to_int!(pri_match.pri)
             severity = pri % 8
-            .detected_level = if severity == 0 {
+            if severity == 0 {
               "emergency"
             } else if severity == 1 {
               "alert"
@@ -179,7 +179,7 @@ customConfig:
               "debug"
             }
           } else {
-            .detected_level = "info"
+            "info"
           }
         }
 
