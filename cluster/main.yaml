@@ -26,6 +26,7 @@ spec:
         revision: HEAD
         directories:
           - path: cluster/*/*
+            exclude: cluster/*/README.md
   template:
     metadata:
       name: '{{path.basename}}'
