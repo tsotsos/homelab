@@ -99,31 +99,59 @@ customConfig:
           .message = message_text
 
           # Try to get device name from the CEF extension
-          # Example field: UNIFIdeviceName=Agg
-          cef = parse_regex(
+          # Priority order:
+          # 1. UNIFIconnectedToDeviceName= (for client events, this is the AP/switch the client connected to)
+          # 2. UNIFIdeviceName= (for device events)
+          # 3. UNIFIhost= (fallback, may have spaces like "Kng UDM")
+          
+          cef_device = parse_regex(
             message_text,
-            r'UNIFIdeviceName=(?P<hostname>[^ ]+)'
+            r'UNIFIconnectedToDeviceName=(?P<hostname>[^ ]+)'
           ) ?? {}
 
-          if exists(cef.hostname) {
-            .hostname = to_string(cef.hostname)
+          if exists(cef_device.hostname) {
+            .hostname = to_string(cef_device.hostname)
           } else {
-            # Fallback: try UNIFIhost=
-            cef2 = parse_regex(
+            cef_dev = parse_regex(
               message_text,
-              r'UNIFIhost=(?P<hostname>[^ ]+)'
+              r'UNIFIdeviceName=(?P<hostname>[^ ]+)'
             ) ?? {}
-            if exists(cef2.hostname) {
-              .hostname = to_string(cef2.hostname)
+            
+            if exists(cef_dev.hostname) {
+              .hostname = to_string(cef_dev.hostname)
             } else {
-              .hostname = "unknown"
+              # UNIFIhost can have spaces, match until next UNIFI field or end
+              cef_host = parse_regex(
+                message_text,
+                r'UNIFIhost=(?P<hostname>[^U]+?)(?:\s+UNIFI|$)'
+              ) ?? {}
+              
+              if exists(cef_host.hostname) {
+                # Trim trailing whitespace
+                hostname_str = to_string(cef_host.hostname)
+                .hostname = replace(hostname_str, r'\s+$', "")
+              } else {
+                .hostname = "unknown"
+              }
             }
           }
 
           # CEF: severity is field 7 (index 6: 0..6)
+          # Map CEF severity: 0-3=High, 4-6=Medium, 7-8=Low, 9-10=Info
           parts = split(message_text, "|")
           if length(parts) > 6 {
-            .detected_level = to_string(parts[6])
+            sev = to_string(parts[6])
+            sev_num = to_int(sev) ?? 5
+            
+            if sev_num <= 3 {
+              .detected_level = "error"
+            } else if sev_num <= 6 {
+              .detected_level = "warning"
+            } else if sev_num <= 8 {
+              .detected_level = "notice"
+            } else {
+              .detected_level = "info"
+            }
           } else {
             .detected_level = "info"
           }
