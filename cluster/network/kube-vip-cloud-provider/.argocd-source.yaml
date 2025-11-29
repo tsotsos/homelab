@@ -1,6 +1,6 @@
 labels:
   category: network
-  type: dns
+  type: loadbalancer
 annotations:
   argocd.argoproj.io/sync-wave: "3"
 kustomize:

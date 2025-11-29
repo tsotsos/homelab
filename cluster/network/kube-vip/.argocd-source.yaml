@@ -1,6 +1,6 @@
 labels:
-  category: security
-  type: certificates
+  category: network
+  type: loadbalancer
   critical: "true"
 annotations:
   argocd.argoproj.io/sync-wave: "2"

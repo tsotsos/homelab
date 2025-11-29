@@ -1,6 +1,6 @@
 labels:
-  category: security
-  type: secrets
+  category: network
+  type: cni
   critical: "true"
 annotations:
   argocd.argoproj.io/sync-wave: "1"
