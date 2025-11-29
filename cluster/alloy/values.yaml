@@ -1,4 +1,26 @@
 alloy:
+  extraPorts:
+    - name: "syslog-udp"
+      port: 514
+      targetPort: 514
+      protocol: "UDP"
+    - name: "syslog-tcp"
+      port: 1514
+      targetPort: 1514
+      protocol: "TCP"
+    - name: "nut-ups"
+      port: 5514
+      targetPort: 5514
+      protocol: "UDP"
+    - name: "proxmox"
+      port: 6514
+      targetPort: 6514
+      protocol: "UDP"
+    - name: "http"
+      port: 8080
+      targetPort: 8080
+      protocol: "TCP"
+  
   configMap:
     create: true
     content: |
@@ -365,27 +387,6 @@ controller:
 
 service:
   type: LoadBalancer
-  ports:
-    - name: syslog-udp
-      port: 514
-      targetPort: 514
-      protocol: UDP
-    - name: syslog-tcp
-      port: 1514
-      targetPort: 1514
-      protocol: TCP
-    - name: nut-ups
-      port: 5514
-      targetPort: 5514
-      protocol: UDP
-    - name: proxmox
-      port: 6514
-      targetPort: 6514
-      protocol: UDP
-    - name: http
-      port: 8080
-      targetPort: 8080
-      protocol: TCP
 
 ingress:
   enabled: true
