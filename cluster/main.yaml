@@ -26,6 +26,7 @@ spec:
         revision: HEAD
         directories:
           - path: cluster/*
+          - path: cluster/*/*
   template:
     metadata:
       name: '{{path.basename}}'
