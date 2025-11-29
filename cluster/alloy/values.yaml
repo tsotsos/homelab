@@ -82,9 +82,10 @@ alloy:
       // ============================================================================
       loki.source.syslog "unifi_udp" {
         listener {
-          address  = "0.0.0.0:514"
-          protocol = "udp"
-          labels   = {
+          address        = "0.0.0.0:514"
+          protocol       = "udp"
+          syslog_format  = "rfc3164"
+          labels         = {
             cluster = "kng",
             source  = "syslog-udp",
           }
@@ -94,9 +95,10 @@ alloy:
 
       loki.source.syslog "unifi_tcp" {
         listener {
-          address  = "0.0.0.0:1514"
-          protocol = "tcp"
-          labels   = {
+          address        = "0.0.0.0:1514"
+          protocol       = "tcp"
+          syslog_format  = "rfc3164"
+          labels         = {
             cluster = "kng",
             source  = "syslog-tcp",
           }
@@ -197,9 +199,10 @@ alloy:
       // ============================================================================
       loki.source.syslog "nut_ups" {
         listener {
-          address  = "0.0.0.0:5514"
-          protocol = "udp"
-          labels   = {
+          address        = "0.0.0.0:5514"
+          protocol       = "udp"
+          syslog_format  = "rfc3164"
+          labels         = {
             cluster     = "kng",
             job         = "ups",
             device_type = "ups",
@@ -258,9 +261,10 @@ alloy:
       // ============================================================================
       loki.source.syslog "proxmox" {
         listener {
-          address  = "0.0.0.0:6514"
-          protocol = "udp"
-          labels   = {
+          address        = "0.0.0.0:6514"
+          protocol       = "udp"
+          syslog_format  = "rfc3164"
+          labels         = {
             cluster     = "kng",
             job         = "proxmox",
             device_type = "proxmox",
