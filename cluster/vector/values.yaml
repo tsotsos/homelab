@@ -158,28 +158,30 @@ customConfig:
             r'^<(?P<pri>\d+)>'
           ) ?? {}
 
-          .detected_level = if exists(pri_match.pri) {
+          if exists(pri_match.pri) {
             pri = to_int!(pri_match.pri)
-            severity = pri % 8
-            if severity == 0 {
-              "emergency"
-            } else if severity == 1 {
-              "alert"
-            } else if severity == 2 {
-              "critical"
-            } else if severity == 3 {
-              "error"
-            } else if severity == 4 {
-              "warning"
-            } else if severity == 5 {
-              "notice"
-            } else if severity == 6 {
-              "info"
+            severity_num = pri % 8
+            if severity_num == 0 {
+              .detected_level = "emergency"
+            } else if severity_num == 1 {
+              .detected_level = "alert"
+            } else if severity_num == 2 {
+              .detected_level = "critical"
+            } else if severity_num == 3 {
+              .detected_level = "error"
+            } else if severity_num == 4 {
+              .detected_level = "warning"
+            } else if severity_num == 5 {
+              .detected_level = "notice"
+            } else if severity_num == 6 {
+              .detected_level = "info"
             } else {
-              "debug"
+              .detected_level = "debug"
             }
-          } else {
-            "info"
+          }
+          
+          if !exists(.detected_level) {
+            .detected_level = "info"
           }
         }
 
