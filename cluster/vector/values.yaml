@@ -135,14 +135,23 @@ customConfig:
         if syslog_parts.pri != null {
           pri = to_int!(syslog_parts.pri)
           severity = mod(pri, 8)
-          if severity == 0 { .detected_level = "emergency" }
-          else if severity == 1 { .detected_level = "alert" }
-          else if severity == 2 { .detected_level = "critical" }
-          else if severity == 3 { .detected_level = "error" }
-          else if severity == 4 { .detected_level = "warning" }
-          else if severity == 5 { .detected_level = "notice" }
-          else if severity == 6 { .detected_level = "info" }
-          else { .detected_level = "debug" }
+          .detected_level = if severity == 0 {
+            "emergency"
+          } else if severity == 1 {
+            "alert"
+          } else if severity == 2 {
+            "critical"
+          } else if severity == 3 {
+            "error"
+          } else if severity == 4 {
+            "warning"
+          } else if severity == 5 {
+            "notice"
+          } else if severity == 6 {
+            "info"
+          } else {
+            "debug"
+          }
         } else {
           .detected_level = "info"
         }
