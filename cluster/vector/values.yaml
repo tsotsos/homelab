@@ -85,10 +85,10 @@ customConfig:
         .cluster = "kng"
         
         # Extract hostname as job (hostname is always present in syslog)
-        .job = .hostname
+        .job = to_string(.hostname) ?? "unknown"
         
         # Detect device type from hostname
-        hostname = .hostname
+        hostname = to_string(.hostname) ?? ""
         if starts_with(hostname, "udm") || starts_with(hostname, "UDM") {
           .device_type = "udm"
         } else if starts_with(hostname, "USW") || starts_with(hostname, "usw") {
