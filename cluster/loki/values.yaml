@@ -39,6 +39,13 @@ loki:
 # Deployment mode - SingleBinary for simplicity
 deploymentMode: SingleBinary
 
+# Disable caches for SingleBinary mode
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
 # SingleBinary configuration
 singleBinary:
   replicas: 1  # Multiple replicas require object storage

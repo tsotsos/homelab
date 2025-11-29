@@ -48,7 +48,6 @@ customConfig:
         - parse_logs
       source: |
         .node = .kubernetes.pod_node_name
-        .zone = get_env_var!("VECTOR_SELF_ZONE")
   
   # Sinks: Send logs to Loki
   sinks:
@@ -63,7 +62,6 @@ customConfig:
         cluster: "{{`{{ cluster }}`}}"
         namespace: "{{`{{ kubernetes.pod_namespace }}`}}"
         node: "{{`{{ node }}`}}"
-        zone: "{{`{{ zone }}`}}"
         pod: "{{`{{ kubernetes.pod_name }}`}}"
         container: "{{`{{ kubernetes.container_name }}`}}"
         job: "{{`{{ job }}`}}"
@@ -81,16 +79,8 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8686"
 
-# Environment variables
-env:
-  - name: VECTOR_SELF_NODE_NAME
-    valueFrom:
-      fieldRef:
-        fieldPath: spec.nodeName
-  - name: VECTOR_SELF_ZONE
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.labels['topology.kubernetes.io/zone']
+# Note: VECTOR_SELF_NODE_NAME, VECTOR_SELF_POD_NAME, and VECTOR_SELF_POD_NAMESPACE 
+# are automatically added by the Vector Helm chart when role=Agent
 
 # Resources
 resources:
