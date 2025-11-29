@@ -164,22 +164,22 @@ customConfig:
             severity_num = pri % 8
           }
           
-          if severity_num == 0 {
-            .detected_level = "emergency"
+          .detected_level = if severity_num == 0 {
+            "emergency"
           } else if severity_num == 1 {
-            .detected_level = "alert"
+            "alert"
           } else if severity_num == 2 {
-            .detected_level = "critical"
+            "critical"
           } else if severity_num == 3 {
-            .detected_level = "error"
+            "error"
           } else if severity_num == 4 {
-            .detected_level = "warning"
+            "warning"
           } else if severity_num == 5 {
-            .detected_level = "notice"
+            "notice"
           } else if severity_num == 6 {
-            .detected_level = "info"
+            "info"
           } else {
-            .detected_level = "debug"
+            "debug"
           }
         }
 
