@@ -114,14 +114,12 @@ customConfig:
         
         # Extract hostname or use source IP as fallback
         hostname = if syslog_parts.hostname != null {
-          syslog_parts.hostname
+          to_string(syslog_parts.hostname) ?? "unknown"
         } else if exists(.host) {
           to_string!(.host)
         } else {
           "unknown"
         }
-        # Ensure hostname is never null
-        hostname = hostname ?? "unknown"
         .job = hostname
         .hostname = hostname
         
