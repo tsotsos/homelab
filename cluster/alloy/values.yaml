@@ -2,7 +2,9 @@ alloy:
   configMap:
     create: true
     content: |
-      // Kubernetes pod logs
+      // ============================================================================
+      // KUBERNETES POD LOGS
+      // ============================================================================
       discovery.kubernetes "pods" {
         role = "pod"
       }
@@ -38,105 +40,124 @@ alloy:
 
       loki.source.kubernetes "pods" {
         targets    = discovery.relabel.pods.output
-        forward_to = [loki.process.pods.receiver]
+        forward_to = [loki.process.kubernetes.receiver]
       }
 
-      loki.process "pods" {
+      loki.process "kubernetes" {
         stage.static_labels {
           values = {
             cluster      = "kng",
             device_type  = "kubernetes",
-            service_name = "kubernetes",
+            source       = "k8s-logs",
           }
         }
         
         forward_to = [loki.write.default.receiver]
       }
 
-      // UniFi syslog receiver (UDP) - handles CEF format
-      loki.source.syslog "unifi" {
+      // ============================================================================
+      // UNIFI NETWORK DEVICES - CEF FORMAT
+      // ============================================================================
+      loki.source.syslog "unifi_udp" {
         listener {
           address  = "0.0.0.0:514"
           protocol = "udp"
           labels   = {
-            cluster      = "kng",
-            job          = "unifi",
+            cluster = "kng",
+            job     = "unifi",
+            source  = "syslog-udp",
           }
         }
-        forward_to = [loki.process.unifi_cef.receiver]
+        forward_to = [loki.process.unifi.receiver]
       }
 
-      // UniFi syslog receiver (TCP)
       loki.source.syslog "unifi_tcp" {
         listener {
           address  = "0.0.0.0:1514"
           protocol = "tcp"
           labels   = {
-            cluster      = "kng",
-            job          = "unifi",
+            cluster = "kng",
+            job     = "unifi",
+            source  = "syslog-tcp",
           }
         }
-        forward_to = [loki.process.unifi_cef.receiver]
+        forward_to = [loki.process.unifi.receiver]
       }
 
-      // Process UniFi CEF logs
-      loki.process "unifi_cef" {
-        // Extract CEF format: CEF:version|vendor|product|product_version|signature|name|severity|extensions
+      loki.process "unifi" {
+        // Parse CEF format: CEF:version|vendor|product|version|signature|name|severity|extensions
         stage.regex {
-          expression = "CEF:(?P<version>\\d+)\\|(?P<vendor>[^|]*)\\|(?P<product>[^|]*)\\|(?P<product_version>[^|]*)\\|(?P<signature>[^|]*)\\|(?P<name>[^|]*)\\|(?P<severity>[^|]*)\\|(?P<ext>.*)"
+          expression = "CEF:(?P<cef_version>\\d+)\\|(?P<vendor>[^|]*)\\|(?P<product>[^|]*)\\|(?P<product_version>[^|]*)\\|(?P<signature>[^|]*)\\|(?P<event_name>[^|]*)\\|(?P<severity>[^|]*)\\|(?P<extensions>.*)"
         }
         
+        // Extract device info from CEF extensions
+        stage.regex {
+          source     = "extensions"
+          expression = "UNIFIconnectedToDeviceName=(?P<connected_device>[^ ]+)"
+        }
+        
+        stage.regex {
+          source     = "extensions"
+          expression = "UNIFIhost=(?P<unifi_host>[^\\s]+(?:\\s+[^\\s]+)*?)(?:\\s+UNIFI|$)"
+        }
+        
+        stage.regex {
+          source     = "extensions"
+          expression = "UNIFIclientHostname=(?P<client_hostname>[^ ]+)"
+        }
+        
+        // Set labels from extracted values
         stage.labels {
           values = {
-            severity = "",
-            vendor = "",
-            product = "",
-            event_name = "name",
-          }
-        }
-        
-        // Extract device name from extensions (UNIFIconnectedToDeviceName or UNIFIhost)
-        stage.regex {
-          source = "ext"
-          expression = "UNIFIconnectedToDeviceName=(?P<device_name>[^ ]+)"
-        }
-        
-        stage.regex {
-          source = "ext"
-          expression = "UNIFIhost=(?P<unifi_host>[^ ]+)"
-        }
-        
-        stage.labels {
-          values = {
-            device_name = "",
-            host = "unifi_host",
+            vendor       = "",
+            product      = "",
+            severity     = "",
+            event_name   = "",
+            device_name  = "connected_device",
+            host         = "unifi_host",
+            client       = "client_hostname",
           }
         }
         
         // Detect device type from device name
         stage.match {
-          selector = "{device_name=~\".*[Uu][Dd][Mm].*\"}"
-          stage.static_labels {
+          selector = "{device_name=~\".+\"}"
+          
+          stage.regex {
+            source     = "device_name"
+            expression = "(?i)^(?P<device_prefix>udm|usw|uap|u6|usg|uck)"
+          }
+          
+          stage.labels {
             values = {
-              device_type = "udm",
+              device_type = "device_prefix",
             }
           }
         }
         
+        // Fallback: detect from host if device_name not present
         stage.match {
-          selector = "{device_name=~\".*[Ss]witch.*|.*[Uu][Ss][Ww].*\"}"
-          stage.static_labels {
+          selector = "{device_type=\"\",host=~\".+\"}"
+          
+          stage.regex {
+            source     = "host"
+            expression = "(?i)(?P<host_prefix>udm|usw|uap|u6|usg|uck)"
+          }
+          
+          stage.labels {
             values = {
-              device_type = "usw",
+              device_type = "host_prefix",
             }
           }
         }
         
+        // Default device_type if still empty
         stage.match {
-          selector = "{device_name=~\".*[Aa][Pp].*|.*[Uu]6.*\"}"
+          selector = "{device_type=\"\"}"
+          
           stage.static_labels {
             values = {
-              device_type = "uap",
+              device_type = "unifi",
             }
           }
         }
@@ -144,7 +165,151 @@ alloy:
         forward_to = [loki.write.default.receiver]
       }
 
-      // HTTP receiver for application logs
+      // ============================================================================
+      // UPS/NUT (Network UPS Tools) - SYSLOG FORMAT
+      // ============================================================================
+      loki.source.syslog "nut_ups" {
+        listener {
+          address  = "0.0.0.0:5514"
+          protocol = "udp"
+          labels   = {
+            cluster     = "kng",
+            job         = "ups",
+            device_type = "ups",
+            source      = "nut-syslog",
+          }
+        }
+        forward_to = [loki.process.ups.receiver]
+      }
+
+      loki.process "ups" {
+        // Extract UPS-specific information
+        stage.regex {
+          expression = "(?P<ups_daemon>upsd|upsmon|upssched)(?:\\[(?P<pid>\\d+)\\])?:\\s+(?P<message>.*)"
+        }
+        
+        stage.labels {
+          values = {
+            ups_daemon = "",
+            ups_event  = "",
+          }
+        }
+        
+        // Detect UPS events
+        stage.match {
+          selector = "{message=~\".*battery.*\"}"
+          stage.static_labels {
+            values = {
+              ups_event = "battery",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{message=~\".*power.*\"}"
+          stage.static_labels {
+            values = {
+              ups_event = "power",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{message=~\".*online.*\"}"
+          stage.static_labels {
+            values = {
+              ups_event = "online",
+            }
+          }
+        }
+        
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // ============================================================================
+      // PROXMOX - SYSLOG FORMAT
+      // ============================================================================
+      loki.source.syslog "proxmox" {
+        listener {
+          address  = "0.0.0.0:6514"
+          protocol = "udp"
+          labels   = {
+            cluster     = "kng",
+            job         = "proxmox",
+            device_type = "proxmox",
+            source      = "proxmox-syslog",
+          }
+        }
+        forward_to = [loki.process.proxmox.receiver]
+      }
+
+      loki.process "proxmox" {
+        // Extract Proxmox-specific components
+        stage.regex {
+          expression = "(?P<pve_component>pve-cluster|pvedaemon|pvescheduler|pveproxy|pvestatd|qm|lxc|vzdump|pveceph)(?:\\[(?P<pid>\\d+)\\])?:\\s+(?P<message>.*)"
+        }
+        
+        stage.labels {
+          values = {
+            component = "pve_component",
+          }
+        }
+        
+        // Extract VM/CT IDs
+        stage.regex {
+          source     = "message"
+          expression = "(?:VM|CT)\\s+(?P<vm_id>\\d+)"
+        }
+        
+        stage.labels {
+          values = {
+            vm_id = "",
+          }
+        }
+        
+        // Detect operation types
+        stage.match {
+          selector = "{message=~\".*start.*\"}"
+          stage.static_labels {
+            values = {
+              operation = "start",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{message=~\".*stop.*|.*shutdown.*\"}"
+          stage.static_labels {
+            values = {
+              operation = "stop",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{message=~\".*backup.*\"}"
+          stage.static_labels {
+            values = {
+              operation = "backup",
+            }
+          }
+        }
+        
+        stage.match {
+          selector = "{message=~\".*migrate.*\"}"
+          stage.static_labels {
+            values = {
+              operation = "migrate",
+            }
+          }
+        }
+        
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // ============================================================================
+      // HTTP PUSH API - FOR APPLICATIONS
+      // ============================================================================
       loki.source.api "http" {
         http {
           listen_address = "0.0.0.0"
@@ -156,19 +321,48 @@ alloy:
       loki.process "http" {
         stage.static_labels {
           values = {
-            cluster      = "kng",
-            device_type  = "http",
-            service_name = "http",
+            cluster     = "kng",
+            device_type = "application",
+            source      = "http-push",
           }
         }
         
         forward_to = [loki.write.default.receiver]
       }
 
-      // Write to Loki
+      // ============================================================================
+      // LOKI WRITE ENDPOINT
+      // ============================================================================
       loki.write "default" {
         endpoint {
           url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
+          
+          // Retry configuration
+          retry_on_http_429 = true
+          min_backoff       = "100ms"
+          max_backoff       = "10s"
+          max_retries       = 3
+        }
+        
+        // External labels applied to all logs
+        external_labels = {
+          cluster = "kng",
+        }
+      }
+
+      // ============================================================================
+      // PROMETHEUS METRICS - SELF MONITORING
+      // ============================================================================
+      prometheus.exporter.self "alloy" {}
+
+      prometheus.scrape "alloy" {
+        targets    = prometheus.exporter.self.alloy.targets
+        forward_to = [prometheus.remote_write.metrics.receiver]
+      }
+
+      prometheus.remote_write "metrics" {
+        endpoint {
+          url = "http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local:9090/api/v1/write"
         }
       }
 
@@ -186,6 +380,14 @@ service:
       port: 1514
       targetPort: 1514
       protocol: TCP
+    - name: nut-ups
+      port: 5514
+      targetPort: 5514
+      protocol: UDP
+    - name: proxmox
+      port: 6514
+      targetPort: 6514
+      protocol: UDP
     - name: http
       port: 8080
       targetPort: 8080
