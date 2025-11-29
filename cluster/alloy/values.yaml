@@ -53,49 +53,69 @@ alloy:
         forward_to = [loki.write.default.receiver]
       }
 
-      // Syslog receiver (UDP)
-      loki.source.syslog "syslog_udp" {
+      // UniFi syslog receiver (UDP) - handles CEF format
+      loki.source.syslog "unifi" {
         listener {
           address  = "0.0.0.0:514"
           protocol = "udp"
           labels   = {
             cluster      = "kng",
-            device_type  = "syslog",
-            service_name = "syslog",
+            job          = "unifi",
           }
         }
-        forward_to = [loki.process.syslog.receiver]
+        forward_to = [loki.process.unifi_cef.receiver]
       }
 
-      // Syslog receiver (TCP)
-      loki.source.syslog "syslog_tcp" {
+      // UniFi syslog receiver (TCP)
+      loki.source.syslog "unifi_tcp" {
         listener {
           address  = "0.0.0.0:1514"
           protocol = "tcp"
           labels   = {
             cluster      = "kng",
-            device_type  = "syslog",
-            service_name = "syslog",
+            job          = "unifi",
           }
         }
-        forward_to = [loki.process.syslog.receiver]
+        forward_to = [loki.process.unifi_cef.receiver]
       }
 
-      loki.process "syslog" {
-        // Extract hostname from syslog
+      // Process UniFi CEF logs
+      loki.process "unifi_cef" {
+        // Extract CEF format: CEF:version|vendor|product|product_version|signature|name|severity|extensions
         stage.regex {
-          expression = "^(?:<\\d+>)?(?P<timestamp>[A-Za-z]{3}\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2})\\s+(?P<hostname>\\S+)\\s+(?P<message>.*)$"
+          expression = "CEF:(?P<version>\\d+)\\|(?P<vendor>[^|]*)\\|(?P<product>[^|]*)\\|(?P<product_version>[^|]*)\\|(?P<signature>[^|]*)\\|(?P<name>[^|]*)\\|(?P<severity>[^|]*)\\|(?P<ext>.*)"
         }
         
         stage.labels {
           values = {
-            hostname = "",
+            severity = "",
+            vendor = "",
+            product = "",
+            event_name = "name",
           }
         }
         
-        // Detect device type from hostname prefix
+        // Extract device name from extensions (UNIFIconnectedToDeviceName or UNIFIhost)
+        stage.regex {
+          source = "ext"
+          expression = "UNIFIconnectedToDeviceName=(?P<device_name>[^ ]+)"
+        }
+        
+        stage.regex {
+          source = "ext"
+          expression = "UNIFIhost=(?P<unifi_host>[^ ]+)"
+        }
+        
+        stage.labels {
+          values = {
+            device_name = "",
+            host = "unifi_host",
+          }
+        }
+        
+        // Detect device type from device name
         stage.match {
-          selector = "{hostname=~\"udm.*\"}"
+          selector = "{device_name=~\".*[Uu][Dd][Mm].*\"}"
           stage.static_labels {
             values = {
               device_type = "udm",
@@ -104,7 +124,7 @@ alloy:
         }
         
         stage.match {
-          selector = "{hostname=~\"usw.*\"}"
+          selector = "{device_name=~\".*[Ss]witch.*|.*[Uu][Ss][Ww].*\"}"
           stage.static_labels {
             values = {
               device_type = "usw",
@@ -113,7 +133,7 @@ alloy:
         }
         
         stage.match {
-          selector = "{hostname=~\"uap.*|u6.*\"}"
+          selector = "{device_name=~\".*[Aa][Pp].*|.*[Uu]6.*\"}"
           stage.static_labels {
             values = {
               device_type = "uap",
@@ -172,7 +192,14 @@ service:
       protocol: TCP
 
 ingress:
-  enabled: false
+  enabled: true
+  ingressClassName: cilium
+  hosts:
+    - logs.kng.house
+  tls:
+    - secretName: logs-kng-house-tls
+      hosts:
+        - logs.kng.house
 
 serviceMonitor:
   enabled: true
