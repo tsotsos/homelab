@@ -1,5 +1,5 @@
 # Vector Configuration - Log collector DaemonSet
-# Collects logs from all nodes and sends to Loki
+# Collects logs from Kubernetes and external devices (syslog, HTTP)
 
 # Role for Vector
 role: Agent
@@ -10,61 +10,143 @@ customConfig:
   
   api:
     enabled: true
-    address: 0.0.0.0:8686
+    address: 127.0.0.1:8686
+    playground: false
   
-  # Sources: Collect logs from Kubernetes
+  # Sources: Collect logs from multiple sources
   sources:
+    # Kubernetes pod logs
     kubernetes_logs:
       type: kubernetes_logs
+      max_read_bytes: 16384
+      glob_minimum_cooldown_ms: 15000
       auto_partial_merge: true
       self_node_name: ${VECTOR_SELF_NODE_NAME}
+    
+    # Syslog UDP for network devices (UDM, switches, etc)
+    syslog_udp:
+      type: syslog
+      address: 0.0.0.0:514
+      mode: udp
+    
+    # Syslog TCP (optional, more reliable)
+    syslog_tcp:
+      type: syslog
+      address: 0.0.0.0:1514
+      mode: tcp
+    
+    # HTTP endpoint for applications that can send JSON
+    http_logs:
+      type: http_server
+      address: 0.0.0.0:8080
+      encoding: json
       
   # Transforms: Parse and enrich logs
   transforms:
-    # Parse container logs
-    parse_logs:
+    # Parse Kubernetes logs
+    kubernetes_parsed:
       type: remap
       inputs:
         - kubernetes_logs
       source: |
-        # Parse JSON logs if possible
-        if is_string(.message) {
-          parsed, err = parse_json(.message)
-          if err == null {
-            . = merge(., parsed) ?? .
-          }
-        }
-        
-        # Add standard labels
         .cluster = "kng"
         
-        # Namespace-based filtering
-        .job = .kubernetes.pod_namespace
+        # Parse Kubernetes metadata
+        if exists(.kubernetes) {
+          .node = del(.kubernetes.pod_node_name)
+          .namespace = del(.kubernetes.pod_namespace)
+          .pod = del(.kubernetes.pod_name)
+          .container = del(.kubernetes.container_name)
+          del(.kubernetes)
+          .job = "logging"
+        }
         
-    # Add node labels
-    add_node_labels:
+        # Detect log level
+        level = parse_regex(.message, r'level=(?P<level>\w+)') ?? {}
+        if level.level != null {
+          .detected_level = downcase!(level.level)
+        } else {
+          .detected_level = "unknown"
+        }
+        
+        # Extract service name from container
+        if exists(.container) {
+          .service_name = .container
+        }
+    
+    # Parse syslog messages from network devices
+    syslog_parsed:
       type: remap
       inputs:
-        - parse_logs
+        - syslog_udp
+        - syslog_tcp
       source: |
-        .node = .kubernetes.pod_node_name
+        .cluster = "kng"
+        
+        # Extract hostname as job
+        .job = .hostname ?? "syslog"
+        
+        # Detect device type from hostname
+        if starts_with!(.hostname, "udm") || starts_with!(.hostname, "UDM") {
+          .device_type = "udm"
+        } else if starts_with!(.hostname, "USW") || starts_with!(.hostname, "usw") {
+          .device_type = "unifi_switch"
+        } else if starts_with!(.hostname, "UAP") || starts_with!(.hostname, "uap") {
+          .device_type = "unifi_ap"
+        } else {
+          .device_type = "network_device"
+        }
+        
+        # Extract severity as level
+        .detected_level = downcase!(.severity) ?? "unknown"
+    
+    # Parse HTTP logs from external applications
+    http_logs_parsed:
+      type: remap
+      inputs:
+        - http_logs
+      source: |
+        .cluster = "kng"
+        
+        # Extract device info from payload
+        .job = .device ?? .hostname ?? "external"
+        .device_type = .device ?? "app"
+        
+        # Preserve or detect log level
+        if exists(.level) {
+          .detected_level = downcase!(.level)
+        } else if exists(.severity) {
+          .detected_level = downcase!(.severity)
+        } else {
+          .detected_level = "unknown"
+        }
+        
+        # Ensure message field exists
+        if !exists(.message) && exists(.msg) {
+          .message = del(.msg)
+        }
   
-  # Sinks: Send logs to Loki
+  # Sinks: Send all logs to Loki
   sinks:
     loki:
       type: loki
       inputs:
-        - add_node_labels
+        - kubernetes_parsed
+        - syslog_parsed
+        - http_logs_parsed
       endpoint: http://loki-gateway.logging.svc.cluster.local
       encoding:
         codec: json
       labels:
         cluster: "{{`{{ cluster }}`}}"
-        namespace: "{{`{{ kubernetes.pod_namespace }}`}}"
-        node: "{{`{{ node }}`}}"
-        pod: "{{`{{ kubernetes.pod_name }}`}}"
-        container: "{{`{{ kubernetes.container_name }}`}}"
         job: "{{`{{ job }}`}}"
+        namespace: "{{`{{ namespace }}`}}"
+        pod: "{{`{{ pod }}`}}"
+        container: "{{`{{ container }}`}}"
+        node: "{{`{{ node }}`}}"
+        service_name: "{{`{{ service_name }}`}}"
+        detected_level: "{{`{{ detected_level }}`}}"
+        device_type: "{{`{{ device_type }}`}}"
       # Buffer configuration for reliability
       buffer:
         type: disk
@@ -96,11 +178,25 @@ tolerations:
   - effect: NoSchedule
     operator: Exists
 
-# Service for metrics
+# Service for syslog and HTTP log ingestion
 service:
   enabled: true
-  type: ClusterIP
+  type: LoadBalancer
+  annotations:
+    io.cilium/lb-ipam-ips: "10.0.2.70"
   ports:
+    - name: syslog-udp
+      protocol: UDP
+      port: 514
+      targetPort: 514
+    - name: syslog-tcp
+      protocol: TCP
+      port: 1514
+      targetPort: 1514
+    - name: http-logs
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
     - name: metrics
       port: 8686
       protocol: TCP
@@ -125,3 +221,19 @@ updateStrategy:
   type: RollingUpdate
   rollingUpdate:
     maxUnavailable: 1
+
+# Ingress for HTTP log collection
+ingress:
+  enabled: true
+  className: cilium
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+  hosts:
+    - host: vector.kng.house
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: vector-tls
+      hosts:
+        - vector.kng.house
