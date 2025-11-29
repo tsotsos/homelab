@@ -5,6 +5,10 @@ loki:
   # Authentication - disabled for internal use
   auth_enabled: false
   
+  # Common configuration for SingleBinary mode
+  commonConfig:
+    replication_factor: 1
+  
   # Storage configuration - Longhorn for filesystem
   storage:
     type: filesystem
