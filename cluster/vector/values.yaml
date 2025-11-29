@@ -90,95 +90,118 @@ customConfig:
         - syslog_tcp
       source: |
         .cluster = "kng"
-        
-        # Convert bytes to string for parsing
+
+        # Convert bytes -> string
         message_text = to_string!(.message)
-        
-        # Initialize hostname variable
-        hostname = "unknown"
-        
-        # Try to parse syslog with priority: <PRI>TIMESTAMP HOSTNAME MESSAGE
-        # Example: <78>Nov 29 04:00:00 AtticAP message here
-        # Regex explanation: <digits>Month Day HH:MM:SS Hostname Rest
-        syslog_parts = parse_regex(message_text, r'^<\d+>([A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+([^\s]+)\s+(.*)$') ?? {}
-        
-        # Extract captured groups
-        if length(syslog_parts) >= 3 {
-          .timestamp = syslog_parts[0]
-          .hostname = syslog_parts[1]
-          .message = syslog_parts[2]
-          hostname = syslog_parts[1]
-        } else {
-          # Fallback: try without priority
-          syslog_parts = parse_regex(message_text, r'^([A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+([^\s]+)\s+(.*)$') ?? {}
-          if length(syslog_parts) >= 3 {
-            .timestamp = syslog_parts[0]
-            .hostname = syslog_parts[1]
-            .message = syslog_parts[2]
-            hostname = syslog_parts[1]
+
+        # ---- 1. Handle pure UniFi CEF lines (no classic syslog header) ----
+        if starts_with(message_text, "CEF:") {
+          .message = message_text
+
+          # Try to get device name from the CEF extension
+          # Example field: UNIFIdeviceName=Agg
+          cef = parse_regex(
+            message_text,
+            r'UNIFIdeviceName=(?P<hostname>[^ ]+)'
+          ) ?? {}
+
+          if exists(cef.hostname) {
+            .hostname = to_string(cef.hostname)
           } else {
-            # Last resort: use first word as hostname
-            parts = split(message_text, " ", limit: 2)
-            if length(parts) >= 2 {
-              hostname = parts[0]
-              .message = parts[1]
+            # Fallback: try UNIFIhost=
+            cef2 = parse_regex(
+              message_text,
+              r'UNIFIhost=(?P<hostname>[^ ]+)'
+            ) ?? {}
+            if exists(cef2.hostname) {
+              .hostname = to_string(cef2.hostname)
             } else {
-              hostname = "unknown"
-              .message = message_text
+              .hostname = "unknown"
             }
           }
-        }
-        
-        # Extract priority if present
-        pri_match = parse_regex(message_text, r'^<(?P<pri>\d+)>') ?? {}
-        if pri_match.pri != null {
-          pri = to_int!(pri_match.pri)
-          severity = mod(pri, 8)
-          .detected_level = if severity == 0 {
-            "emergency"
-          } else if severity == 1 {
-            "alert"
-          } else if severity == 2 {
-            "critical"
-          } else if severity == 3 {
-            "error"
-          } else if severity == 4 {
-            "warning"
-          } else if severity == 5 {
-            "notice"
-          } else if severity == 6 {
-            "info"
+
+          # CEF: severity is field 7 (index 6: 0..6)
+          parts = split(message_text, "|")
+          if length(parts) > 6 {
+            .detected_level = to_string(parts[6])
           } else {
-            "debug"
+            .detected_level = "info"
           }
+
+        # ---- 2. Classic syslog (with or without <PRI>) ----
         } else {
-          .detected_level = "info"
+          # Named capture groups: timestamp, host, body
+          syslog = parse_regex(
+            message_text,
+            r'^(?:<\d+>)?(?P<ts>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<host>\S+)\s+(?P<body>.*)$'
+          ) ?? {}
+
+          if exists(syslog.host) {
+            .timestamp = syslog.ts
+            .hostname = syslog.host
+            .message = syslog.body
+          } else {
+            # Fallback: first token as hostname
+            parts = split(message_text, " ", limit: 2)
+            if length(parts) == 2 {
+              .hostname = parts[0]
+              .message  = parts[1]
+            } else {
+              .hostname = "unknown"
+              .message  = message_text
+            }
+          }
+
+          # Map <PRI> to severity if present
+          pri_match = parse_regex(
+            message_text,
+            r'^<(?P<pri>\d+)>'
+          ) ?? {}
+
+          if exists(pri_match.pri) {
+            pri = to_int!(pri_match.pri)
+            severity = pri % 8
+            if severity == 0 {
+              .detected_level = "emergency"
+            } else if severity == 1 {
+              .detected_level = "alert"
+            } else if severity == 2 {
+              .detected_level = "critical"
+            } else if severity == 3 {
+              .detected_level = "error"
+            } else if severity == 4 {
+              .detected_level = "warning"
+            } else if severity == 5 {
+              .detected_level = "notice"
+            } else if severity == 6 {
+              .detected_level = "info"
+            } else {
+              .detected_level = "debug"
+            }
+          } else {
+            .detected_level = "info"
+          }
         }
-        
-        # Ensure hostname is always a string (never null)
-        if hostname == null {
-          hostname = "unknown"
-        }
-        hostname = to_string(hostname)
-        .job = hostname
+
+        # ---- 3. Common enrichment for all cases ----
+        hostname = to_string(.hostname) ?? "unknown"
         .hostname = hostname
-        
-        # Detect device type from hostname
-        if starts_with(hostname, "udm") || starts_with(hostname, "UDM") {
-          .device_type = "udm"
-        } else if starts_with(hostname, "Switch") || starts_with(hostname, "USW") || starts_with(hostname, "usw") {
-          .device_type = "unifi_switch"
-        } else if starts_with(hostname, "UAP") || starts_with(hostname, "uap") || contains(hostname, "AP") {
-          .device_type = "unifi_ap"
+        .job = hostname
+
+        # Simple device_type by naming convention, no per-device config:
+        # e.g. "udm-main", "usw-agg", "uap-attic"
+        parts = split(hostname, "-")
+        if length(parts) > 0 {
+          .device_type = downcase(parts[0])
         } else {
           .device_type = "network_device"
         }
-        
-        # Set empty values for Kubernetes-specific fields to prevent Loki errors
-        .namespace = "none"
-        .pod = "none"
-        .container = "none"
-        .node = "none"
+
+        # Fill k8s-ish fields so Loki label templates don't explode
+        .namespace    = "none"
+        .pod          = "none"
+        .container    = "none"
+        .node         = "none"
         .service_name = "syslog"
     
     # Parse HTTP logs from external applications
