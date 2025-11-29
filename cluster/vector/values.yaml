@@ -94,29 +94,35 @@ customConfig:
         # Convert bytes to string for parsing
         message_text = to_string!(.message)
         
-        # Try to parse standard syslog format: <PRI>TIMESTAMP HOSTNAME MESSAGE
-        # Example: <14>Nov 29 01:40:00 udm-pro test: message here
-        syslog_parts = parse_regex(message_text, r'^<(?P<pri>\d+)>(?P<timestamp>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>[^\s:]+)[\s:](?P<rest>.*)$') ?? {}
+        # Try to parse syslog with priority: <PRI>TIMESTAMP HOSTNAME MESSAGE
+        # Example: <78>Nov 29 04:00:00 AtticAP message here
+        syslog_parts = parse_regex(message_text, r'^<(?P<pri>\d+)>(?P<timestamp>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>[^\s]+)\s+(?P<rest>.*)$') ?? {}
         
-        # If standard format fails, try without priority
+        # If that fails, try without timestamp (some devices don't send it)
         if syslog_parts.hostname == null {
-          syslog_parts = parse_regex(message_text, r'^(?P<timestamp>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>[^\s:]+)[\s:](?P<rest>.*)$') ?? {}
+          syslog_parts = parse_regex(message_text, r'^<(?P<pri>\d+)>(?P<hostname>[^\s]+)\s+(?P<rest>.*)$') ?? {}
         }
         
-        # If still no hostname, try just splitting on first space
+        # Try without priority but with timestamp
+        if syslog_parts.hostname == null {
+          syslog_parts = parse_regex(message_text, r'^(?P<timestamp>[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>[^\s]+)\s+(?P<rest>.*)$') ?? {}
+        }
+        
+        # Last resort: assume first word is hostname
         if syslog_parts.hostname == null {
           parts = split(message_text, " ", limit: 2)
-          if length(parts) == 2 {
+          if length(parts) >= 2 {
             syslog_parts.hostname = parts[0]
             syslog_parts.rest = parts[1]
+          } else {
+            syslog_parts.hostname = "unknown"
+            syslog_parts.rest = message_text
           }
         }
         
-        # Extract hostname or use source IP as fallback
+        # Extract hostname, never use IP from .host field
         hostname = if syslog_parts.hostname != null {
           to_string(syslog_parts.hostname)
-        } else if exists(.host) {
-          to_string!(.host)
         } else {
           "unknown"
         }
