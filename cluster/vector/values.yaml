@@ -161,22 +161,22 @@ customConfig:
           if exists(pri_match.pri) {
             pri = to_int!(pri_match.pri)
             severity = pri % 8
-            if severity == 0 {
-              .detected_level = "emergency"
+            .detected_level = if severity == 0 {
+              "emergency"
             } else if severity == 1 {
-              .detected_level = "alert"
+              "alert"
             } else if severity == 2 {
-              .detected_level = "critical"
+              "critical"
             } else if severity == 3 {
-              .detected_level = "error"
+              "error"
             } else if severity == 4 {
-              .detected_level = "warning"
+              "warning"
             } else if severity == 5 {
-              .detected_level = "notice"
+              "notice"
             } else if severity == 6 {
-              .detected_level = "info"
+              "info"
             } else {
-              .detected_level = "debug"
+              "debug"
             }
           } else {
             .detected_level = "info"
