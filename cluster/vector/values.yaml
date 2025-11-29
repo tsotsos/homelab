@@ -94,6 +94,9 @@ customConfig:
         # Convert bytes to string for parsing
         message_text = to_string!(.message)
         
+        # Initialize hostname variable
+        hostname = "unknown"
+        
         # Try to parse syslog with priority: <PRI>TIMESTAMP HOSTNAME MESSAGE
         # Example: <78>Nov 29 04:00:00 AtticAP message here
         # Regex explanation: <digits>Month Day HH:MM:SS Hostname Rest
