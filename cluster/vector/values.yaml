@@ -28,12 +28,15 @@ customConfig:
       type: syslog
       address: 0.0.0.0:514
       mode: udp
+      # Accept both RFC3164 and RFC5424 formats (UniFi uses RFC3164)
+      max_length: 102400
     
     # Syslog TCP (optional, more reliable)
     syslog_tcp:
       type: syslog
       address: 0.0.0.0:1514
       mode: tcp
+      max_length: 102400
     
     # HTTP endpoint for applications that can send JSON
     http_logs:
@@ -101,6 +104,13 @@ customConfig:
         
         # Extract severity as level (use to_string to handle severity)
         .detected_level = to_string(.severity) ?? "unknown"
+        
+        # Set empty values for Kubernetes-specific fields to prevent Loki errors
+        .namespace = "none"
+        .pod = "none"
+        .container = "none"
+        .node = "none"
+        .service_name = "syslog"
     
     # Parse HTTP logs from external applications
     http_logs_parsed:
@@ -138,6 +148,13 @@ customConfig:
         if !exists(.message) && exists(.msg) {
           .message = del(.msg)
         }
+        
+        # Set empty values for Kubernetes-specific fields to prevent Loki errors
+        .namespace = "none"
+        .pod = "none"
+        .container = "none"
+        .node = "none"
+        .service_name = "http"
   
   # Sinks: Send all logs to Loki
   sinks:
