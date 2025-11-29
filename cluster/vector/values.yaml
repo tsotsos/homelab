@@ -192,7 +192,7 @@ customConfig:
         # e.g. "udm-main", "usw-agg", "uap-attic"
         parts = split(hostname, "-")
         if length(parts) > 0 {
-          .device_type = downcase(parts[0])
+          .device_type = downcase!(parts[0])
         } else {
           .device_type = "network_device"
         }
