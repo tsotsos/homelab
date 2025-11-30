@@ -1,48 +1,79 @@
 # Cluster Manifests Directory
 
-This directory contains cluster-specific Kustomize overlays and configurations that customize the base applications from `apps/` for deployment.
+This directory contains all Kubernetes applications organized by category, deployed via GitOps with ArgoCD ApplicationSet.
 
 ## 📦 Structure
 
 ```
 cluster/
 ├── README.md                        # This file
-├── main.yaml                        # ArgoCD App-of-Apps (GitOps root)
-├── kustomization.yaml               # Root kustomization
-├── argocd/                          # ArgoCD customizations
-│   ├── .argocd-source.yaml         # ArgoCD-specific directives
-│   ├── configmap.yaml               # ConfigMap overlay
-│   ├── ingress.yaml                 # Ingress configuration
-│   ├── rbac.yaml                    # RBAC configuration
-│   └── kustomization.yaml           # Kustomize overlay
-├── cert-manager/                    # Cert-Manager customizations
-│   ├── clusterIssuer.yaml          # Let's Encrypt issuer
-│   ├── sealed-secret.yaml           # Cloudflare API token (sealed)
-│   └── kustomization.yaml
-├── external-dns/                    # External-DNS customizations
-│   ├── sealed-secret.yaml           # UniFi credentials (sealed)
-│   └── kustomization.yaml
-├── kube-vip-cloud-provider/         # LoadBalancer customizations
-│   ├── patch.yaml                   # IP pool configuration
-│   └── kustomization.yaml
-└── sealed-secrets/                  # Sealed-Secrets customizations
-    └── kustomization.yaml
+├── main.yaml                        # ArgoCD ApplicationSet (auto-discovers apps)
+├── argocd/                          # ArgoCD bootstrap (not managed by itself)
+│   ├── kustomization.yaml
+│   ├── values.yaml
+│   ├── configmap.yaml
+│   ├── rbac.yaml
+│   └── .argocd-source.yaml
+├── network/                         # Network infrastructure
+│   ├── cilium/                      # CNI + L7 Ingress Controller
+│   │   ├── kustomization.yaml
+│   │   ├── values.yaml
+│   │   └── .argocd-source.yaml      # Labels: category=network, type=cni
+│   ├── kube-vip/                    # LoadBalancer VIP for control plane
+│   │   └── .argocd-source.yaml      # Labels: category=network, type=loadbalancer
+│   ├── kube-vip-cloud-provider/     # LoadBalancer IP provider
+│   │   └── .argocd-source.yaml      # Labels: category=network, type=loadbalancer
+│   └── external-dns/                # Automatic DNS record creation
+│       ├── sealed-secret.yaml
+│       └── .argocd-source.yaml      # Labels: category=network, type=dns
+├── security/                        # Security & secrets management
+│   ├── sealed-secrets/              # Secret encryption controller
+│   │   └── .argocd-source.yaml      # Labels: category=security, type=secrets
+│   ├── cert-manager/                # TLS certificate automation
+│   │   ├── clusterIssuer.yaml
+│   │   ├── sealed-secret.yaml
+│   │   └── .argocd-source.yaml      # Labels: category=security, type=certificates
+│   └── authentik/                   # SSO & authentication
+│       ├── sealed-secret.yaml
+│       └── .argocd-source.yaml      # Labels: category=security, type=auth
+├── storage/                         # Storage solutions
+│   └── longhorn/                    # Distributed block storage
+│       └── .argocd-source.yaml      # Labels: category=storage, type=distributed
+├── database/                        # Database services
+│   └── postgresql/                  # PostgreSQL database
+│       ├── sealed-secret.yaml
+│       └── .argocd-source.yaml      # Labels: category=database, type=relational
+└── observability/                   # Monitoring & logging
+    ├── kube-prometheus-stack/       # Prometheus + Grafana + Alertmanager
+    │   ├── sealed-secret.yaml
+    │   ├── values.yaml
+    │   └── .argocd-source.yaml      # Labels: category=observability, type=metrics
+    ├── loki/                        # Log aggregation backend
+    │   ├── values.yaml
+    │   └── .argocd-source.yaml      # Labels: category=observability, type=logs
+    └── alloy/                       # Log collection agent (syslog + k8s logs)
+        ├── values.yaml
+        └── .argocd-source.yaml      # Labels: category=observability, type=logs
 ```
 
 ## 🎯 Purpose
 
-This directory provides cluster-specific configurations that:
+This directory provides all cluster applications organized by category:
 
-1. **Overlay base apps** from `apps/` with cluster-specific settings
-2. **Add secrets** (as sealed secrets, safe for git)
-3. **Configure ingress** rules and DNS entries
-4. **Set LoadBalancer** IP pools
-5. **Define ClusterIssuers** for certificate management
-6. **Customize resources** per environment
+1. **Network**: CNI, ingress, LoadBalancer, DNS automation
+2. **Security**: Secret management, certificates, authentication
+3. **Storage**: Distributed storage solutions
+4. **Database**: Database services
+5. **Observability**: Monitoring, logging, alerting
+
+Each app has a `.argocd-source.yaml` file with:
+- **Labels**: `category`, `type`, `critical` for organization
+- **Annotations**: `argocd.argoproj.io/sync-wave` for deployment ordering
+- **Kustomize config**: `enable_helm: true` for Helm chart rendering
 
 ## 🚀 GitOps with ArgoCD
 
-The `main.yaml` file defines an **App-of-Apps** pattern:
+The `main.yaml` file defines an **ApplicationSet** that auto-discovers apps:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -53,76 +84,85 @@ spec:
   generators:
     - git:
         directories:
-          - path: cluster/*
+          - path: cluster/*/*  # Matches: cluster/network/cilium, etc.
 ```
 
-This automatically creates ArgoCD Applications for every subdirectory in `cluster/`, enabling:
-- **Automatic sync** when you push to git
-- **Self-healing** if resources drift
+This automatically creates ArgoCD Applications for every app in subdirectories, enabling:
+- **Automatic discovery** of new apps (add folder → app deployed)
+- **Self-healing** if resources drift from git
 - **Namespace auto-creation**
-- **Centralized management** in ArgoCD UI
+- **Sync waves** for ordered deployment (via `.argocd-source.yaml`)
+- **Custom labels** for filtering and organization
 
-## 📋 Directory Breakdown
+## 📋 Category Breakdown
 
-### argocd/
-Customizes ArgoCD itself:
-- URL and hostname
-- Ingress with TLS
-- RBAC policies (optional)
-- SSO configuration (commented out)
+### network/
+Network infrastructure deployed first (sync-wave 1-3):
+- **cilium**: CNI + L7 ingress (wave 1, critical)
+- **kube-vip**: LoadBalancer VIP for HA (wave 2, critical)
+- **kube-vip-cloud-provider**: IP allocation (wave 3)
+- **external-dns**: Automatic DNS records (wave 3)
 
-### cert-manager/
-Certificate automation:
-- **ClusterIssuer**: Let's Encrypt DNS-01 challenge (Cloudflare)
-- **Sealed Secret**: Cloudflare API token
-- Namespace: `cert-manager`
+### security/
+Security components (sync-wave 1-5):
+- **sealed-secrets**: Secret encryption controller (wave 1, critical)
+- **cert-manager**: TLS certificate automation (wave 2, critical)
+- **authentik**: SSO and authentication (wave 5)
 
-### external-dns/
-DNS automation:
-- **Sealed Secret**: UniFi controller credentials
-- **Patch**: Domain filter (`kng.house`)
-- Namespace: `external-dns`
+### storage/
+Storage layer (sync-wave 2):
+- **longhorn**: Distributed block storage (wave 2, critical)
 
-### kube-vip-cloud-provider/
-LoadBalancer IPs:
-- **Patch**: IP pool range (configured per environment)
-- Provides LoadBalancer IPs for services
-- Namespace: `kube-system`
+### database/
+Database services (sync-wave 4):
+- **postgresql**: PostgreSQL database (wave 4)
 
-### sealed-secrets/
-Secret encryption:
-- No customizations needed (uses base from `apps/`)
-- Namespace: `kube-system`
+### observability/
+Monitoring and logging (sync-wave 4-6):
+- **kube-prometheus-stack**: Metrics, Grafana, Alertmanager (wave 4)
+- **loki**: Log aggregation backend (wave 5)
+- **alloy**: Log collection with syslog support (wave 6)
 
 ## 🔧 Usage
 
-### Apply Manually
+### Bootstrap Deployment
 
 ```bash
-# Apply specific app
-kustomize build --enable-helm cluster/argocd | kubectl apply -f -
+# 1. Deploy Talos cluster
+cd scripts/
+./deploy.sh
 
-# Apply all
-kustomize build --enable-helm cluster/ | kubectl apply -f -
+# 2. Bootstrap Cilium + ArgoCD
+./bootstrap.sh
+
+# ArgoCD ApplicationSet now auto-deploys all apps!
 ```
 
-### Deploy via ArgoCD
+### Manual App Deployment
 
 ```bash
-# Install ArgoCD first
+# Deploy specific app
+kustomize build --enable-helm cluster/network/cilium | kubectl apply -f -
+
+# Deploy ArgoCD
 kustomize build --enable-helm cluster/argocd | kubectl apply -f -
-
-# Apply App-of-Apps
-kubectl apply -f cluster/main.yaml
-
-# ArgoCD now manages everything automatically!
 ```
 
-### Check ArgoCD Status
+### Check Deployment Status
 
 ```bash
+# View all ArgoCD applications
 kubectl get applications -n argocd
+
+# Check ApplicationSet
 kubectl get applicationsets -n argocd
+
+# View apps by category
+kubectl get app -n argocd -l category=network
+kubectl get app -n argocd -l category=observability
+
+# Check sync status
+kubectl get app -n argocd -o custom-columns=NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status
 ```
 
 ## 🔐 Secrets Management
@@ -151,20 +191,63 @@ git push
 
 ## 📝 Adding New Applications
 
-1. **Create overlay directory**:
+1. **Create app directory in appropriate category**:
    ```bash
-   mkdir cluster/my-app
+   mkdir -p cluster/network/my-app
+   cd cluster/network/my-app
    ```
 
-2. **Create kustomization.yaml**:
+2. **Create kustomization.yaml with Helm chart**:
    ```yaml
    apiVersion: kustomize.config.k8s.io/v1beta1
    kind: Kustomization
    namespace: my-app
-   resources:
-     - ../../apps/my-app
-   # Add patches, configmaps, secrets here
+   
+   helmCharts:
+     - name: my-app
+       repo: https://charts.example.com
+       version: 1.0.0
+       releaseName: my-app
+       valuesFile: values.yaml
    ```
+
+3. **Create .argocd-source.yaml for labels and sync wave**:
+   ```yaml
+   labels:
+     category: network
+     type: custom
+   annotations:
+     argocd.argoproj.io/sync-wave: "5"
+   kustomize:
+     enable_helm: true
+   ```
+
+4. **Create values.yaml** (optional):
+   ```yaml
+   # Helm values here
+   ```
+
+5. **Commit and push**:
+   ```bash
+   git add cluster/network/my-app
+   git commit -m "Add my-app to network category"
+   git push
+   ```
+
+6. **ArgoCD automatically discovers and deploys it!**
+
+## 🔍 Sync Wave Order
+
+Applications deploy in order based on sync-wave annotations:
+
+| Wave | Category | Apps | Notes |
+|------|----------|------|-------|
+| 1 | network, security | cilium, sealed-secrets | Critical infrastructure |
+| 2 | network, security, storage | kube-vip, cert-manager, longhorn | Core services |
+| 3 | network | kube-vip-cloud-provider, external-dns | Network completion |
+| 4 | database, observability | postgresql, kube-prometheus-stack | Data layer |
+| 5 | security, observability | authentik, loki | Application services |
+| 6 | observability | alloy | Log collection |
 
 3. **Add to root kustomization**:
    ```yaml

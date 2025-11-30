@@ -53,21 +53,27 @@ homelab/
 │   ├── main.tf                     # Terraform infrastructure
 │   ├── terraform.tfvars.example    # Example configuration
 │   └── talos-config/              # Generated configs (ignored in git)
-├── 📦 apps/                        # Helm charts & app definitions
-│   ├── argocd/                    # GitOps controller
-│   ├── cert-manager/              # Certificate management
-│   ├── external-dns/              # DNS automation
-│   ├── kube-vip-cloud-provider/   # LoadBalancer provider
-│   ├── longhorn/                  # Storage solution
-│   └── sealed-secrets/            # Secret encryption
-├── 🎯 cluster/                     # Cluster-specific manifests
-│   ├── argocd/                    # ArgoCD config overlays
-│   ├── cert-manager/              # Cert-Manager + ClusterIssuer
-│   ├── external-dns/              # External-DNS config
-│   ├── kube-vip-cloud-provider/   # LoadBalancer IP pool
-│   ├── sealed-secrets/            # Sealed secret overlays
-│   ├── kustomization.yaml         # Root kustomization
-│   └── main.yaml                  # ArgoCD App-of-Apps
+├── 🎯 cluster/                     # Cluster applications (organized by category)
+│   ├── README.md                   # Cluster manifests documentation
+│   ├── main.yaml                   # ArgoCD ApplicationSet (GitOps root)
+│   ├── argocd/                    # ArgoCD itself (bootstrap)
+│   ├── network/                   # Network category
+│   │   ├── cilium/                # CNI + Ingress controller
+│   │   ├── kube-vip/              # LoadBalancer VIP
+│   │   ├── kube-vip-cloud-provider/ # LoadBalancer provider
+│   │   └── external-dns/          # DNS automation
+│   ├── security/                  # Security category
+│   │   ├── sealed-secrets/        # Secret encryption
+│   │   ├── cert-manager/          # Certificate management
+│   │   └── authentik/             # SSO & authentication
+│   ├── storage/                   # Storage category
+│   │   └── longhorn/              # Distributed storage
+│   ├── database/                  # Database category
+│   │   └── postgresql/            # PostgreSQL database
+│   └── observability/             # Observability category
+│       ├── kube-prometheus-stack/ # Metrics & monitoring
+│       ├── loki/                  # Log aggregation
+│       └── alloy/                 # Log collection agent
 └── 📜 scripts/                     # Deployment & utility scripts
     ├── bootstrap.sh               # Install Cilium + ArgoCD
     ├── deploy.sh                  # Deploy Talos cluster
@@ -91,10 +97,15 @@ homelab/
 |-----------|---------|---------|--------|
 | **Talos Linux** | Immutable OS | v1.11.5 | ✅ |
 | **Kubernetes** | Orchestration | v1.34.1 | ✅ |
-| **Cilium** | CNI + Ingress | 1.18.4 | ✅ |
-| **ArgoCD** | GitOps | 8.2.5 | ✅ |
+| **Cilium** | CNI + Ingress | 1.16.4 | ✅ |
+| **ArgoCD** | GitOps | Latest | ✅ |
+| **Kube-VIP** | LoadBalancer | Latest | ✅ |
+| **Sealed-Secrets** | Secret encryption | Latest | ✅ |
 | **Cert-Manager** | TLS certificates | Latest | ✅ |
-| **Sealed-Secrets** | Secret encryption | 2.17.9 | ✅ |
+| **Longhorn** | Storage | Latest | ✅ |
+| **Loki** | Log aggregation | 3.3.2 | ✅ |
+| **Grafana Alloy** | Log collection | 1.4.0 | ✅ |
+| **Prometheus Stack** | Monitoring | Latest | ✅ |
 
 ## 📋 Architecture
 
@@ -181,9 +192,11 @@ cd ../scripts/
 ```
 
 **What it installs:**
-1. **Cilium CNI** (1.18.4) - Nodes become Ready
+1. **Cilium CNI** (1.16.4) - Nodes become Ready
 2. **ArgoCD** - GitOps controller
-3. **App-of-Apps** - Auto-deploys everything in `cluster/` directory
+3. **ApplicationSet** - Auto-discovers and deploys apps from `cluster/*/*`
+
+All apps in subdirectories (network, security, storage, database, observability) will be automatically deployed with their labels and sync waves from `.argocd-source.yaml` files.
 
 ### 5. Verify Deployment
 
