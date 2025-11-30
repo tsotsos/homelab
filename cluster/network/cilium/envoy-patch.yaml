@@ -1,0 +1,14 @@
+---
+# Strategic merge patch to add supplementalGroups to Envoy DaemonSet
+# Required for Envoy to access xds.sock (permissions: root:1337)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cilium-envoy
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      securityContext:
+        supplementalGroups:
+          - 1337

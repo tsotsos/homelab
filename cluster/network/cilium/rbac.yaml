@@ -1,26 +1,25 @@
 ---
-# Role for Cilium agent to read TLS secrets in cilium-secrets namespace
+# ClusterRole for Cilium agent to read TLS secrets for ingress
 # Required for SDS (Secret Discovery Service) in standalone Envoy mode
+# Cilium agent needs to read secrets from ingress namespaces to serve them to Envoy
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: secret-reader
-  namespace: cilium-secrets
+  name: cilium-ingress-secrets-reader
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list", "watch"]
 ---
-# Bind secret-reader role to Cilium agent service account
+# Bind ClusterRole to Cilium agent service account
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: cilium-secret-reader
-  namespace: cilium-secrets
+  name: cilium-ingress-secrets-reader
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: secret-reader
+  kind: ClusterRole
+  name: cilium-ingress-secrets-reader
 subjects:
   - kind: ServiceAccount
     name: cilium
