@@ -47,5 +47,8 @@ ingressController:
   enabled: true
   default: true
   loadbalancerMode: shared
+  secretsNamespace:
+    create: false
+    name: ""  # Empty string means watch all namespaces
   service:
     type: LoadBalancer
