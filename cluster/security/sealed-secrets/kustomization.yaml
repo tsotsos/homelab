@@ -6,6 +6,10 @@ namespace: kube-system
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-3"
 
+
+resources:
+  - crds/bitnami.com_sealedsecrets.yaml
+
 helmCharts:
   - name: sealed-secrets
     repo: https://bitnami-labs.github.io/sealed-secrets
