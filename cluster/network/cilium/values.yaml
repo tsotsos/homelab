@@ -46,10 +46,17 @@ bpf:
 envoy:
   enabled: true
 
+# Operator configuration  
+operator:
+  replicas: 2
+
 # Ingress Controller
 ingressController:
   enabled: true
   default: true
   loadbalancerMode: shared
+  secretsNamespace:
+    create: true
+    name: cilium-secrets
   service:
     type: LoadBalancer
