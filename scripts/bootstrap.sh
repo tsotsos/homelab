@@ -54,12 +54,12 @@ install_cilium() {
     helm repo add cilium https://helm.cilium.io/ 2>/dev/null || true
     helm repo update cilium
     
-    # Install Cilium using cluster/cilium configuration
+    # Install Cilium using cluster/network/cilium configuration
     log "Installing Cilium $cilium_version..."
-    kustomize build --enable-helm "$CLUSTER_DIR/cilium" | kubectl apply -f -
+    kustomize build --enable-helm "$CLUSTER_DIR/network/cilium" | kubectl apply -f -
     
     # Clean up helm charts cache
-    rm -rf "$CLUSTER_DIR/cilium/charts" 2>/dev/null || true
+    rm -rf "$CLUSTER_DIR/network/cilium/charts" 2>/dev/null || true
     
     success "Cilium installed"
     
