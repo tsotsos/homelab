@@ -15,7 +15,3 @@ server:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-dns
       external-dns.alpha.kubernetes.io/hostname: argocd.kng.house
-    extraTls:
-      - hosts:
-          - argocd.kng.house
-        secretName: argocd-tls

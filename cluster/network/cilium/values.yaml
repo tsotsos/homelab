@@ -42,10 +42,6 @@ cgroup:
 bpf:
   preallocateMaps: true
 
-# Operator configuration for secret sync
-operator:
-  replicas: 2
-
 # Ingress Controller
 ingressController:
   enabled: true
@@ -53,6 +49,3 @@ ingressController:
   loadbalancerMode: shared
   service:
     type: LoadBalancer
-  secretsNamespace:
-    create: true
-    name: cilium-secrets
