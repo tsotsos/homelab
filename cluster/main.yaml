@@ -21,35 +21,14 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - list:
-        elements:
-          - app: cilium
-            path: cluster/network/cilium
-          - app: kube-vip
-            path: cluster/network/kube-vip
-          - app: kube-vip-cloud-provider
-            path: cluster/network/kube-vip-cloud-provider
-          - app: external-dns
-            path: cluster/network/external-dns
-          - app: sealed-secrets
-            path: cluster/security/sealed-secrets
-          - app: cert-manager
-            path: cluster/security/cert-manager
-          - app: authentik
-            path: cluster/security/authentik
-          - app: longhorn
-            path: cluster/storage/longhorn
-          - app: postgresql
-            path: cluster/database/postgresql
-          - app: kube-prometheus-stack
-            path: cluster/observability/kube-prometheus-stack
-          - app: loki
-            path: cluster/observability/loki
-          - app: alloy
-            path: cluster/observability/alloy
+    - git:
+        repoURL: https://github.com/tsotsos/homelab
+        revision: HEAD
+        directories:
+          - path: cluster/*/*
   template:
     metadata:
-      name: '{{app}}'
+      name: '{{path.basename}}'
     spec:
       project: kng-cluster
       source:
