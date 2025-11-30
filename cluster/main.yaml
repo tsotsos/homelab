@@ -26,7 +26,16 @@ spec:
         revision: HEAD
         directories:
           - path: cluster/*/*
-            exclude: '{cluster/network,cluster/security,cluster/storage,cluster/database,cluster/observability}'
+          - path: cluster/network
+            exclude: true
+          - path: cluster/security
+            exclude: true
+          - path: cluster/storage
+            exclude: true
+          - path: cluster/database
+            exclude: true
+          - path: cluster/observability
+            exclude: true
   template:
     metadata:
       name: '{{path.basename}}'
