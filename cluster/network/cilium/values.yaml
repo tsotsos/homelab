@@ -42,6 +42,10 @@ cgroup:
 bpf:
   preallocateMaps: true
 
+# Envoy configuration
+envoy:
+  enabled: true
+
 # Ingress Controller
 ingressController:
   enabled: true
