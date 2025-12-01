@@ -14,72 +14,53 @@ Enterprise-grade Kubernetes homelab with Talos Linux, GitOps, and comprehensive 
 ### Deployment Steps
 
 ```bash
-# 1. Configure cluster (edit cluster-config.yaml)
-cd infra/
-vi cluster-config.yaml  # Set your IPs, MACs, Proxmox nodes
+# 1. Configure cluster
+cd infra/ && vi cluster-config.yaml  # Set IPs, MACs, Proxmox nodes
 
 # 2. Deploy infrastructure
-terraform init
-terraform apply
+terraform init && terraform apply
 
 # 3. Deploy Talos cluster
-cd ../scripts/
-./deploy.sh
+cd ../scripts/ && ./deploy.sh
 
-# 4. Bootstrap core services (Cilium + ArgoCD)
-./bootstrap.sh
+# 4. Bootstrap all core services
+./bootstrap.sh  # ~15-20 minutes
 
-# 5. Check status
-./deploy.sh status
-kubectl get nodes -o wide
+# 5. Verify
+kubectl get nodes -o wide && kubectl get pods -A
 ```
 
-**What gets deployed:**
-- ✅ 9 VMs (3 control plane + 6 workers)
-- ✅ Talos Linux installed to disk
-- ✅ Kubernetes cluster bootstrapped
-- ✅ Cilium CNI (1.18.4)
-- ✅ ArgoCD GitOps (auto-deploys from `cluster/`)
-- ✅ Talos VIP (10.0.2.100) for HA
+**Result:** Complete Kubernetes cluster with all core infrastructure
+
+📖 **Detailed Guide:** See [BOOTSTRAP.md](BOOTSTRAP.md) for step-by-step bootstrap documentation
 
 ## 📁 Repository Structure
 
 ```
 homelab/
-├── 📖 README.md                    # This overview + deployment guide
-├── 🏗️ infra/                       # Infrastructure (Terraform + Talos)
-│   ├── README.md                   # Detailed infrastructure docs
-│   ├── cluster-config.yaml         # Single source of truth (YAML)
-│   ├── main.tf                     # Terraform infrastructure
-│   ├── terraform.tfvars.example    # Example configuration
-│   └── talos-config/              # Generated configs (ignored in git)
-├── 🎯 cluster/                     # Cluster applications (organized by category)
-│   ├── README.md                   # Cluster manifests documentation
-│   ├── main.yaml                   # ArgoCD ApplicationSet (GitOps root)
-│   ├── argocd/                    # ArgoCD itself (bootstrap)
-│   ├── network/                   # Network category
-│   │   ├── cilium/                # CNI + Ingress controller
-│   │   ├── kube-vip/              # LoadBalancer VIP
-│   │   ├── kube-vip-cloud-provider/ # LoadBalancer provider
-│   │   └── external-dns/          # DNS automation
-│   ├── security/                  # Security category
-│   │   ├── sealed-secrets/        # Secret encryption
-│   │   ├── cert-manager/          # Certificate management
-│   │   └── authentik/             # SSO & authentication
-│   ├── storage/                   # Storage category
-│   │   └── longhorn/              # Distributed storage
-│   ├── database/                  # Database category
-│   │   └── postgresql/            # PostgreSQL database
-│   └── observability/             # Observability category
-│       ├── kube-prometheus-stack/ # Metrics & monitoring
-│       ├── loki/                  # Log aggregation
-│       └── alloy/                 # Log collection agent
-└── 📜 scripts/                     # Deployment & utility scripts
-    ├── bootstrap.sh               # Install Cilium + ArgoCD
-    ├── deploy.sh                  # Deploy Talos cluster
-    ├── label-nodes.sh             # Apply node labels
-    └── sealed-secrets.sh          # Manage sealed secrets
+├── README.md                      # This overview
+├── BOOTSTRAP.md                   # Detailed bootstrap guide
+├── infra/                         # Infrastructure (Terraform + Talos)
+│   ├── README.md                  # Infrastructure documentation
+│   ├── cluster-config.yaml        # Single source of truth
+│   └── talos-config/             # Generated configs
+├── cluster/                       # Kubernetes applications (GitOps)
+│   ├── README.md                  # Cluster manifests docs
+│   ├── main.yaml                  # ArgoCD ApplicationSet root
+│   ├── argocd/                   # ArgoCD bootstrap
+│   ├── network/                  # CNI, ingress, DNS
+│   ├── security/                 # Secrets, certs, auth
+│   ├── storage/                  # Longhorn
+│   ├── database/                 # PostgreSQL
+│   └── observability/            # Monitoring & logging
+├── secrets-un/                    # Unsealed secrets (git-ignored)
+└── scripts/                       # Deployment scripts
+    ├── bootstrap.sh              # Bootstrap infrastructure
+    ├── deploy.sh                 # Deploy Talos cluster
+    └── README.md                 # Scripts documentation
 ```
+
+📖 **Detailed Docs:** Each directory has its own README with specific documentation
 
 ## ✨ Features
 
@@ -93,19 +74,20 @@ homelab/
 
 ## 🎯 Core Stack
 
-| Component | Purpose | Version | Status |
-|-----------|---------|---------|--------|
-| **Talos Linux** | Immutable OS | v1.11.5 | ✅ |
-| **Kubernetes** | Orchestration | v1.34.1 | ✅ |
-| **Cilium** | CNI + Ingress | 1.16.4 | ✅ |
-| **ArgoCD** | GitOps | Latest | ✅ |
-| **Kube-VIP** | LoadBalancer | Latest | ✅ |
-| **Sealed-Secrets** | Secret encryption | Latest | ✅ |
-| **Cert-Manager** | TLS certificates | Latest | ✅ |
-| **Longhorn** | Storage | Latest | ✅ |
-| **Loki** | Log aggregation | 3.3.2 | ✅ |
-| **Grafana Alloy** | Log collection | 1.4.0 | ✅ |
-| **Prometheus Stack** | Monitoring | Latest | ✅ |
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| **Talos Linux** | Immutable OS | ✅ |
+| **Kubernetes** | Orchestration | ✅ |
+| **Cilium** | CNI + Ingress | ✅ |
+| **ArgoCD** | GitOps | ✅ |
+| **Kube-VIP** | LoadBalancer | ✅ |
+| **Sealed-Secrets** | Secret encryption | ✅ |
+| **Cert-Manager** | TLS automation | ✅ |
+| **Longhorn** | Distributed storage | ✅ |
+| **Loki + Alloy** | Log aggregation | ✅ |
+| **Prometheus Stack** | Monitoring | ✅ |
+
+📖 **See:** [BOOTSTRAP.md](BOOTSTRAP.md) for detailed component installation steps
 
 ## 📋 Architecture
 
@@ -131,177 +113,102 @@ homelab/
 
 ## 🚀 Getting Started
 
-### 1. Configure Cluster
+### Prerequisites
 
-Copy and edit `infra/cluster-config.yaml.example` to `infra/cluster-config.yaml`:
+- **Proxmox VE** cluster with sufficient resources
+- **Talos ISO** uploaded to Proxmox storage
+- **Network** with VLAN and static IP range configured
+- **Tools**: terraform, talosctl, kubectl, helm, kustomize, yq, kubeseal
+
+### Quick Start
+
+1. **Configure:** Edit `infra/cluster-config.yaml` with your settings
+2. **Deploy:** Run `cd infra && terraform apply`
+3. **Bootstrap:** Run `cd ../scripts && ./deploy.sh && ./bootstrap.sh`
+4. **Verify:** Check with `kubectl get nodes -o wide`
+
+📖 **Detailed Guide:** See [BOOTSTRAP.md](BOOTSTRAP.md) for complete documentation
+
+### Configuration
+
+Edit `infra/cluster-config.yaml`:
 
 ```yaml
 cluster:
   name: "my-cluster"
-  vip: "192.168.1.100"       # Your VIP address
-  use_talos_vip: true        # Built-in HA
-  use_static_ips: true       # Not DHCP
-  cni: "none"                # Cilium installed post-bootstrap
+  vip: "192.168.1.100"
 
 nodes:
   "cp-1":
     vm_id: 101
-    ip_address: "192.168.1.101"  # Your IP range
-    mac_address: "AA:BB:CC:DD:01:01"
-    proxmox_node: "pve1"          # Your Proxmox node name
+    ip_address: "192.168.1.101"
+    proxmox_node: "pve1"
     role: "controlplane"
-    cpu_cores: 4
-    # ... more nodes ...
+    # ... more configuration
 ```
 
-Also create `infra/terraform.tfvars` from `terraform.tfvars.example` with your Proxmox credentials.
-
-### 2. Deploy Infrastructure
-
-```bash
-cd infra/
-terraform init
-terraform plan          # Review changes
-terraform apply         # Creates VMs + generates Talos configs
-```
-
-**Output:**
-- 9 VMs created on Proxmox (3 per host, balanced distribution)
-- Talos machine configs in `talos-config/` directory
-- `talosconfig` client configuration file
-
-### 3. Deploy Talos Cluster
-
-```bash
-cd ../scripts/
-./deploy.sh
-```
-
-**What it does:**
-1. Applies Talos machine configs to all VMs
-2. Waits for nodes to be ready (2-5 mins per node)
-3. Bootstraps Kubernetes on first control plane
-4. Retrieves kubeconfig to `infra/talos-config/kubeconfig`
-
-**Result:** Kubernetes cluster running, nodes will be **NotReady** (no CNI yet)
-
-### 4. Bootstrap Core Services
-
-```bash
-./bootstrap.sh
-```
-
-**What it installs:**
-1. **Cilium CNI** (1.16.4) - Nodes become Ready
-2. **ArgoCD** - GitOps controller
-3. **ApplicationSet** - Auto-discovers and deploys apps from `cluster/*/*`
-
-All apps in subdirectories (network, security, storage, database, observability) will be automatically deployed with their labels and sync waves from `.argocd-source.yaml` files.
-
-### 5. Verify Deployment
-
-```bash
-./deploy.sh status                 # Cluster overview
-kubectl get nodes -o wide          # Node status
-kubectl get pods -A                # All pods
-kubectl get applications -n argocd # ArgoCD apps
-```
-
-### 6. Access ArgoCD
-
-```bash
-# Get admin password
-kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath="{.data.password}" | base64 -d && echo
-
-# Port forward
-kubectl port-forward svc/argocd-server -n argocd 8080:443 --address 0.0.0.0
-
-# Access at https://localhost:8080
-# Username: admin
-# Password: (from command above)
-```
+Also create `infra/terraform.tfvars` from `terraform.tfvars.example`.
 
 ## 🔧 Operations
 
-### Deployment Scripts
+### Common Commands
 
 ```bash
-# Deploy cluster (from scratch or redeploy)
-cd scripts/
-./deploy.sh              # Full: apply + bootstrap
-./deploy.sh apply        # Just install Talos to VMs
-./deploy.sh bootstrap    # Just bootstrap K8s
-./deploy.sh status       # Check cluster health
+# Cluster deployment
+./scripts/deploy.sh              # Full deployment
+./scripts/deploy.sh status       # Check health
 
-# Bootstrap services (Cilium + ArgoCD)
-./bootstrap.sh           # Full bootstrap
-./bootstrap.sh cilium    # Only Cilium CNI
-./bootstrap.sh argocd    # Only ArgoCD (requires Cilium)
+# Bootstrap infrastructure
+./scripts/bootstrap.sh           # Install all components
+./scripts/bootstrap.sh --step 3  # Resume from step 3
+./scripts/bootstrap.sh --seal-secrets  # Reseal secrets only
 
-# Manage sealed secrets
-./sealed-secrets.sh all       # Install controller + seal secrets
-./sealed-secrets.sh validate  # Check unsealed secrets
-./sealed-secrets.sh seal      # Encrypt secrets
-./sealed-secrets.sh unseal    # Decrypt secrets
+# Access ArgoCD
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Get password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+# Verify cluster
+kubectl get nodes -o wide
+kubectl get pods -A
+kubectl get applications -n argocd
 ```
+
+📖 **See:** [BOOTSTRAP.md](BOOTSTRAP.md) for detailed operations and troubleshooting
 
 ### Managing Secrets
 
-**Never commit actual secrets to git!** Use sealed-secrets:
+Secrets are managed using sealed-secrets for safe git storage:
 
 ```bash
-cd scripts/
+# 1. Edit unsealed secret
+vi secrets-un/cert-manager.yaml
 
-# 1. Edit unsealed secrets in secrets-un/
-vi ../secrets-un/cert-manager.yaml
-vi ../secrets-un/external-dns.yaml
+# 2. Reseal
+./scripts/bootstrap.sh --seal-secrets
 
-# 2. Validate format
-./sealed-secrets.sh validate
-
-# 3. Seal secrets (encrypts with cluster public key)
-./sealed-secrets.sh seal
-
-# 4. Sealed secrets are written to cluster/*/sealed-secret.yaml
-# 5. Commit sealed secrets (safe to push to git)
-git add ../cluster/*/sealed-secret.yaml
-git commit -m "Update sealed secrets"
+# 3. Commit sealed version
+git add cluster/security/cert-manager/sealed-secret.yaml
+git commit -m "Update secrets"
 ```
+
+📖 **See:** [BOOTSTRAP.md](BOOTSTRAP.md) for complete secret management workflow
 
 ### Talos Operations
 
 ```bash
 export TALOSCONFIG="infra/talos-config/talosconfig"
 
-# Check node status
+# Node management
 talosctl --nodes <NODE_IP> version
-talosctl --nodes <CP1_IP>,<CP2_IP>,<CP3_IP> health
-
-# View logs
-talosctl --nodes <NODE_IP> logs
-talosctl --nodes <NODE_IP> dmesg
-
-# Node operations
 talosctl --nodes <NODE_IP> reboot
-talosctl --nodes <NODE_IP> shutdown
-talosctl --nodes <NODE_IP> reset  # ⚠️ Destructive!
+talosctl --nodes <NODE_IP> logs
 
-
-# Check etcd cluster
-talosctl --nodes 10.0.2.101 etcd members
+# Cluster health
+talosctl --nodes <CP_IP> health
+talosctl --nodes <CP_IP> etcd members
 ```
 
-### Scaling
-
-```bash
-# Scale worker nodes (edit cluster-config.yaml first)
-cd infra/
-vi cluster-config.yaml  # Add new worker node definition
-terraform apply         # Creates new VM
-cd ../scripts/
-# Apply config to new node manually with talosctl apply-config
-```
+📖 **See:** `infra/README.md` for detailed Talos operations
 
 ## 🛡️ Security
 
@@ -313,71 +220,47 @@ cd ../scripts/
 - **Certificate Management**: Automated via cert-manager + Let's Encrypt
 - **Network Policies**: Ready for implementation
 
-## � Troubleshooting
 
-### Nodes Not Ready After Bootstrap
+## 🛠️ Troubleshooting
 
-This is **expected**! Nodes will be NotReady until Cilium CNI is installed.
+### Common Issues
 
-```bash
-cd scripts/
-./bootstrap.sh  # Installs Cilium
-```
+**Nodes Not Ready After deploy.sh**
+- Expected! Run `./scripts/bootstrap.sh` to install Cilium CNI
 
-### Certificate Errors
+**Bootstrap Fails at Step N**
+- Resume with: `./scripts/bootstrap.sh --step N`
 
-**Never regenerate Talos certificates manually!** Always use Terraform-generated configs.
+**Sealed Secrets Not Decrypting**
+- Reseal after cluster rebuild: `./scripts/bootstrap.sh --seal-secrets`
 
-```bash
-cd infra/
-terraform apply -auto-approve -target=local_file.talosconfig
-```
+**High CPU on Proxmox**
+- Check kernel args in `cluster-config.yaml` and remove `idle=poll`
 
-### High CPU Usage on Proxmox Hosts
+📖 **Detailed Troubleshooting:** See [BOOTSTRAP.md](BOOTSTRAP.md)
 
-Check kernel arguments in `cluster-config.yaml`. Remove aggressive CPU settings:
-
-```yaml
-defaults:
-  talos:
-    kernel_args:
-      - "mitigations=off"     # Safe for homelab
-      - "clocksource=tsc"     # Efficient timekeeping
-      - "tsc=reliable"        # Trust TSC
-      # ❌ DO NOT USE: "idle=poll" or "processor.max_cstate=1"
-      # These cause 100% CPU polling!
-```
-
-### Nodes Not Installing Talos
-
-Check VM console in Proxmox:
-- ISO properly mounted?
-- Network configured?
-- UEFI boot working?
-- Sufficient disk space (150GB)?
-
-### Sealed Secrets Not Decrypting
-
-Sealed secrets are encrypted with cluster-specific public key. If cluster was rebuilt:
+### Diagnostics
 
 ```bash
-cd scripts/
-# Re-seal with new cluster key
-./sealed-secrets.sh seal
-git add ../cluster/*/sealed-secret.yaml
-git commit -m "Re-seal secrets for new cluster"
-```
-
-### Check Deployment Logs
-
-```bash
-# Talos logs
-export TALOSCONFIG="infra/talos-config/talosconfig"
-talosctl --nodes 10.0.2.101 logs
-
-# Kubernetes events
-kubectl get events -A --sort-by='.lastTimestamp'
-
-# Pod logs
+# Component logs
 kubectl logs -n kube-system -l k8s-app=cilium
 kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server
+
+# Talos logs
+talosctl --nodes <NODE_IP> logs
+```
+
+## 📚 Documentation
+
+- **[BOOTSTRAP.md](BOOTSTRAP.md)** - Complete bootstrap guide with troubleshooting
+- **[infra/README.md](infra/README.md)** - Infrastructure and Terraform documentation
+- **[cluster/README.md](cluster/README.md)** - Cluster manifests and GitOps structure  
+- **[scripts/README.md](scripts/README.md)** - Script usage and reference
+
+## 🤝 Contributing
+
+This is a personal homelab project, but feedback and suggestions are welcome!
+
+## 📄 License
+
+This project is provided as-is for educational purposes.

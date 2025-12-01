@@ -28,110 +28,65 @@ Deploys Talos Linux to VMs and bootstraps Kubernetes cluster (without CNI).
 ---
 
 ### 🎯 bootstrap.sh
-**Kubernetes bootstrap script - installs CNI and GitOps**
+**Comprehensive Kubernetes bootstrap script**
 
-Installs Cilium CNI and ArgoCD on a freshly bootstrapped cluster.
+Installs all core infrastructure components and seals secrets automatically.
 
 ```bash
-./bootstrap.sh           # Full bootstrap (Cilium + ArgoCD)
-./bootstrap.sh cilium    # Install only Cilium CNI
-./bootstrap.sh argocd    # Install only ArgoCD (requires Cilium)
+./bootstrap.sh                    # Run full bootstrap (or resume)
+./bootstrap.sh --step <N>         # Resume from specific step
+./bootstrap.sh --seal-secrets     # Only seal secrets
+./bootstrap.sh --reset            # Clear state and start fresh
+./bootstrap.sh --help             # Show help
 ```
 
-**What it installs:**
+**Bootstrap Steps:**
 
-1. **Cilium CNI (1.18.4)**
-   - Uses Talos VIP (10.0.2.100) for API endpoint
-   - Talos-specific security contexts
-   - eBPF optimizations
-   - Nodes become **Ready** after installation
+0. **Apply Node Labels** - Labels nodes based on cluster-config.yaml
+1. **Cilium CNI** - Network plugin with eBPF optimization
+2. **Kube-VIP** - Load balancer for services
+3. **Sealed Secrets** - Encrypts and seals all secrets from secrets-un/
+4. **External-DNS** - Automatic DNS management
+5. **Cert-Manager** - TLS certificate automation
+6. **Longhorn** - Distributed storage system
+7. **ArgoCD** - GitOps continuous delivery
 
-2. **ArgoCD (8.2.5)**
-   - GitOps controller
-   - Deployed from `cluster/argocd/`
-   - Auto-discovers apps in `cluster/` directory
+**Features:**
+- ✅ Automatic secret sealing with namespace detection
+- ✅ State management for resumable bootstraps
+- ✅ Helm chart cleanup after installation
+- ✅ Removes problematic creationTimestamp fields
+- ✅ Displays ArgoCD admin password on completion
+**Secret Management:**
+The bootstrap script automatically finds and seals all secrets in `secrets-un/` directory:
+- Detects namespace from secret YAML
+- Finds matching directory in cluster/
+- Seals using kubeseal (direct cluster access)
+- Removes problematic creationTimestamp fields
+- Places sealed-secret.yaml in correct app folder
 
-3. **App-of-Apps**
-   - Applies `cluster/main.yaml`
-   - ArgoCD automatically deploys all apps from git
+**Resuming Failed Bootstrap:**
+If bootstrap fails at any step:
+```bash
+./bootstrap.sh --step 3  # Resume from step 3 (sealed-secrets)
+```
 
-4. **Node Labels**
-   - Applies `node-role.kubernetes.io/worker` labels
-   - (Cannot be set via Talos machine config)
+Or let it auto-resume:
+```bash
+./bootstrap.sh  # Prompts to resume from last completed step
+```
+
+**Resealing Secrets Later:**
+After cluster is running with sealed-secrets controller:
+```bash
+./bootstrap.sh --seal-secrets  # Only reseal all secrets
+```
 
 **After bootstrap:**
-- Cluster is fully functional
-- ArgoCD manages all applications via GitOps
-- Display admin password for ArgoCD UI access
-
----
-
-### 🏷️ label-nodes.sh
-**Apply worker node role labels**
-
-Applies `node-role.kubernetes.io/worker` labels to worker nodes.
-
-```bash
-./label-nodes.sh
-```
-
-**Why needed:** Protected Kubernetes labels (node-role.kubernetes.io/*) cannot be set via Talos machine configuration and must be applied post-bootstrap via kubectl.
-
-**Labels applied:**
-- `node-role.kubernetes.io/worker=worker` on all 6 worker nodes
-
-**Called automatically by:** `bootstrap.sh`
-
----
-
-### 🔐 sealed-secrets.sh
-**Manage sealed secrets for safe git storage**
-
-Encrypts Kubernetes secrets using cluster-specific public key, enabling safe commit to git.
-
-```bash
-./sealed-secrets.sh all       # Install controller + seal all secrets
-./sealed-secrets.sh install   # Install sealed-secrets controller only
-./sealed-secrets.sh validate  # Validate unsealed secret format
-./sealed-secrets.sh seal      # Encrypt unsealed secrets
-./sealed-secrets.sh unseal    # Decrypt sealed secrets (requires cluster access)
-```
-
-**Workflow:**
-
-1. **Edit unsealed secrets** (git-ignored):
-   ```bash
-   vi ../secrets-un/cert-manager.yaml
-   vi ../secrets-un/external-dns.yaml
-   ```
-
-2. **Validate format** (checks namespace/name):
-   ```bash
-   ./sealed-secrets.sh validate
-   ```
-
-3. **Seal secrets** (encrypts with cluster public key):
-   ```bash
-   ./sealed-secrets.sh seal
-   ```
-   - Reads from: `secrets-un/*.yaml` (git-ignored)
-   - Writes to: `cluster/*/sealed-secret.yaml` (safe to commit)
-
-4. **Commit sealed secrets**:
-   ```bash
-   git add ../cluster/*/sealed-secret.yaml
-   git commit -m "Update sealed secrets"
-   git push
-   ```
-
-**Managed secrets:**
-- `cert-manager.yaml` → `cluster/cert-manager/sealed-secret.yaml`
-- `external-dns.yaml` → `cluster/external-dns/sealed-secret.yaml`
-
-**Validation checks:**
-- Correct namespace (cert-manager, external-dns)
-- Correct secret name
-- Valid YAML format
+- Cluster is fully functional with all core components
+- ArgoCD ready to deploy applications via GitOps
+- All secrets encrypted and safe for git storage
+- ArgoCD admin password displayed for UI access
 
 ---
 
