@@ -46,6 +46,15 @@ get_expected_name() {
     "external-dns.yaml")
       echo "external-dns-unifi-secret"
       ;;
+    "authentik.yaml")
+      echo "authentik-secrets"
+      ;;
+    "kube-prometheus-stack.yaml")
+      echo "grafana-secrets"
+      ;;
+    "postgresql.yaml")
+      echo "postgresql-secrets"
+      ;;
     *)
       echo ""
       ;;
