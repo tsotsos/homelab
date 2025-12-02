@@ -38,6 +38,16 @@ spec:
           set -e
           export PGPASSWORD=$(cat /shared/postgres-password)
           
+          echo "Waiting for PostgreSQL to be resolvable..."
+          for i in $(seq 1 30); do
+            if nslookup ${POSTGRES_HOST} > /dev/null 2>&1; then
+              echo "PostgreSQL DNS resolved"
+              break
+            fi
+            echo "Attempt $i: DNS not resolved yet, waiting..."
+            sleep 2
+          done
+          
           echo "Checking if database 'authentik' exists..."
           
           # Check if database exists
