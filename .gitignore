@@ -93,4 +93,4 @@ target/
 # Cache directories
 .cache/
 node_modules/
-.npm/
+.npm/scripts/.bootstrap-state

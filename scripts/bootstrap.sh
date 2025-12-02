@@ -392,6 +392,14 @@ step_5_install_cert_manager() {
         kubectl rollout status deployment cert-manager -n cert-manager --timeout=180s
         kubectl rollout status deployment cert-manager-webhook -n cert-manager --timeout=180s
         kubectl rollout status deployment cert-manager-cainjector -n cert-manager --timeout=180s
+        
+        # Wait for webhook to be fully functional before applying ClusterIssuer
+        log "Waiting for webhook to be ready..."
+        sleep 10
+        
+        log "Applying ClusterIssuer..."
+        kubectl apply -f "$CLUSTER_DIR/security/cert-manager/clusterIssuer.yaml"
+        
         success "cert-manager installed"
     fi
     
@@ -428,6 +436,10 @@ step_7_install_argocd() {
     if kubectl get namespace argocd &>/dev/null; then
         warn "ArgoCD already installed"
     else
+        # Create namespace first
+        log "Creating ArgoCD namespace..."
+        kubectl create namespace argocd
+        
         log "Installing ArgoCD..."
         kustomize build --enable-helm "$CLUSTER_DIR/argocd" | kubectl apply -f -
         rm -rf "$CLUSTER_DIR/argocd/charts" 2>/dev/null || true

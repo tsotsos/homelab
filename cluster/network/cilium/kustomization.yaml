@@ -8,6 +8,7 @@ commonAnnotations:
 
 resources:
   - rbac.yaml
+  - ingress-secrets-rbac.yaml
 
 helmCharts:
   - name: cilium
