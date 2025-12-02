@@ -4,7 +4,7 @@ namespace: authentik
 resources:
   - ns.yaml
   - sealed-secret.yaml
-  - db-init-rbac.yaml
+  - db-init-sa.yaml
   - db-init-job.yaml
 helmCharts:
   - name: authentik

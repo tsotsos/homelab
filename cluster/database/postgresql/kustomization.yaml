@@ -6,6 +6,7 @@ namespace: postgresql
 resources:
   - ns.yaml
   - sealed-secret.yaml
+  - authentik-db-rbac.yaml
 
 helmCharts:
   - name: postgresql
