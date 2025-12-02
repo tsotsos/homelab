@@ -1,0 +1,34 @@
+---
+# ServiceAccount for the database init job
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: authentik-db-init
+  namespace: authentik
+---
+# Role to read PostgreSQL admin secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: postgresql-secret-reader
+  namespace: postgresql
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["postgresql-secrets"]
+  verbs: ["get"]
+---
+# RoleBinding to allow authentik-db-init SA to read postgresql secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: authentik-db-init-postgresql-secrets
+  namespace: postgresql
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: postgresql-secret-reader
+subjects:
+- kind: ServiceAccount
+  name: authentik-db-init
+  namespace: authentik

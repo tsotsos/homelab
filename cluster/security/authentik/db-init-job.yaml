@@ -1,0 +1,89 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: authentik-db-init
+  namespace: authentik
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      name: authentik-db-init
+    spec:
+      serviceAccountName: authentik-db-init
+      restartPolicy: OnFailure
+      initContainers:
+      # Get PostgreSQL admin password from postgresql namespace
+      - name: fetch-postgres-password
+        image: bitnami/kubectl:latest
+        command:
+        - sh
+        - -c
+        - |
+          kubectl get secret postgresql-secrets -n postgresql -o jsonpath='{.data.postgres-password}' | base64 -d > /shared/postgres-password
+        volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+      containers:
+      - name: db-init
+        image: postgres:16-alpine
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          export PGPASSWORD=$(cat /shared/postgres-password)
+          
+          echo "Checking if database 'authentik' exists..."
+          
+          # Check if database exists
+          DB_EXISTS=$(psql -h "${POSTGRES_HOST}" -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='authentik'")
+          
+          if [ "$DB_EXISTS" = "1" ]; then
+            echo "Database 'authentik' already exists. Skipping creation."
+          else
+            echo "Database 'authentik' does not exist. Creating..."
+            
+            # Create user if not exists
+            psql -h "${POSTGRES_HOST}" -U postgres -c "
+              DO \$\$
+              BEGIN
+                IF NOT EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = 'authentik') THEN
+                  CREATE USER authentik WITH PASSWORD '${AUTHENTIK_DB_PASSWORD}';
+                END IF;
+              END
+              \$\$;
+            "
+            
+            # Create database
+            psql -h "${POSTGRES_HOST}" -U postgres -c "
+              CREATE DATABASE authentik OWNER authentik;
+            "
+            
+            # Grant privileges
+            psql -h "${POSTGRES_HOST}" -U postgres -c "
+              GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;
+            "
+            
+            echo "Database 'authentik' created successfully."
+          fi
+          
+          echo "Database initialization complete."
+        env:
+        - name: POSTGRES_HOST
+          value: "postgresql-primary.postgresql.svc.cluster.local"
+        - name: AUTHENTIK_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: authentik-secrets
+              key: postgresql-password
+        volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+      volumes:
+      - name: shared-data
+        emptyDir: {}
