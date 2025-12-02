@@ -6,6 +6,7 @@ metadata:
   name: authentik-db-init
   namespace: authentik
   annotations:
+    argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/sync-wave: "-10"
 ---
 # Role to read PostgreSQL admin secrets
@@ -15,6 +16,7 @@ metadata:
   name: postgresql-secret-reader
   namespace: postgresql
   annotations:
+    argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/sync-wave: "-10"
 rules:
 - apiGroups: [""]
@@ -29,6 +31,7 @@ metadata:
   name: authentik-db-init-postgresql-secrets
   namespace: postgresql
   annotations:
+    argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/sync-wave: "-10"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
