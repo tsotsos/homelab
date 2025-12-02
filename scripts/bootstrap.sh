@@ -360,7 +360,7 @@ seal_all_secrets() {
 step_4_install_external_dns() {
     step "4: INSTALLING EXTERNAL-DNS"
     
-    if kubectl get deployment -n external-dns external-dns &>/dev/null; then
+    if kubectl get deployment -n external-dns external-dns-unifi &>/dev/null; then
         warn "external-dns already installed"
     else
         log "Installing external-dns..."
@@ -368,7 +368,7 @@ step_4_install_external_dns() {
         rm -rf "$CLUSTER_DIR/network/external-dns/charts" 2>/dev/null || true
         
         log "Waiting for external-dns to be ready..."
-        kubectl rollout status deployment external-dns -n external-dns --timeout=120s
+        kubectl rollout status deployment external-dns-unifi -n external-dns --timeout=120s
         success "external-dns installed"
     fi
     
