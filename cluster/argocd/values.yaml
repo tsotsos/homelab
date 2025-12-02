@@ -2,10 +2,9 @@ configs:
   params:
     server.insecure: true
   cm:
-    create: true
-    admin.enabled: true
+    admin.enabled: "true"
     kustomize.buildOptions: "--enable-helm"
-    url: https://argocd.kng.house
+    url: "https://argocd.kng.house"
     resource.customizations.health.bitnami.com_SealedSecret: |
       hs = {}
       hs.status = "Healthy"
