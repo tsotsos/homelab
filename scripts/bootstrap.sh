@@ -337,7 +337,7 @@ seal_all_secrets() {
         log "Sealing $filename -> $output_file"
         
         # Seal the secret using kubeseal (accessing the cluster directly)
-        if kubeseal --format yaml < "$secret_file" > "$output_file" 2>/dev/null; then
+        if kubeseal --controller-name sealed-secrets --controller-namespace kube-system --format yaml < "$secret_file" > "$output_file" 2>/dev/null; then
             # Remove creationTimestamp from metadata if present
             yq eval 'del(.metadata.creationTimestamp)' -i "$output_file"
             # Remove creationTimestamp from template.metadata if present
