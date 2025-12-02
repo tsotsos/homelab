@@ -87,7 +87,7 @@ spec:
           echo "Database initialization complete."
         env:
         - name: POSTGRES_HOST
-          value: "postgresql-primary.postgresql.svc.cluster.local"
+          value: "postgresql-primary.postgresql"
         - name: AUTHENTIK_DB_PASSWORD
           valueFrom:
             secretKeyRef:
