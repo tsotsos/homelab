@@ -5,6 +5,12 @@ configs:
     create: true
     admin.enabled: true
     kustomize.buildOptions: "--enable-helm"
+    url: https://argocd.kng.house
+    resource.customizations.health.bitnami.com_SealedSecret: |
+      hs = {}
+      hs.status = "Healthy"
+      hs.message = "SealedSecret is synced"
+      return hs
 
 server:
   ingress:

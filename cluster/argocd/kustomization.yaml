@@ -10,9 +10,3 @@ helmCharts:
     releaseName: argocd
     namespace: argocd
     valuesFile: values.yaml
-
-patches:
-  - path: configmap.yaml
-    target:
-      kind: ConfigMap
-      name: argocd-cm
