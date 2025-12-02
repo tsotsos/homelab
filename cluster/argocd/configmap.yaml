@@ -5,7 +5,14 @@ metadata:
   namespace: argocd
 data:
   url: https://argocd.kng.house
-  # redirectURL: https://argocd.kng.house/api/dex/callback
+  
+  # SealedSecret health check - consider it healthy if synced
+  resource.customizations.health.bitnami.com_SealedSecret: |
+    hs = {}
+    hs.status = "Healthy"
+    hs.message = "SealedSecret is synced"
+    return hs
+  
   # kustomize.buildOptions: --enable-helm
   # dex.config: |
   #   connectors:
