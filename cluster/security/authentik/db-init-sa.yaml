@@ -6,5 +6,4 @@ metadata:
   name: authentik-db-init
   namespace: authentik
   annotations:
-    argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/sync-wave: "-10"
