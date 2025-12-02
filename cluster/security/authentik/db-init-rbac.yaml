@@ -5,6 +5,8 @@ kind: ServiceAccount
 metadata:
   name: authentik-db-init
   namespace: authentik
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
 ---
 # Role to read PostgreSQL admin secrets
 apiVersion: rbac.authorization.k8s.io/v1
@@ -12,6 +14,8 @@ kind: Role
 metadata:
   name: postgresql-secret-reader
   namespace: postgresql
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
@@ -24,6 +28,8 @@ kind: RoleBinding
 metadata:
   name: authentik-db-init-postgresql-secrets
   namespace: postgresql
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
