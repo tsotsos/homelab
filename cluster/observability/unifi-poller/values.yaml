@@ -3,6 +3,13 @@ image:
   tag: v2.16.0
   pullPolicy: IfNotPresent
 
+# Disable Grafana Operator dashboards (we don't have the operator)
+# Dashboards will need to be imported manually into Grafana
+dashboards:
+  create: false
+  grafana:
+    create: false
+
 # Configuration for unifi-poller using the upConfig format
 # See https://unpoller.com/docs/install/configuration for all options
 upConfig: |
