@@ -102,11 +102,13 @@ spec:
       - name: nut-exporter
         image: druggeri/nut_exporter:3.1.1
         imagePullPolicy: IfNotPresent
-        args:
-        - --nut.server=127.0.0.1
-        - --nut.username=mon
-        - --nut.password=monpass
-        - --nut.vars_enable=battery.charge,battery.runtime,battery.voltage,input.voltage,output.voltage,ups.load,ups.status,ups.temperature
+        env:
+        - name: NUT_EXPORTER_SERVER
+          value: "127.0.0.1:3493"
+        - name: NUT_EXPORTER_USERNAME  
+          value: "mon"
+        - name: NUT_EXPORTER_PASSWORD
+          value: "monpass"
         ports:
         - containerPort: 9199
           name: metrics
