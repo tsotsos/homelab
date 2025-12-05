@@ -81,9 +81,10 @@ spec:
           chown -R nut:nut /etc/nut
           
           echo "Starting NUT drivers..."
-          upsdrvctl start
+          upsdrvctl -u nut start || true
+          sleep 5
           echo "Starting upsd..."
-          exec upsd -D
+          exec upsd -D -u nut
         ports:
         - containerPort: 3493
           name: nut
