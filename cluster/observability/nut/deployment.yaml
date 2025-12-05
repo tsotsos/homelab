@@ -26,19 +26,23 @@ spec:
           chmod 640 /etc/nut/*
           # Create nut.conf with required MODE setting
           echo "MODE=netserver" > /etc/nut/nut.conf
-          # Create dummy USB directory structure
-          mkdir -p /dev-mount/bus/usb
         volumeMounts:
         - name: nut-config-source
           mountPath: /config-source
         - name: nut-config-rw
           mountPath: /etc/nut
-        - name: dev-dummy
-          mountPath: /dev-mount
       containers:
       - name: nut-upsd
         image: upshift/nut-upsd:latest
         imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          # Create dummy USB directory to satisfy entrypoint check
+          mkdir -p /dev/bus/usb || true
+          # Run the original entrypoint
+          exec /usr/local/bin/docker-entrypoint
         ports:
         - containerPort: 3493
           name: nut
@@ -55,8 +59,6 @@ spec:
         volumeMounts:
         - name: nut-config-rw
           mountPath: /etc/nut
-        - name: dev-dummy
-          mountPath: /dev
       - name: nut-exporter
         image: hon95/prometheus-nut-exporter:latest
         imagePullPolicy: IfNotPresent
@@ -84,6 +86,4 @@ spec:
         secret:
           secretName: nut-config
       - name: nut-config-rw
-        emptyDir: {}
-      - name: dev-dummy
         emptyDir: {}
