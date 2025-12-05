@@ -14,4 +14,4 @@ spec:
   - port: metrics
     interval: 30s
     scrapeTimeout: 10s
-    path: /ups_metrics
+    path: /metrics

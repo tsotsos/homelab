@@ -103,7 +103,7 @@ spec:
         image: hon95/prometheus-nut-exporter:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 9199
+        - containerPort: 9995
           name: metrics
           protocol: TCP
         env:
