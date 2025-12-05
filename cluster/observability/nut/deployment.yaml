@@ -39,10 +39,16 @@ spec:
         - sh
         - -c
         - |
-          # Create dummy USB directory to satisfy entrypoint check
+          # Create dummy USB directory to prevent errors
           mkdir -p /dev/bus/usb || true
-          # Run the original entrypoint
-          exec /usr/local/bin/docker-entrypoint
+          # Start only the SNMP drivers explicitly
+          for ups in apc-ups-main apc-pdu-net apc-pdu-srv; do
+            echo "Starting driver for $ups..."
+            upsdrvctl start $ups || echo "Failed to start $ups, continuing..."
+          done
+          # Start upsd in foreground
+          echo "Starting upsd..."
+          exec upsd -D
         ports:
         - containerPort: 3493
           name: nut
