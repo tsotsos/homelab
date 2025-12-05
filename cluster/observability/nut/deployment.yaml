@@ -33,7 +33,7 @@ spec:
           mountPath: /etc/nut
       containers:
       - name: nut-upsd
-        image: networkupstools/nut:v2.8.2
+        image: instantlinux/nut-upsd:2.8.1
         imagePullPolicy: IfNotPresent
         command:
         - sh
