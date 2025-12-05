@@ -77,8 +77,9 @@ spec:
           MODE=netserver
           EOF
 
+          mkdir -p /var/run/nut
           chmod 640 /etc/nut/*
-          chown -R nut:nut /etc/nut
+          chown -R nut:nut /etc/nut /var/run/nut
           
           echo "Starting NUT drivers..."
           upsdrvctl -u nut start || true
