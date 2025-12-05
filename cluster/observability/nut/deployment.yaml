@@ -39,16 +39,20 @@ spec:
         - sh
         - -c
         - |
-          # Create dummy USB directory to prevent errors
-          mkdir -p /dev/bus/usb || true
-          # Start only the SNMP drivers explicitly
-          for ups in apc-ups-main apc-pdu-net apc-pdu-srv; do
-            echo "Starting driver for $ups..."
-            upsdrvctl start $ups || echo "Failed to start $ups, continuing..."
-          done
+          # Create dummy USB directory and runtime directory
+          mkdir -p /dev/bus/usb /var/run/nut || true
+          # Fix permissions
+          chown -R nut:nut /etc/nut /var/run/nut 2>/dev/null || true
+          chmod 640 /etc/nut/* 2>/dev/null || true
+          # Start SNMP drivers  
+          echo "Starting SNMP drivers..."
+          /lib/nut/snmp-ups -a apc-ups-main &
+          /lib/nut/snmp-ups -a apc-pdu-net &
+          /lib/nut/snmp-ups -a apc-pdu-srv &
+          sleep 5
           # Start upsd in foreground
           echo "Starting upsd..."
-          exec upsd -D
+          exec upsd -D -u nut
         ports:
         - containerPort: 3493
           name: nut
