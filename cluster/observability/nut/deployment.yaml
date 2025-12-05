@@ -104,6 +104,12 @@ spec:
         imagePullPolicy: IfNotPresent
         args:
         - --nut.server=127.0.0.1:3493
+        - --nut.vars_enable=battery.charge,battery.runtime,battery.voltage,input.voltage,ups.load,ups.status,ups.temperature
+        env:
+        - name: NUT_EXPORTER_USERNAME
+          value: "mon"
+        - name: NUT_EXPORTER_PASSWORD
+          value: "monpass"
         ports:
         - containerPort: 9199
           name: metrics
