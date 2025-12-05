@@ -3,57 +3,62 @@ image:
   tag: v2.16.0
   pullPolicy: IfNotPresent
 
-# Environment variable configuration for unifi-poller
+# Configuration for unifi-poller using the upConfig format
 # See https://unpoller.com/docs/install/configuration for all options
+upConfig: |
+  [poller]
+    debug = false
+    quiet = false
+    plugins = []
+  
+  [prometheus]
+    disable = false
+    http_listen = "0.0.0.0:9130"
+    report_errors = false
+    namespace = "unifipoller"
+  
+  [influxdb]
+    disable = true
+  
+  [loki]
+    url = "http://loki-gateway.logging.svc.cluster.local:80"
+    disable = false
+  
+  [unifi]
+    dynamic = false
+  
+  [[unifi.controller]]
+    url = "https://unifi.kng.house"
+    user = "${UP_UNIFI_USER}"
+    pass = "${UP_UNIFI_PASS}"
+    sites = ["all"]
+    save_ids = false
+    save_dpi = true
+    save_sites = true
+    save_events = false
+    save_alarms = false
+    save_anomalies = false
+    hash_pii = false
+    verify_ssl = false
+
+# Environment variables for credentials
 env:
-  # Poller configuration
-  UP_POLLER_DEBUG: "false"
-  
-  # Prometheus configuration
-  UP_PROMETHEUS_DISABLE: "false"
-  UP_PROMETHEUS_NAMESPACE: "unifipoller"
-  
-  # UniFi Controller configuration
-  UP_UNIFI_DEFAULT_ROLE: "main-controller"
-  UP_UNIFI_DEFAULT_URL: "https://unifi.kng.house"
-  UP_UNIFI_DEFAULT_VERIFY_SSL: "false"
-  UP_UNIFI_DEFAULT_SAVE_SITES: "true"
-  UP_UNIFI_DEFAULT_SAVE_IDS: "false"
-  UP_UNIFI_DEFAULT_SAVE_EVENTS: "false"
-  UP_UNIFI_DEFAULT_SAVE_ALARMS: "false"
-  UP_UNIFI_DEFAULT_SAVE_ANOMALIES: "false"
-  UP_UNIFI_DEFAULT_SAVE_DPI: "true"
-  
-  # Loki configuration (optional - for logs)
-  UP_LOKI_URL: "http://loki-gateway.logging.svc.cluster.local:80"
-  
-  # InfluxDB disabled - using Prometheus
-  UP_INFLUXDB_DISABLE: "true"
+  - name: UP_UNIFI_USER
+    valueFrom:
+      secretKeyRef:
+        name: unifi-poller-secrets
+        key: unifi-user
+  - name: UP_UNIFI_PASS
+    valueFrom:
+      secretKeyRef:
+        name: unifi-poller-secrets
+        key: unifi-password
 
-# Use existing secret for credentials
-envFrom:
-  - secretRef:
-      name: unifi-poller-secrets
-
-service:
-  main:
-    ports:
-      http:
-        enabled: false
-      metrics:
-        enabled: true
-        port: 9130
-        protocol: TCP
-
-# Enable Prometheus ServiceMonitor for metrics collection
-metrics:
+# Enable PodMonitor for Prometheus Operator
+podMonitor:
   enabled: true
-  serviceMonitor:
-    interval: 2m
-    scrapeTimeout: 30s
-    labels: {}
-  prometheusRule:
-    enabled: false
+  interval: 2m
+  scrapeTimeout: 30s
 
 resources:
   requests:
