@@ -10,63 +10,24 @@ dashboards:
   grafana:
     create: false
 
-# Minimal upConfig - credentials and URL come from environment variables
-upConfig: |
-  [poller]
-    debug = false
-  [prometheus]
-    disable = false
-    namespace = "unifipoller"
-  [influxdb]
-    disable = true
-  [loki]
-    disable = false
-  [unifi]
-    dynamic = false
+# Don't use upConfig - we'll mount the config from a secret instead
+# This empty/minimal config prevents the chart from creating its own ConfigMap
+upConfig: ""
 
-# Environment variables override upConfig settings
-env:
-  - name: UP_POLLER_DEBUG
-    value: "false"
-  - name: UP_PROMETHEUS_DISABLE
-    value: "false"
-  - name: UP_PROMETHEUS_NAMESPACE
-    value: "unifipoller"
-  - name: UP_INFLUXDB_DISABLE
-    value: "true"
-  - name: UP_LOKI_URL
-    value: "http://loki-gateway.logging.svc.cluster.local:80"
-  - name: UP_LOKI_DISABLE
-    value: "false"
-  - name: UP_UNIFI_DEFAULT_URL
-    valueFrom:
-      secretKeyRef:
-        name: unifi-poller-secrets
-        key: unifi-url
-  - name: UP_UNIFI_DEFAULT_VERIFY_SSL
-    value: "false"
-  - name: UP_UNIFI_DEFAULT_SAVE_SITES
-    value: "true"
-  - name: UP_UNIFI_DEFAULT_SAVE_IDS
-    value: "false"
-  - name: UP_UNIFI_DEFAULT_SAVE_DPI
-    value: "true"
-  - name: UP_UNIFI_DEFAULT_SAVE_EVENTS
-    value: "false"
-  - name: UP_UNIFI_DEFAULT_SAVE_ALARMS
-    value: "false"
-  - name: UP_UNIFI_DEFAULT_SAVE_ANOMALIES
-    value: "false"
-  - name: UP_UNIFI_DEFAULT_USER
-    valueFrom:
-      secretKeyRef:
-        name: unifi-poller-secrets
-        key: unifi-user
-  - name: UP_UNIFI_DEFAULT_PASS
-    valueFrom:
-      secretKeyRef:
-        name: unifi-poller-secrets
-        key: unifi-password
+# Mount the config file from our sealed secret
+extraVolumes:
+  - name: config-secret
+    secret:
+      secretName: unifi-poller-secrets
+      items:
+        - key: up.conf
+          path: up.conf
+
+extraVolumeMounts:
+  - name: config-secret
+    mountPath: /etc/unpoller/up.conf
+    subPath: up.conf
+    readOnly: true
 
 # Enable PodMonitor for Prometheus Operator
 podMonitor:
