@@ -10,24 +10,74 @@ dashboards:
   grafana:
     create: false
 
-# Don't use upConfig - we'll mount the config from a secret instead
-# This empty/minimal config prevents the chart from creating its own ConfigMap
-upConfig: ""
+# Minimal upConfig - will be overridden by init container that uses secrets
+upConfig: |
+  [poller]
+    debug = false
 
-# Mount the config file from our sealed secret
-extraVolumes:
-  - name: config-secret
-    secret:
-      secretName: unifi-poller-secrets
-      items:
-        - key: up.conf
-          path: up.conf
-
-extraVolumeMounts:
-  - name: config-secret
-    mountPath: /etc/unpoller/up.conf
-    subPath: up.conf
-    readOnly: true
+# Init container to generate config from secrets
+initContainers:
+  - name: config-generator
+    image: busybox:latest
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cat > /etc/unpoller/up.conf <<EOF
+        [poller]
+          debug = false
+          quiet = false
+          plugins = []
+        
+        [prometheus]
+          disable = false
+          http_listen = "0.0.0.0:9130"
+          report_errors = false
+          namespace = "unifipoller"
+        
+        [influxdb]
+          disable = true
+        
+        [loki]
+          url = "http://loki-gateway.logging.svc.cluster.local:80"
+          disable = false
+        
+        [unifi]
+          dynamic = false
+        
+        [[unifi.controller]]
+          url = "${UNIFI_URL}"
+          user = "${UNIFI_USER}"
+          pass = "${UNIFI_PASS}"
+          sites = ["all"]
+          save_ids = false
+          save_dpi = true
+          save_sites = true
+          save_events = false
+          save_alarms = false
+          save_anomalies = false
+          hash_pii = false
+          verify_ssl = false
+        EOF
+    env:
+      - name: UNIFI_URL
+        valueFrom:
+          secretKeyRef:
+            name: unifi-poller-secrets
+            key: unifi-url
+      - name: UNIFI_USER
+        valueFrom:
+          secretKeyRef:
+            name: unifi-poller-secrets
+            key: unifi-user
+      - name: UNIFI_PASS
+        valueFrom:
+          secretKeyRef:
+            name: unifi-poller-secrets
+            key: unifi-password
+    volumeMounts:
+      - name: config-volume
+        mountPath: /etc/unpoller
 
 # Enable PodMonitor for Prometheus Operator
 podMonitor:
