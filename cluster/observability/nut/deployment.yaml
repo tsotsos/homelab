@@ -33,35 +33,17 @@ spec:
           mountPath: /etc/nut
       containers:
       - name: nut-upsd
-        image: debian:bookworm-slim
+        image: networkupstools/nut:v2.8.2
         imagePullPolicy: IfNotPresent
         command:
-        - bash
+        - sh
         - -c
         - |
           set -e
-          echo "Installing NUT with SNMP support..."
-          apt-get update -qq
-          apt-get install -y --no-install-recommends nut-snmp nut-server
-          
-          echo "Creating runtime directory..."
-          mkdir -p /var/run/nut
-          chown -R nut:nut /var/run/nut /etc/nut
-          chmod 640 /etc/nut/*
-          
-          echo "Starting SNMP drivers for APC devices..."
-          # UPS at 10.0.1.8
-          /lib/nut/snmp-ups -a apc-ups-main -u nut &
-          # PDU at 10.0.1.9
-          /lib/nut/snmp-ups -a apc-pdu-net -u nut &
-          # PDU at 10.0.1.10
-          /lib/nut/snmp-ups -a apc-pdu-srv -u nut &
-          
-          echo "Waiting for drivers to connect..."
-          sleep 15
-          
-          echo "Starting upsd daemon..."
-          exec /sbin/upsd -D -u nut
+          echo "Starting NUT drivers..."
+          upsdrvctl start
+          echo "Starting upsd..."
+          exec upsd -D
         ports:
         - containerPort: 3493
           name: nut
