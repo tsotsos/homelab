@@ -33,26 +33,22 @@ spec:
           mountPath: /etc/nut
       containers:
       - name: nut-upsd
-        image: upshift/nut-upsd:latest
+        image: alpine:3.19
         imagePullPolicy: IfNotPresent
         command:
         - sh
         - -c
         - |
-          # Create dummy USB directory and runtime directory
-          mkdir -p /dev/bus/usb /var/run/nut || true
-          # Fix permissions
-          chown -R nut:nut /etc/nut /var/run/nut 2>/dev/null || true
-          chmod 640 /etc/nut/* 2>/dev/null || true
-          # Start SNMP drivers  
+          # Install NUT with SNMP support
+          apk add --no-cache nut nut-snmp
+          # Create runtime directory
+          mkdir -p /var/run/nut
+          # Start SNMP drivers
           echo "Starting SNMP drivers..."
-          /lib/nut/snmp-ups -a apc-ups-main &
-          /lib/nut/snmp-ups -a apc-pdu-net &
-          /lib/nut/snmp-ups -a apc-pdu-srv &
-          sleep 5
+          upsdrvctl -u root start
           # Start upsd in foreground
           echo "Starting upsd..."
-          exec upsd -D -u nut
+          exec upsd -D -u root
         ports:
         - containerPort: 3493
           name: nut
