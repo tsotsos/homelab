@@ -102,8 +102,7 @@ spec:
       - name: nut-exporter
         image: ghcr.io/druggeri/nut_exporter:3.1.1
         imagePullPolicy: IfNotPresent
-        command:
-        - /bin/nut_exporter
+        args:
         - --nut.server=127.0.0.1:3493
         ports:
         - containerPort: 9199
