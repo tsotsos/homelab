@@ -1,0 +1,63 @@
+image:
+  repository: ghcr.io/unpoller/unpoller
+  tag: v2.16.0
+  pullPolicy: IfNotPresent
+
+# Environment variable configuration for unifi-poller
+# See https://unpoller.com/docs/install/configuration for all options
+env:
+  # Poller configuration
+  UP_POLLER_DEBUG: "false"
+  
+  # Prometheus configuration
+  UP_PROMETHEUS_DISABLE: "false"
+  UP_PROMETHEUS_NAMESPACE: "unifipoller"
+  
+  # UniFi Controller configuration
+  UP_UNIFI_DEFAULT_ROLE: "main-controller"
+  UP_UNIFI_DEFAULT_URL: "https://unifi.kng.house"
+  UP_UNIFI_DEFAULT_VERIFY_SSL: "false"
+  UP_UNIFI_DEFAULT_SAVE_SITES: "true"
+  UP_UNIFI_DEFAULT_SAVE_IDS: "false"
+  UP_UNIFI_DEFAULT_SAVE_EVENTS: "false"
+  UP_UNIFI_DEFAULT_SAVE_ALARMS: "false"
+  UP_UNIFI_DEFAULT_SAVE_ANOMALIES: "false"
+  UP_UNIFI_DEFAULT_SAVE_DPI: "true"
+  
+  # Loki configuration (optional - for logs)
+  UP_LOKI_URL: "http://loki-gateway.logging.svc.cluster.local:80"
+  
+  # InfluxDB disabled - using Prometheus
+  UP_INFLUXDB_DISABLE: "true"
+
+# Use existing secret for credentials
+envFrom:
+  - secretRef:
+      name: unifi-poller-secrets
+
+service:
+  main:
+    ports:
+      http:
+        enabled: false
+      metrics:
+        enabled: true
+        port: 9130
+        protocol: TCP
+
+# Enable Prometheus ServiceMonitor for metrics collection
+metrics:
+  enabled: true
+  serviceMonitor:
+    interval: 2m
+    scrapeTimeout: 30s
+    labels: {}
+  prometheusRule:
+    enabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
