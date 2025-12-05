@@ -26,7 +26,10 @@ env:
   - name: UP_LOKI_DISABLE
     value: "false"
   - name: UP_UNIFI_DEFAULT_URL
-    value: "https://10.0.1.1"
+    valueFrom:
+      secretKeyRef:
+        name: unifi-poller-secrets
+        key: unifi-url
   - name: UP_UNIFI_DEFAULT_VERIFY_SSL
     value: "false"
   - name: UP_UNIFI_DEFAULT_SAVE_SITES
