@@ -33,20 +33,15 @@ spec:
           mountPath: /etc/nut
       containers:
       - name: nut-upsd
-        image: ghcr.io/jr0dd/nut-server:v2.8.0
+        image: upshift/nut-upsd:latest
         imagePullPolicy: IfNotPresent
-        command:
-        - sh
-        - -c
-        - |
-          # Start SNMP drivers for each UPS
-          upsdrvctl start
-          # Start upsd server
-          upsd -D
         ports:
         - containerPort: 3493
           name: nut
           protocol: TCP
+        env:
+        - name: DISABLE_USB
+          value: "true"
         resources:
           requests:
             cpu: 50m
@@ -57,7 +52,7 @@ spec:
         - name: nut-config-rw
           mountPath: /etc/nut
       - name: nut-exporter
-        image: ghcr.io/druant/nut_exporter:latest
+        image: hon95/prometheus-nut-exporter:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9199
