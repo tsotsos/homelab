@@ -26,7 +26,7 @@ env:
   - name: UP_LOKI_DISABLE
     value: "false"
   - name: UP_UNIFI_DEFAULT_URL
-    value: "https://unifi.kng.house"
+    value: "https://10.0.1.1"
   - name: UP_UNIFI_DEFAULT_VERIFY_SSL
     value: "false"
   - name: UP_UNIFI_DEFAULT_SAVE_SITES
