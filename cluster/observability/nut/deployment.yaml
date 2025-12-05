@@ -15,6 +15,20 @@ spec:
       labels:
         app: nut-server
     spec:
+      initContainers:
+      - name: nut-config-setup
+        image: busybox:latest
+        command:
+        - sh
+        - -c
+        - |
+          cp /config-source/* /etc/nut/
+          chmod 640 /etc/nut/*
+        volumeMounts:
+        - name: nut-config-source
+          mountPath: /config-source
+        - name: nut-config-rw
+          mountPath: /etc/nut
       containers:
       - name: nut-upsd
         image: upshift/nut-upsd:2.8.0
@@ -30,18 +44,8 @@ spec:
           limits:
             memory: 128Mi
         volumeMounts:
-        - name: nut-config
-          mountPath: /etc/nut/ups.conf
-          subPath: ups.conf
-        - name: nut-config
-          mountPath: /etc/nut/upsd.conf
-          subPath: upsd.conf
-        - name: nut-config
-          mountPath: /etc/nut/upsd.users
-          subPath: upsd.users
-        - name: nut-config
-          mountPath: /etc/nut/upsmon.conf
-          subPath: upsmon.conf
+        - name: nut-config-rw
+          mountPath: /etc/nut
         securityContext:
           capabilities:
             add:
@@ -69,6 +73,8 @@ spec:
           limits:
             memory: 64Mi
       volumes:
-      - name: nut-config
+      - name: nut-config-source
         secret:
           secretName: nut-config
+      - name: nut-config-rw
+        emptyDir: {}
