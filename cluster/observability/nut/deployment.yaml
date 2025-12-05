@@ -33,17 +33,20 @@ spec:
           mountPath: /etc/nut
       containers:
       - name: nut-upsd
-        image: instantlinux/nut-upsd:2.8.1-r0
+        image: networkupstools/nut:v2.8.0-186-g87d83e91
         imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          # Start SNMP drivers for each UPS
+          upsdrvctl start
+          # Start upsd server
+          upsd -D
         ports:
         - containerPort: 3493
           name: nut
           protocol: TCP
-        env:
-        - name: API_USER
-          value: "admin"
-        - name: API_PASSWORD
-          value: "adminpass"
         resources:
           requests:
             cpu: 50m
@@ -53,10 +56,6 @@ spec:
         volumeMounts:
         - name: nut-config-rw
           mountPath: /etc/nut
-        securityContext:
-          capabilities:
-            add:
-            - NET_ADMIN
       - name: nut-exporter
         image: druxa/nut_exporter:3.1.1
         imagePullPolicy: IfNotPresent
