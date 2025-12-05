@@ -40,7 +40,7 @@ spec:
             port = 10.0.1.9
             snmp_version = v2c
             community = public
-            mibs = apcc
+            mibs = auto
             desc = "PDU 10.0.1.9"
 
           [ups3]
@@ -48,7 +48,7 @@ spec:
             port = 10.0.1.10
             snmp_version = v2c
             community = public
-            mibs = apcc
+            mibs = auto
             desc = "PDU 10.0.1.10"
           EOF
 
