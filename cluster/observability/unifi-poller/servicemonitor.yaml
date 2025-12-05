@@ -5,6 +5,7 @@ metadata:
   namespace: monitoring
   labels:
     app: unifi-poller
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
