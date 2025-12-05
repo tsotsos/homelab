@@ -26,15 +26,15 @@ spec:
           chmod 640 /etc/nut/*
           # Create nut.conf with required MODE setting
           echo "MODE=netserver" > /etc/nut/nut.conf
-          # Create dummy /dev/bus/usb directory to prevent errors
-          mkdir -p /dev-dummy/bus/usb
+          # Create dummy USB directory structure
+          mkdir -p /dev-mount/bus/usb
         volumeMounts:
         - name: nut-config-source
           mountPath: /config-source
         - name: nut-config-rw
           mountPath: /etc/nut
         - name: dev-dummy
-          mountPath: /dev-dummy
+          mountPath: /dev-mount
       containers:
       - name: nut-upsd
         image: upshift/nut-upsd:latest
@@ -56,7 +56,7 @@ spec:
         - name: nut-config-rw
           mountPath: /etc/nut
         - name: dev-dummy
-          mountPath: /dev/bus
+          mountPath: /dev
       - name: nut-exporter
         image: hon95/prometheus-nut-exporter:latest
         imagePullPolicy: IfNotPresent
