@@ -38,17 +38,15 @@ spec:
           [ups2]
             driver = snmp-ups
             port = 10.0.1.9
-            snmp_version = v2c
+            snmp_version = v1
             community = public
-            mibs = apcc
             desc = "PDU 10.0.1.9"
 
           [ups3]
             driver = snmp-ups
             port = 10.0.1.10
-            snmp_version = v2c
+            snmp_version = v1
             community = public
-            mibs = apcc
             desc = "PDU 10.0.1.10"
           EOF
 
