@@ -10,52 +10,43 @@ dashboards:
   grafana:
     create: false
 
-# Configuration for unifi-poller using the upConfig format
-# See https://unpoller.com/docs/install/configuration for all options
-upConfig: |
-  [poller]
-    debug = false
-    quiet = false
-    plugins = []
-  
-  [prometheus]
-    disable = false
-    http_listen = "0.0.0.0:9130"
-    report_errors = false
-    namespace = "unifipoller"
-  
-  [influxdb]
-    disable = true
-  
-  [loki]
-    url = "http://loki-gateway.logging.svc.cluster.local:80"
-    disable = false
-  
-  [unifi]
-    dynamic = false
-  
-  [[unifi.controller]]
-    url = "https://unifi.kng.house"
-    user = "${UP_UNIFI_USER}"
-    pass = "${UP_UNIFI_PASS}"
-    sites = ["all"]
-    save_ids = false
-    save_dpi = true
-    save_sites = true
-    save_events = false
-    save_alarms = false
-    save_anomalies = false
-    hash_pii = false
-    verify_ssl = false
-
-# Environment variables for credentials
+# Environment variables for unpoller configuration
+# Using env vars instead of upConfig for better secret integration
 env:
-  - name: UP_UNIFI_USER
+  - name: UP_POLLER_DEBUG
+    value: "false"
+  - name: UP_PROMETHEUS_DISABLE
+    value: "false"
+  - name: UP_PROMETHEUS_NAMESPACE
+    value: "unifipoller"
+  - name: UP_INFLUXDB_DISABLE
+    value: "true"
+  - name: UP_LOKI_URL
+    value: "http://loki-gateway.logging.svc.cluster.local:80"
+  - name: UP_LOKI_DISABLE
+    value: "false"
+  - name: UP_UNIFI_DEFAULT_URL
+    value: "https://unifi.kng.house"
+  - name: UP_UNIFI_DEFAULT_VERIFY_SSL
+    value: "false"
+  - name: UP_UNIFI_DEFAULT_SAVE_SITES
+    value: "true"
+  - name: UP_UNIFI_DEFAULT_SAVE_IDS
+    value: "false"
+  - name: UP_UNIFI_DEFAULT_SAVE_DPI
+    value: "true"
+  - name: UP_UNIFI_DEFAULT_SAVE_EVENTS
+    value: "false"
+  - name: UP_UNIFI_DEFAULT_SAVE_ALARMS
+    value: "false"
+  - name: UP_UNIFI_DEFAULT_SAVE_ANOMALIES
+    value: "false"
+  - name: UP_UNIFI_DEFAULT_USER
     valueFrom:
       secretKeyRef:
         name: unifi-poller-secrets
         key: unifi-user
-  - name: UP_UNIFI_PASS
+  - name: UP_UNIFI_DEFAULT_PASS
     valueFrom:
       secretKeyRef:
         name: unifi-poller-secrets
