@@ -39,14 +39,14 @@ spec:
             driver = snmp-ups
             port = 10.0.1.9
             snmp_version = v1
-            community = public
+            community = network
             desc = "PDU 10.0.1.9"
 
           [ups3]
             driver = snmp-ups
             port = 10.0.1.10
             snmp_version = v1
-            community = public
+            community = network
             desc = "PDU 10.0.1.10"
           EOF
 
