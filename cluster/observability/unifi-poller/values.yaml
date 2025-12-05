@@ -10,8 +10,21 @@ dashboards:
   grafana:
     create: false
 
-# Environment variables for unpoller configuration
-# Using env vars instead of upConfig for better secret integration
+# Minimal upConfig - credentials and URL come from environment variables
+upConfig: |
+  [poller]
+    debug = false
+  [prometheus]
+    disable = false
+    namespace = "unifipoller"
+  [influxdb]
+    disable = true
+  [loki]
+    disable = false
+  [unifi]
+    dynamic = false
+
+# Environment variables override upConfig settings
 env:
   - name: UP_POLLER_DEBUG
     value: "false"
