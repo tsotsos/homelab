@@ -24,6 +24,8 @@ spec:
         - |
           cp /config-source/* /etc/nut/
           chmod 640 /etc/nut/*
+          # Create nut.conf with required MODE setting
+          echo "MODE=netserver" > /etc/nut/nut.conf
         volumeMounts:
         - name: nut-config-source
           mountPath: /config-source
@@ -31,12 +33,17 @@ spec:
           mountPath: /etc/nut
       containers:
       - name: nut-upsd
-        image: upshift/nut-upsd:2.8.0
+        image: instantlinux/nut-upsd:2.8.1-r0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3493
           name: nut
           protocol: TCP
+        env:
+        - name: API_USER
+          value: "admin"
+        - name: API_PASSWORD
+          value: "adminpass"
         resources:
           requests:
             cpu: 50m
