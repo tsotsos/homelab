@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: monitoring
 
 resources:
-  - ns.yaml
   - sealed-secret.yaml
   - deployment.yaml
   - service.yaml
