@@ -15,22 +15,6 @@ spec:
       labels:
         app: nut-server
     spec:
-      initContainers:
-      - name: nut-config-setup
-        image: busybox:latest
-        command:
-        - sh
-        - -c
-        - |
-          cp /config-source/* /etc/nut/
-          chmod 640 /etc/nut/*
-          # Create nut.conf with required MODE setting
-          echo "MODE=netserver" > /etc/nut/nut.conf
-        volumeMounts:
-        - name: nut-config-source
-          mountPath: /config-source
-        - name: nut-config-rw
-          mountPath: /etc/nut
       containers:
       - name: nut-upsd
         image: instantlinux/nut-upsd:2.8.1
@@ -40,6 +24,62 @@ spec:
         - -c
         - |
           set -e
+          
+          # Create config files directly
+          cat > /etc/nut/ups.conf <<'EOF'
+          [ups1]
+            driver = snmp-ups
+            port = 10.0.1.8
+            snmp_version = v2c
+            community = public
+            mibs = apcc
+            desc = "UPS 10.0.1.8"
+
+          [ups2]
+            driver = snmp-ups
+            port = 10.0.1.9
+            snmp_version = v2c
+            community = public
+            mibs = apcc
+            desc = "PDU 10.0.1.9"
+
+          [ups3]
+            driver = snmp-ups
+            port = 10.0.1.10
+            snmp_version = v2c
+            community = public
+            mibs = apcc
+            desc = "PDU 10.0.1.10"
+          EOF
+
+          cat > /etc/nut/upsd.conf <<'EOF'
+          LISTEN 0.0.0.0 3493
+          EOF
+
+          cat > /etc/nut/upsd.users <<'EOF'
+          [admin]
+            password = adminpass
+            actions = SET
+            instcmds = ALL
+
+          [mon]
+            password = monpass
+            upsmon slave
+          EOF
+
+          cat > /etc/nut/upsmon.conf <<'EOF'
+          MONITOR ups1@localhost 1 mon monpass master
+          MINSUPPLIES 1
+          SHUTDOWNCMD "/sbin/shutdown -h +0"
+          EOF
+
+          cat > /etc/nut/nut.conf <<'EOF'
+          MODE=netserver
+          EOF
+
+          chmod 640 /etc/nut/*
+          chown -R nut:nut /etc/nut
+          
           echo "Starting NUT drivers..."
           upsdrvctl start
           echo "Starting upsd..."
@@ -57,9 +97,6 @@ spec:
             memory: 64Mi
           limits:
             memory: 128Mi
-        volumeMounts:
-        - name: nut-config-rw
-          mountPath: /etc/nut
       - name: nut-exporter
         image: hon95/prometheus-nut-exporter:latest
         imagePullPolicy: IfNotPresent
@@ -82,9 +119,3 @@ spec:
             memory: 32Mi
           limits:
             memory: 64Mi
-      volumes:
-      - name: nut-config-source
-        secret:
-          secretName: nut-config
-      - name: nut-config-rw
-        emptyDir: {}
