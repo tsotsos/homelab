@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nut-server
+  namespace: monitoring
+  labels:
+    app: nut-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nut-server
+  template:
+    metadata:
+      labels:
+        app: nut-server
+    spec:
+      containers:
+      - name: nut-upsd
+        image: upshift/nut-upsd:2.8.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3493
+          name: nut
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+        volumeMounts:
+        - name: nut-config
+          mountPath: /etc/nut/ups.conf
+          subPath: ups.conf
+        - name: nut-config
+          mountPath: /etc/nut/upsd.conf
+          subPath: upsd.conf
+        - name: nut-config
+          mountPath: /etc/nut/upsd.users
+          subPath: upsd.users
+        - name: nut-config
+          mountPath: /etc/nut/upsmon.conf
+          subPath: upsmon.conf
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+      - name: nut-exporter
+        image: druxa/nut_exporter:3.1.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9199
+          name: metrics
+          protocol: TCP
+        env:
+        - name: NUT_EXPORTER_SERVER
+          value: "127.0.0.1"
+        - name: NUT_EXPORTER_PORT
+          value: "3493"
+        - name: NUT_EXPORTER_USERNAME
+          value: "mon"
+        - name: NUT_EXPORTER_PASSWORD
+          value: "monpass"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+      volumes:
+      - name: nut-config
+        secret:
+          secretName: nut-config
