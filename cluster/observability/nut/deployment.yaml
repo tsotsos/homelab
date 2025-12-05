@@ -40,6 +40,7 @@ spec:
             port = 10.0.1.9
             snmp_version = v1
             community = network
+            pollfreq = 30
             desc = "PDU 10.0.1.9"
 
           [ups3]
@@ -47,6 +48,7 @@ spec:
             port = 10.0.1.10
             snmp_version = v1
             community = network
+            pollfreq = 30
             desc = "PDU 10.0.1.10"
           EOF
 
