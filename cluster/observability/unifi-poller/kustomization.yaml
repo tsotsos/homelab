@@ -6,12 +6,6 @@ namespace: monitoring
 resources:
   - ns.yaml
   - sealed-secret.yaml
-
-helmCharts:
-  - name: unpoller
-    repo: https://unpoller.github.io/helm-chart
-    version: 2.11.2-Chart6
-    releaseName: unifi-poller
-    namespace: monitoring
-    valuesFile: values.yaml
-    includeCRDs: false
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
