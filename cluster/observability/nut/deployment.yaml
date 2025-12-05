@@ -40,7 +40,7 @@ spec:
             port = 10.0.1.9
             snmp_version = v2c
             community = public
-            mibs = auto
+            mibs = apcc
             desc = "PDU 10.0.1.9"
 
           [ups3]
@@ -48,7 +48,7 @@ spec:
             port = 10.0.1.10
             snmp_version = v2c
             community = public
-            mibs = auto
+            mibs = apcc
             desc = "PDU 10.0.1.10"
           EOF
 
@@ -82,7 +82,7 @@ spec:
           chown -R nut:nut /etc/nut /var/run/nut
           
           echo "Starting NUT drivers..."
-          upsdrvctl -u nut start || true
+          upsdrvctl -u nut start &
           sleep 5
           echo "Starting upsd..."
           exec upsd -D -u nut
