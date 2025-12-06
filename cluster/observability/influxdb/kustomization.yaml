@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: influxdb
+
+resources:
+  - ns.yaml
+  - sealed-secret.yaml
+
+helmCharts:
+  - name: influxdb2
+    repo: https://helm.influxdata.com/
+    version: 2.1.2
+    releaseName: influxdb
+    namespace: influxdb
+    valuesFile: values.yaml

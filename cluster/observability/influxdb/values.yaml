@@ -1,0 +1,72 @@
+# InfluxDB v2 Configuration with Longhorn Storage
+
+# Authentication
+auth:
+  admin:
+    username: admin
+    password: admin-user-password
+    token: admin-user-token
+    org: kng
+    bucket: default
+  # Read admin credentials from secret
+  existingSecret: influxdb-auth
+
+# Persistence with Longhorn
+persistence:
+  enabled: true
+  storageClass: longhorn
+  size: 50Gi
+  accessMode: ReadWriteOnce
+
+# Resources
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 250m
+  limits:
+    memory: 2Gi
+    cpu: 1000m
+
+# Node selector for storage nodes
+nodeSelector:
+  node.kng/workload-storage: "true"
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8086
+  targetPort: 8086
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: cilium
+  hostname: influxdb.kng.house
+  tls: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    external-dns.alpha.kubernetes.io/hostname: influxdb.kng.house
+
+# InfluxDB configuration
+influxdb:
+  # HTTP configuration
+  http:
+    enabled: true
+    bindAddress: ":8086"
+  
+  # Logging
+  logging:
+    level: info
+  
+  # Continuous queries (v1 compatibility)
+  continuousQueries:
+    enabled: false
+
+# Metrics and monitoring
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: influxdb
+    interval: 30s
+    scrapeTimeout: 10s
