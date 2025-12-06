@@ -1,0 +1,68 @@
+---
+# ServiceAccount for Home Assistant database initialization
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homeassistant-db-init
+  namespace: home-assistant
+---
+# Role in postgresql namespace to read secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: homeassistant-postgresql-secret-reader
+  namespace: postgresql
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["postgresql-secrets"]
+  verbs: ["get"]
+---
+# RoleBinding to allow homeassistant-db-init SA to read postgresql secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: homeassistant-db-init-secrets
+  namespace: postgresql
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: homeassistant-postgresql-secret-reader
+subjects:
+- kind: ServiceAccount
+  name: homeassistant-db-init
+  namespace: home-assistant
+---
+# ServiceAccount for Home Assistant InfluxDB initialization
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homeassistant-influxdb-init
+  namespace: home-assistant
+---
+# Role in influxdb namespace to read secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: homeassistant-influxdb-secret-reader
+  namespace: influxdb
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["influxdb-auth"]
+  verbs: ["get"]
+---
+# RoleBinding to allow homeassistant-influxdb-init SA to read influxdb secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: homeassistant-influxdb-init-secrets
+  namespace: influxdb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: homeassistant-influxdb-secret-reader
+subjects:
+- kind: ServiceAccount
+  name: homeassistant-influxdb-init
+  namespace: home-assistant

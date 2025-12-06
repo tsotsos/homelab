@@ -4,7 +4,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: homeassistant-influxdb-init
-  namespace: influxdb
+  namespace: home-assistant
 data:
   init-homeassistant.sh: |
     #!/bin/sh
@@ -57,10 +57,11 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: homeassistant-influxdb-init
-  namespace: influxdb
+  namespace: home-assistant
 spec:
   template:
     spec:
+      serviceAccountName: homeassistant-influxdb-init
       restartPolicy: OnFailure
       containers:
       - name: influxdb-init
