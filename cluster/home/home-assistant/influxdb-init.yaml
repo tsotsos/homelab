@@ -39,20 +39,19 @@ data:
     # Check if token exists
     if influx auth list --org "$ORG" | grep -q "$TOKEN_DESCRIPTION"; then
       echo "Token '$TOKEN_DESCRIPTION' already exists"
-      TOKEN=$(influx auth list --org "$ORG" --json | jq -r ".[] | select(.description == \"$TOKEN_DESCRIPTION\") | .token")
+      echo "Skipping token creation"
     else
       echo "Creating token for Home Assistant..."
-      TOKEN=$(influx auth create \
+      influx auth create \
         --org "$ORG" \
         --description "$TOKEN_DESCRIPTION" \
         --read-buckets \
-        --write-buckets \
-        --json | jq -r '.token')
+        --write-buckets
       echo "Token created successfully"
+      echo "Note: Token can be retrieved with: influx auth list --org $ORG"
     fi
     
     echo "Home Assistant InfluxDB setup complete"
-    echo "Token: $TOKEN"
 ---
 # Job to initialize InfluxDB bucket and token
 apiVersion: batch/v1
