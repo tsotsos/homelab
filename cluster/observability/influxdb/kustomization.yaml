@@ -6,6 +6,7 @@ namespace: influxdb
 resources:
   - ns.yaml
   - sealed-secret.yaml
+  - homeassistant-influxdb-rbac.yaml
 
 helmCharts:
   - name: influxdb2
