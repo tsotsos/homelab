@@ -1,0 +1,25 @@
+---
+# Role to read InfluxDB secrets for home assistant influxdb init
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: homeassistant-influxdb-secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["influxdb-auth"]
+  verbs: ["get"]
+---
+# RoleBinding to allow homeassistant-influxdb-init SA from home-assistant namespace to read influxdb secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: homeassistant-influxdb-init-secrets
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: homeassistant-influxdb-secret-reader
+subjects:
+- kind: ServiceAccount
+  name: homeassistant-influxdb-init
+  namespace: home-assistant
