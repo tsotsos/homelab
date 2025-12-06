@@ -10,6 +10,21 @@ configs:
       hs.status = "Healthy"
       hs.message = "SealedSecret is synced"
       return hs
+    # Authentik OIDC configuration
+    oidc.config: |
+      name: Authentik
+      issuer: https://authentik.kng.house/application/o/argocd/
+      clientID: $argocd-oidc-secret:clientID
+      clientSecret: $argocd-oidc-secret:clientSecret
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+  rbac:
+    policy.default: role:readonly
+    policy.csv: |
+      g, authentik Admins, role:admin
 
 server:
   ingress:
