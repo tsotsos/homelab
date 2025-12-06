@@ -40,9 +40,9 @@ grafana:
       client_secret: $__file{/etc/secrets/oauth-client-secret}
       scopes: openid profile email
       auth_url: https://authentik.kng.house/application/o/authorize/
-      token_url: http://authentik-server.authentik.svc.cluster.local/application/o/token/
-      api_url: http://authentik-server.authentik.svc.cluster.local/application/o/userinfo/
-      role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+      token_url: https://authentik.kng.house/application/o/token/
+      api_url: https://authentik.kng.house/application/o/userinfo/
+      role_attribute_path: authentik Admins
       allow_sign_up: true
   
   # Mount OAuth secret
