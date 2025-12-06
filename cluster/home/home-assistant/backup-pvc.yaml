@@ -1,0 +1,17 @@
+---
+# PVC for Home Assistant backups (separate from config for easier restore)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homeassistant-backups
+  namespace: home-assistant
+  labels:
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/component: backups
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 50Gi

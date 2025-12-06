@@ -1,0 +1,110 @@
+---
+# ConfigMap with SQL to create Home Assistant database and user
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeassistant-db-init
+  namespace: postgresql
+data:
+  init-homeassistant-db.sql: |
+    -- Create Home Assistant database
+    SELECT 'CREATE DATABASE homeassistant'
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'homeassistant')\gexec
+    
+    -- Create Home Assistant user
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'homeassistant') THEN
+        CREATE USER homeassistant WITH PASSWORD 't4i49jyeHCEmCw3aLYrr66AE9bAL6pJVCRIUk/ReEp4=';
+      END IF;
+    END
+    $$;
+    
+    -- Grant privileges
+    GRANT ALL PRIVILEGES ON DATABASE homeassistant TO homeassistant;
+    
+    -- Connect to homeassistant database and grant schema privileges
+    \c homeassistant
+    GRANT ALL ON SCHEMA public TO homeassistant;
+    ALTER DATABASE homeassistant OWNER TO homeassistant;
+---
+# Job to initialize Home Assistant database
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: homeassistant-db-init
+  namespace: postgresql
+spec:
+  template:
+    spec:
+      serviceAccountName: homeassistant-db-init
+      restartPolicy: OnFailure
+      containers:
+      - name: db-init
+        image: postgres:16-alpine
+        env:
+        - name: PGHOST
+          value: postgresql-primary.postgresql.svc.cluster.local
+        - name: PGPORT
+          value: "5432"
+        - name: PGUSER
+          value: postgres
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: postgres-password
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready, initializing Home Assistant database..."
+          psql -f /scripts/init-homeassistant-db.sql
+          echo "Home Assistant database initialized successfully"
+        volumeMounts:
+        - name: init-script
+          mountPath: /scripts
+      volumes:
+      - name: init-script
+        configMap:
+          name: homeassistant-db-init
+---
+# ServiceAccount for database initialization
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homeassistant-db-init
+  namespace: postgresql
+---
+# Role to read PostgreSQL admin secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: homeassistant-postgresql-secret-reader
+  namespace: postgresql
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["postgresql-secrets"]
+  verbs: ["get"]
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: homeassistant-db-init-secrets
+  namespace: postgresql
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: homeassistant-postgresql-secret-reader
+subjects:
+- kind: ServiceAccount
+  name: homeassistant-db-init
+  namespace: postgresql

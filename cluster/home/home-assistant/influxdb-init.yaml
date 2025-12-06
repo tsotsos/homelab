@@ -1,0 +1,86 @@
+---
+# ConfigMap to create InfluxDB bucket and token for Home Assistant
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeassistant-influxdb-init
+  namespace: influxdb
+data:
+  init-homeassistant.sh: |
+    #!/bin/sh
+    set -e
+    
+    BUCKET_NAME="homeassistant"
+    ORG="influxdata"
+    TOKEN_DESCRIPTION="homeassistant-token"
+    
+    echo "Waiting for InfluxDB to be ready..."
+    until influx ping > /dev/null 2>&1; do
+      echo "Waiting for InfluxDB..."
+      sleep 2
+    done
+    
+    echo "InfluxDB is ready, checking bucket..."
+    
+    # Check if bucket exists
+    if influx bucket list --org "$ORG" | grep -q "$BUCKET_NAME"; then
+      echo "Bucket '$BUCKET_NAME' already exists"
+    else
+      echo "Creating bucket '$BUCKET_NAME'..."
+      influx bucket create \
+        --name "$BUCKET_NAME" \
+        --org "$ORG" \
+        --retention 0
+      echo "Bucket created successfully"
+    fi
+    
+    # Check if token exists
+    if influx auth list --org "$ORG" | grep -q "$TOKEN_DESCRIPTION"; then
+      echo "Token '$TOKEN_DESCRIPTION' already exists"
+      TOKEN=$(influx auth list --org "$ORG" --json | jq -r ".[] | select(.description == \"$TOKEN_DESCRIPTION\") | .token")
+    else
+      echo "Creating token for Home Assistant..."
+      TOKEN=$(influx auth create \
+        --org "$ORG" \
+        --description "$TOKEN_DESCRIPTION" \
+        --read-buckets \
+        --write-buckets \
+        --json | jq -r '.token')
+      echo "Token created successfully"
+    fi
+    
+    echo "Home Assistant InfluxDB setup complete"
+    echo "Token: $TOKEN"
+---
+# Job to initialize InfluxDB bucket and token
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: homeassistant-influxdb-init
+  namespace: influxdb
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: influxdb-init
+        image: influxdb:2.7-alpine
+        env:
+        - name: INFLUX_HOST
+          value: http://influxdb-influxdb2.influxdb.svc.cluster.local:8086
+        - name: INFLUX_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-auth
+              key: admin-user-token
+        command:
+        - /bin/sh
+        - /scripts/init-homeassistant.sh
+        volumeMounts:
+        - name: init-script
+          mountPath: /scripts
+      volumes:
+      - name: init-script
+        configMap:
+          name: homeassistant-influxdb-init
+          defaultMode: 0755

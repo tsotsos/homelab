@@ -1,0 +1,52 @@
+---
+# CronJob for automated Home Assistant backups
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: homeassistant-backup
+  namespace: home-assistant
+spec:
+  # Run daily at 3 AM
+  schedule: "0 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: ghcr.io/home-assistant/home-assistant:2024.12.1
+            command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              BACKUP_NAME="backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+              BACKUP_PATH="/config/backups/$BACKUP_NAME"
+              
+              echo "Creating backup: $BACKUP_NAME"
+              
+              # Create backup using Home Assistant CLI
+              ha backups new --name "automated-$(date +%Y%m%d-%H%M%S)"
+              
+              # Keep only last 7 backups
+              echo "Cleaning old backups..."
+              cd /config/backups
+              ls -t backup-*.tar.gz | tail -n +8 | xargs -r rm -f
+              
+              echo "Backup completed successfully"
+              ls -lh /config/backups
+            volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: backups
+              mountPath: /config/backups
+          volumes:
+          - name: config
+            persistentVolumeClaim:
+              claimName: home-assistant-home-assistant
+          - name: backups
+            persistentVolumeClaim:
+              claimName: homeassistant-backups

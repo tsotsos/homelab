@@ -1,0 +1,188 @@
+# Home Assistant Configuration with PostgreSQL, InfluxDB, and Longhorn Storage
+
+# Image configuration
+image:
+  repository: ghcr.io/home-assistant/home-assistant
+  tag: "2024.12.1"
+  pullPolicy: IfNotPresent
+
+# Deployment strategy
+strategy:
+  type: Recreate  # Required for RWO storage
+
+# Security context (needed for device access)
+securityContext:
+  privileged: true
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8123
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: cilium
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    external-dns.alpha.kubernetes.io/hostname: home.kng.house
+  hosts:
+    - host: home.kng.house
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: homeassistant-tls
+      hosts:
+        - home.kng.house
+
+# Persistence with Longhorn for configuration and backups
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteOnce
+  size: 20Gi
+  # Mount path for Home Assistant config
+  mountPath: /config
+
+# Additional volumes for backups
+additionalVolumes:
+  - name: backups
+    persistentVolumeClaim:
+      claimName: homeassistant-backups
+  - name: secrets
+    secret:
+      secretName: home-assistant-secrets
+
+# Additional volume mounts
+additionalVolumeMounts:
+  - name: backups
+    mountPath: /config/backups
+  - name: secrets
+    mountPath: /secrets
+    readOnly: true
+
+# Resources
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+# Node selector for stable nodes
+nodeSelector:
+  node.kng/workload-storage: "true"
+
+# Probes
+probes:
+  liveness:
+    enabled: true
+    httpGet:
+      path: /manifest.json
+      port: http
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
+  readiness:
+    enabled: true
+    httpGet:
+      path: /manifest.json
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Environment variables for database configuration
+env:
+  - name: TZ
+    value: Europe/Athens
+  - name: POSTGRES_URL
+    valueFrom:
+      secretKeyRef:
+        name: home-assistant-secrets
+        key: postgres-url
+
+# Init containers to ensure database is ready
+initContainers:
+  - name: wait-for-db
+    image: postgres:16-alpine
+    command:
+      - sh
+      - -c
+      - |
+        until pg_isready -h postgresql-primary.postgresql.svc.cluster.local -U homeassistant -d homeassistant; do
+          echo "Waiting for PostgreSQL..."
+          sleep 5
+        done
+        echo "PostgreSQL is ready!"
+    env:
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: home-assistant-secrets
+            key: postgres-password
+
+# ServiceMonitor for Prometheus metrics
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+
+# Pod annotations for backup scheduling
+podAnnotations:
+  backup.velero.io/backup-volumes: config,backups
+  backup.longhorn.io/recurring-job-group: default
+
+# Affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: home-assistant
+          topologyKey: kubernetes.io/hostname
+
+# Code Server (VS Code in browser for config editing)
+codeserver:
+  enabled: true
+  image:
+    repository: ghcr.io/coder/code-server
+    tag: "4.99.3"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  ingress:
+    enabled: true
+    className: cilium
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-dns
+      external-dns.alpha.kubernetes.io/hostname: home-code.kng.house
+    hosts:
+      - host: home-code.kng.house
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: homeassistant-code-tls
+        hosts:
+          - home-code.kng.house
+  volumeMounts:
+    - name: config
+      mountPath: /config
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
