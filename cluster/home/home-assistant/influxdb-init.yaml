@@ -5,6 +5,8 @@ kind: ConfigMap
 metadata:
   name: homeassistant-influxdb-init
   namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "-8"
 data:
   init-homeassistant.sh: |
     #!/bin/sh
