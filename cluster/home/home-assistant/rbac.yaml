@@ -1,12 +1,5 @@
 ---
-# ServiceAccount for Home Assistant database initialization
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: homeassistant-db-init
-  namespace: home-assistant
----
-# Role in postgresql namespace to read secrets
+# Role to read PostgreSQL secrets for home assistant db init
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -22,7 +15,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: homeassistant-db-init-secrets
+  name: homeassistant-db-init-postgresql-secrets
   namespace: postgresql
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -33,14 +26,7 @@ subjects:
   name: homeassistant-db-init
   namespace: home-assistant
 ---
-# ServiceAccount for Home Assistant InfluxDB initialization
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: homeassistant-influxdb-init
-  namespace: home-assistant
----
-# Role in influxdb namespace to read secrets
+# Role to read InfluxDB secrets for home assistant influxdb init
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

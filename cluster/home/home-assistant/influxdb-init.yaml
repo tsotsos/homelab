@@ -58,30 +58,56 @@ kind: Job
 metadata:
   name: homeassistant-influxdb-init
   namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
+  ttlSecondsAfterFinished: 300
   template:
     spec:
       serviceAccountName: homeassistant-influxdb-init
       restartPolicy: OnFailure
+      initContainers:
+      # Fetch InfluxDB admin token from influxdb namespace
+      - name: fetch-influxdb-token
+        image: bitnami/kubectl:latest
+        command:
+        - sh
+        - -c
+        - |
+          kubectl get secret influxdb-auth -n influxdb -o jsonpath='{.data.admin-user-token}' | base64 -d > /shared/influxdb-token
+        volumeMounts:
+        - name: shared-data
+          mountPath: /shared
       containers:
       - name: influxdb-init
         image: influxdb:2.7-alpine
         env:
         - name: INFLUX_HOST
           value: http://influxdb-influxdb2.influxdb.svc.cluster.local:8086
-        - name: INFLUX_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: influxdb-auth
-              key: admin-user-token
         command:
         - /bin/sh
-        - /scripts/init-homeassistant.sh
+        - -c
+        - |
+          export INFLUX_TOKEN=$(cat /shared/influxdb-token)
+          /scripts/init-homeassistant.sh
         volumeMounts:
         - name: init-script
           mountPath: /scripts
+        - name: shared-data
+          mountPath: /shared
       volumes:
       - name: init-script
         configMap:
           name: homeassistant-influxdb-init
           defaultMode: 0755
+      - name: shared-data
+        emptyDir: {}
+---
+# ServiceAccount for InfluxDB initialization
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homeassistant-influxdb-init
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"

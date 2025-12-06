@@ -34,11 +34,26 @@ kind: Job
 metadata:
   name: homeassistant-db-init
   namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
+  ttlSecondsAfterFinished: 300
   template:
     spec:
       serviceAccountName: homeassistant-db-init
       restartPolicy: OnFailure
+      initContainers:
+      # Fetch PostgreSQL admin password from postgresql namespace
+      - name: fetch-postgres-password
+        image: bitnami/kubectl:latest
+        command:
+        - sh
+        - -c
+        - |
+          kubectl get secret postgresql-secrets -n postgresql -o jsonpath='{.data.postgres-password}' | base64 -d > /shared/postgres-password
+        volumeMounts:
+        - name: shared-data
+          mountPath: /shared
       containers:
       - name: db-init
         image: postgres:16-alpine
@@ -49,16 +64,13 @@ spec:
           value: "5432"
         - name: PGUSER
           value: postgres
-        - name: PGPASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgresql-secrets
-              key: postgres-password
         command:
         - /bin/sh
         - -c
         - |
           set -e
+          export PGPASSWORD=$(cat /shared/postgres-password)
+          
           echo "Waiting for PostgreSQL to be ready..."
           until pg_isready; do
             echo "Waiting for PostgreSQL..."
@@ -70,9 +82,20 @@ spec:
         volumeMounts:
         - name: init-script
           mountPath: /scripts
+        - name: shared-data
+          mountPath: /shared
       volumes:
       - name: init-script
         configMap:
           name: homeassistant-db-init
+      - name: shared-data
+        emptyDir: {}
 ---
-# ServiceAccount moved to rbac.yaml
+# ServiceAccount for database initialization
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homeassistant-db-init
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
