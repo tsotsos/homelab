@@ -43,6 +43,7 @@ ingress:
   className: cilium
   hostname: influxdb.kng.house
   tls: true
+  secretName: influxdb-tls
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-dns
     external-dns.alpha.kubernetes.io/hostname: influxdb.kng.house
