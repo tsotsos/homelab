@@ -282,6 +282,7 @@ seal_all_secrets() {
     fi
     
     local sealed_count=0
+    local failed_count=0
     
     for secret_file in $secret_files; do
         local filename=$(basename "$secret_file")
@@ -294,64 +295,46 @@ seal_all_secrets() {
         
         if [ "$namespace" = "null" ] || [ -z "$namespace" ]; then
             warn "Skipping $filename - no namespace defined"
+            ((failed_count++))
             continue
         fi
         
-        # Try to find matching directory in cluster/
-        local target_dir=""
-        
-        # Search for directory matching the namespace or secret name
-        target_dir=$(find "$CLUSTER_DIR" -type d -name "$namespace" -o -name "$secret_name" | head -n 1)
-        
-        # If not found, try common patterns
-        if [ -z "$target_dir" ]; then
-            case "$namespace" in
-                "monitoring")
-                    target_dir="$CLUSTER_DIR/observability/kube-prometheus-stack"
-                    ;;
-                "cert-manager")
-                    target_dir="$CLUSTER_DIR/security/cert-manager"
-                    ;;
-                "external-dns")
-                    target_dir="$CLUSTER_DIR/network/external-dns"
-                    ;;
-                "postgresql")
-                    target_dir="$CLUSTER_DIR/database/postgresql"
-                    ;;
-                "authentik")
-                    target_dir="$CLUSTER_DIR/security/authentik"
-                    ;;
-                "kube-system")
-                    target_dir="$CLUSTER_DIR/security/sealed-secrets"
-                    ;;
-            esac
-        fi
+        # Find matching directory by searching for a directory with the same name as the secret file
+        # Pattern: cluster/*/$secret_name/
+        local target_dir=$(find "$CLUSTER_DIR" -type d -name "$secret_name" | head -n 1)
         
         if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
-            warn "Cannot find target directory for namespace: $namespace (searched for: $secret_name)"
+            warn "Cannot find target directory matching: cluster/*/$secret_name/"
+            warn "  Expected directory: cluster/<category>/$secret_name/"
+            warn "  Secret file: $filename (namespace: $namespace)"
+            ((failed_count++))
             continue
         fi
         
         local output_file="$target_dir/sealed-secret.yaml"
         
-        log "Sealing $filename -> $output_file"
+        log "Sealing $filename -> $(echo $output_file | sed "s|$PROJECT_ROOT/||")"
         
         # Seal the secret using kubeseal (accessing the cluster directly)
         if kubeseal --controller-name sealed-secrets --controller-namespace kube-system --format yaml < "$secret_file" > "$output_file" 2>/dev/null; then
-            # Remove creationTimestamp from metadata if present
-            yq eval 'del(.metadata.creationTimestamp)' -i "$output_file"
-            # Remove creationTimestamp from template.metadata if present
-            yq eval 'del(.spec.template.metadata.creationTimestamp)' -i "$output_file"
+            # Remove all creationTimestamp fields recursively
+            yq eval 'del(.. | select(has("creationTimestamp")).creationTimestamp)' -i "$output_file"
             
-            success "Sealed: $filename -> $(basename "$target_dir")/sealed-secret.yaml"
+            success "Sealed: $filename -> $(basename "$(dirname "$target_dir")")/$(basename "$target_dir")/sealed-secret.yaml"
             ((sealed_count++))
         else
             error "Failed to seal $filename"
+            ((failed_count++))
         fi
     done
     
     echo ""
-    success "Sealed $sealed_count secret(s)"
+    if [ $sealed_count -gt 0 ]; then
+        success "Sealed $sealed_count secret(s)"
+    fi
+    if [ $failed_count -gt 0 ]; then
+        warn "Failed or skipped $failed_count secret(s)"
+    fi
 }
 
 # =============================================================================

@@ -36,7 +36,7 @@ grafana:
     auth.generic_oauth:
       enabled: true
       name: Authentik
-      client_id: grafana
+      client_id: RBFwhodIdZ1JU7t99UNv18QnVmBSHd4fSz6o2M3q
       client_secret: $__file{/etc/secrets/oauth-client-secret}
       scopes: openid profile email
       auth_url: https://authentik.kng.house/application/o/authorize/
