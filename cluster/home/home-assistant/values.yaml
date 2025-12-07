@@ -66,8 +66,8 @@ additionalVolumeMounts:
     mountPath: /secrets
     readOnly: true
   - name: config-override
-    mountPath: /config/configuration.yaml
-    subPath: configuration.yaml
+    mountPath: /config/http.yaml
+    subPath: http.yaml
     readOnly: true
 
 # Resources

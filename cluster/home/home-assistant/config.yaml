@@ -1,12 +1,12 @@
 ---
-# ConfigMap with Home Assistant configuration for reverse proxy
+# ConfigMap with Home Assistant HTTP configuration for reverse proxy
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: homeassistant-config
   namespace: home-assistant
 data:
-  configuration.yaml: |
+  http.yaml: |
     # HTTP configuration for reverse proxy
     http:
       use_x_forwarded_for: true
