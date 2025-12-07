@@ -25,32 +25,37 @@ data:
     echo "Checking if database '${DB_NAME}' exists..."
     export PGPASSWORD="${POSTGRES_PASSWORD}"
     
-    if psql -h ${DB_HOST} -U postgres -lqt | cut -d \| -f 1 | grep -qw ${DB_NAME}; then
+    # Check if database exists
+    DB_EXISTS=$(psql -h ${DB_HOST} -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'")
+    
+    # Check if user exists
+    USER_EXISTS=$(psql -h ${DB_HOST} -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'")
+    
+    if [ "$DB_EXISTS" = "1" ]; then
       echo "✓ Database '${DB_NAME}' already exists"
-      
-      # Check if user exists
-      USER_EXISTS=$(psql -h ${DB_HOST} -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'")
-      if [ "$USER_EXISTS" = "1" ]; then
-        echo "✓ User '${DB_USER}' already exists"
-      else
-        echo "Creating user '${DB_USER}'..."
-        psql -h ${DB_HOST} -U postgres -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
-        psql -h ${DB_HOST} -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
-        echo "✓ User '${DB_USER}' created"
-      fi
     else
-      echo "Creating database '${DB_NAME}' and user '${DB_USER}'..."
-      # Create user
-      psql -h ${DB_HOST} -U postgres -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
-      # Create database
-      psql -h ${DB_HOST} -U postgres -c "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
-      # Grant privileges
-      psql -h ${DB_HOST} -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
-      # Grant schema privileges
-      export PGPASSWORD="${DB_PASSWORD}"
-      psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -c "GRANT ALL ON SCHEMA public TO ${DB_USER};"
-      echo "✓ Database setup completed"
+      echo "Creating database '${DB_NAME}'..."
+      psql -h ${DB_HOST} -U postgres -c "CREATE DATABASE ${DB_NAME};"
+      echo "✓ Database created"
     fi
+    
+    if [ "$USER_EXISTS" = "1" ]; then
+      echo "✓ User '${DB_USER}' already exists"
+    else
+      echo "Creating user '${DB_USER}'..."
+      psql -h ${DB_HOST} -U postgres -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
+      echo "✓ User created"
+    fi
+    
+    # Always ensure proper ownership and privileges
+    echo "Setting database owner and privileges..."
+    psql -h ${DB_HOST} -U postgres -c "ALTER DATABASE ${DB_NAME} OWNER TO ${DB_USER};"
+    psql -h ${DB_HOST} -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
+    
+    # Grant schema privileges
+    export PGPASSWORD="${DB_PASSWORD}"
+    psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -c "GRANT ALL ON SCHEMA public TO ${DB_USER};"
+    echo "✓ Database setup completed"
     
     echo "Database initialization finished successfully"
 ---

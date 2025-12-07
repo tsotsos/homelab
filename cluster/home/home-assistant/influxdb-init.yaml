@@ -24,6 +24,18 @@ data:
     # Read admin token from InfluxDB
     ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
     
+    # Get organization ID from name
+    echo "Fetching organization ID for '${ORG}'..."
+    ORG_ID=$(curl -s \
+      -H "Authorization: Token ${ADMIN_TOKEN}" \
+      "${INFLUX_URL}/api/v2/orgs?org=${ORG}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
+    
+    if [ -z "$ORG_ID" ] || [ "$ORG_ID" = "null" ]; then
+      echo "✗ Failed to get organization ID for '${ORG}'"
+      exit 1
+    fi
+    echo "✓ Organization ID: ${ORG_ID}"
+    
     echo "Checking if bucket '${BUCKET}' exists..."
     BUCKET_CHECK=$(curl -s \
       -H "Authorization: Token ${ADMIN_TOKEN}" \
@@ -39,7 +51,7 @@ data:
         -H "Authorization: Token ${ADMIN_TOKEN}" \
         -H "Content-Type: application/json" \
         "${INFLUX_URL}/api/v2/buckets" \
-        -d "{\"orgID\":\"${ORG}\",\"name\":\"${BUCKET}\",\"retentionRules\":[]}")
+        -d "{\"orgID\":\"${ORG_ID}\",\"name\":\"${BUCKET}\",\"retentionRules\":[]}")
       
       BUCKET_ID=$(echo "${BUCKET_RESPONSE}" | jq -r '.id')
       
@@ -84,11 +96,11 @@ data:
         -H "Content-Type: application/json" \
         "${INFLUX_URL}/api/v2/authorizations" \
         -d "{
-          \"orgID\":\"${ORG}\",
+          \"orgID\":\"${ORG_ID}\",
           \"description\":\"homeassistant-token\",
           \"permissions\":[
-            {\"action\":\"read\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG}\"}},
-            {\"action\":\"write\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG}\"}}
+            {\"action\":\"read\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG_ID}\"}},
+            {\"action\":\"write\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG_ID}\"}}
           ]
         }")
       
