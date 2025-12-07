@@ -82,11 +82,11 @@ data:
     
     if [ -n "$EXISTING_TOKEN" ]; then
       echo "✓ Token already exists in secret, verifying it works..."
-      TOKEN_VALID=$(curl -s \
+      TOKEN_CHECK=$(curl -s \
         -H "Authorization: Token ${EXISTING_TOKEN}" \
-        "${INFLUX_URL}/api/v2/buckets?org=${ORG}" | grep -c "buckets" || echo "0")
+        "${INFLUX_URL}/api/v2/buckets?org=${ORG}")
       
-      if [ "$TOKEN_VALID" -gt 0 ]; then
+      if echo "$TOKEN_CHECK" | jq -e '.buckets' > /dev/null 2>&1; then
         echo "✓ Existing token is valid, using it"
         exit 0
       else
@@ -127,14 +127,12 @@ data:
       echo "✓ Token created successfully"
     fi
     
-    # Store token in Kubernetes secret
-    echo "Storing token in Kubernetes secret..."
-    TOKEN_BASE64=$(echo -n "${NEW_TOKEN}" | base64 -w0)
+    # Store token in shared volume for kubectl sidecar
+    echo "Storing token for secret update..."
+    echo -n "${NEW_TOKEN}" > /shared/token
+    echo "done" > /shared/status
     
-    kubectl patch secret home-assistant-secrets -n home-assistant --type='json' \
-      -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-token\",\"value\":\"${TOKEN_BASE64}\"}]"
-    
-    echo "✓ Token stored in secret 'home-assistant-secrets'"
+    echo "✓ Token ready for storage"
     
     # Verify token has proper access to the bucket
     echo "Verifying token permissions..."
@@ -197,12 +195,44 @@ spec:
             - name: app-secrets
               mountPath: /app-secrets
               readOnly: true
+            - name: shared
+              mountPath: /shared
+        - name: token-patcher
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for token to be ready..."
+              while [ ! -f /shared/status ]; do
+                sleep 1
+              done
+              
+              if [ "$(cat /shared/status)" = "done" ]; then
+                echo "Patching secret with new token..."
+                TOKEN=$(cat /shared/token)
+                TOKEN_BASE64=$(echo -n "${TOKEN}" | base64 -w0)
+                
+                kubectl patch secret home-assistant-secrets -n home-assistant --type='json' \
+                  -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-token\",\"value\":\"${TOKEN_BASE64}\"}]"
+                
+                echo "✓ Token stored in secret 'home-assistant-secrets'"
+              else
+                echo "✗ Token generation failed"
+                exit 1
+              fi
+          volumeMounts:
+            - name: shared
+              mountPath: /shared
       volumes:
         - name: init-script
           configMap:
             name: homeassistant-influxdb-init-script
             defaultMode: 0755
         - name: influx-secrets
+          emptyDir:
+            medium: Memory
+        - name: shared
           emptyDir:
             medium: Memory
         - name: app-secrets
