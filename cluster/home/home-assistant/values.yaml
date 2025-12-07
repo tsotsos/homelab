@@ -117,11 +117,10 @@ initContainers:
       - |
         cat > /config/http.yaml << 'EOF'
         # HTTP configuration for reverse proxy
-        http:
-          use_x_forwarded_for: true
-          trusted_proxies:
-            - 10.244.0.0/16  # Pod network CIDR
-            - 10.0.2.0/24     # Load balancer network
+        use_x_forwarded_for: true
+        trusted_proxies:
+          - 10.244.0.0/16  # Pod network CIDR
+          - 10.0.2.0/24     # Load balancer network
         EOF
         
         # Update configuration.yaml to include http.yaml if not already present
