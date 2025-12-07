@@ -41,9 +41,10 @@ data:
       -H "Authorization: Token ${ADMIN_TOKEN}" \
       "${INFLUX_URL}/api/v2/buckets?org=${ORG}&name=${BUCKET}" || echo "")
     
-    if echo "${BUCKET_CHECK}" | grep -q "\"name\":\"${BUCKET}\""; then
+    BUCKET_ID=$(echo "${BUCKET_CHECK}" | jq -r ".buckets[]? | select(.name==\"${BUCKET}\") | .id")
+    
+    if [ -n "$BUCKET_ID" ] && [ "$BUCKET_ID" != "null" ]; then
       echo "✓ Bucket '${BUCKET}' already exists"
-      BUCKET_ID=$(echo "${BUCKET_CHECK}" | jq -r ".buckets[] | select(.name==\"${BUCKET}\") | .id")
       echo "  Bucket ID: ${BUCKET_ID}"
     else
       echo "Creating bucket '${BUCKET}'..."
@@ -56,11 +57,23 @@ data:
       BUCKET_ID=$(echo "${BUCKET_RESPONSE}" | jq -r '.id')
       
       if [ -z "$BUCKET_ID" ] || [ "$BUCKET_ID" = "null" ]; then
-        echo "✗ Failed to create bucket"
-        echo "Response: ${BUCKET_RESPONSE}"
-        exit 1
+        # Check if bucket was created by someone else in the meantime
+        BUCKET_CHECK_RETRY=$(curl -s \
+          -H "Authorization: Token ${ADMIN_TOKEN}" \
+          "${INFLUX_URL}/api/v2/buckets?org=${ORG}&name=${BUCKET}")
+        BUCKET_ID=$(echo "${BUCKET_CHECK_RETRY}" | jq -r ".buckets[]? | select(.name==\"${BUCKET}\") | .id")
+        
+        if [ -n "$BUCKET_ID" ] && [ "$BUCKET_ID" != "null" ]; then
+          echo "✓ Bucket '${BUCKET}' was created (race condition handled)"
+          echo "  Bucket ID: ${BUCKET_ID}"
+        else
+          echo "✗ Failed to create bucket"
+          echo "Response: ${BUCKET_RESPONSE}"
+          exit 1
+        fi
+      else
+        echo "✓ Bucket created with ID: ${BUCKET_ID}"
       fi
-      echo "✓ Bucket created with ID: ${BUCKET_ID}"
     fi
     
     echo "Checking for existing Home Assistant token..."
