@@ -136,26 +136,36 @@ initContainers:
       - sh
       - -c
       - |
-        # Create http.yaml for reverse proxy
-        cat > /config/http.yaml << 'EOF'
+        # Only create files if they don't exist (preserves manual edits)
+        if [ ! -f /config/http.yaml ]; then
+          echo "Creating http.yaml..."
+          cat > /config/http.yaml << 'EOF'
         # HTTP configuration for reverse proxy
         use_x_forwarded_for: true
         trusted_proxies:
           - 10.244.0.0/16  # Pod network CIDR
           - 10.0.2.0/24     # Load balancer network
         EOF
+        else
+          echo "✓ http.yaml already exists, skipping"
+        fi
         
-        # Create recorder.yaml for PostgreSQL
-        cat > /config/recorder.yaml << 'EOF'
+        if [ ! -f /config/recorder.yaml ]; then
+          echo "Creating recorder.yaml..."
+          cat > /config/recorder.yaml << 'EOF'
         # PostgreSQL database configuration
         db_url: !env_var POSTGRES_URL
         auto_purge: true
         purge_keep_days: 30
         commit_interval: 1
         EOF
+        else
+          echo "✓ recorder.yaml already exists, skipping"
+        fi
         
-        # Create influxdb.yaml for metrics
-        cat > /config/influxdb.yaml << 'EOF'
+        if [ ! -f /config/influxdb.yaml ]; then
+          echo "Creating influxdb.yaml..."
+          cat > /config/influxdb.yaml << 'EOF'
         # InfluxDB configuration for long-term metrics storage
         api_version: 2
         ssl: false
@@ -182,25 +192,34 @@ initContainers:
             - light
             - switch
         EOF
+        else
+          echo "✓ influxdb.yaml already exists, skipping"
+        fi
         
-        # Update configuration.yaml to include these files if not already present
+        # Update configuration.yaml only if includes are missing
         if [ -f /config/configuration.yaml ]; then
           if ! grep -q "http: !include http.yaml" /config/configuration.yaml; then
             echo "Adding http configuration to configuration.yaml"
             sed -i '/^default_config:/a\\n# HTTP configuration for reverse proxy\nhttp: !include http.yaml' /config/configuration.yaml
+          else
+            echo "✓ http include already present"
           fi
           
           if ! grep -q "recorder: !include recorder.yaml" /config/configuration.yaml; then
             echo "Adding recorder configuration to configuration.yaml"
             sed -i '/^default_config:/a\\n# PostgreSQL recorder\nrecorder: !include recorder.yaml' /config/configuration.yaml
+          else
+            echo "✓ recorder include already present"
           fi
           
           if ! grep -q "influxdb: !include influxdb.yaml" /config/configuration.yaml; then
             echo "Adding InfluxDB configuration to configuration.yaml"
             sed -i '/^default_config:/a\\n# InfluxDB metrics\ninfluxdb: !include influxdb.yaml' /config/configuration.yaml
+          else
+            echo "✓ influxdb include already present"
           fi
         fi
-        echo "Configuration files created successfully"
+        echo "Configuration initialization complete"
     volumeMounts:
       - name: home-assistant
         mountPath: /config
