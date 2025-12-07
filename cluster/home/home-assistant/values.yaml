@@ -54,9 +54,6 @@ additionalVolumes:
   - name: secrets
     secret:
       secretName: home-assistant-secrets
-  - name: config-override
-    configMap:
-      name: homeassistant-config
 
 # Additional volume mounts
 additionalVolumeMounts:
@@ -64,10 +61,6 @@ additionalVolumeMounts:
     mountPath: /config/backups
   - name: secrets
     mountPath: /secrets
-    readOnly: true
-  - name: config-override
-    mountPath: /config/http.yaml
-    subPath: http.yaml
     readOnly: true
 
 # Resources
@@ -116,6 +109,31 @@ env:
 
 # Init containers to ensure database is ready
 initContainers:
+  - name: create-http-config
+    image: busybox:latest
+    command:
+      - sh
+      - -c
+      - |
+        cat > /config/http.yaml << 'EOF'
+        # HTTP configuration for reverse proxy
+        http:
+          use_x_forwarded_for: true
+          trusted_proxies:
+            - 10.244.0.0/16  # Pod network CIDR
+            - 10.0.2.0/24     # Load balancer network
+        EOF
+        
+        # Update configuration.yaml to include http.yaml if not already present
+        if [ -f /config/configuration.yaml ] && ! grep -q "http: !include http.yaml" /config/configuration.yaml; then
+          echo "Updating configuration.yaml to include http.yaml"
+          # Insert after default_config line
+          sed -i '/^default_config:/a\\n# HTTP configuration for reverse proxy\nhttp: !include http.yaml' /config/configuration.yaml
+        fi
+        echo "HTTP config setup complete"
+    volumeMounts:
+      - name: home-assistant
+        mountPath: /config
   - name: wait-for-db
     image: postgres:16-alpine
     command:
