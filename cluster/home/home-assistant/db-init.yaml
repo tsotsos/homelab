@@ -57,6 +57,17 @@ data:
     psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -c "GRANT ALL ON SCHEMA public TO ${DB_USER};"
     echo "✓ Database setup completed"
     
+    # Verify Home Assistant user can connect and access database
+    echo "Verifying Home Assistant user access..."
+    CONNECTION_TEST=$(psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -tAc "SELECT 1" 2>&1)
+    if [ "$CONNECTION_TEST" = "1" ]; then
+      echo "✓ Home Assistant user can successfully connect to database"
+    else
+      echo "✗ Home Assistant user cannot connect to database"
+      echo "Error: ${CONNECTION_TEST}"
+      exit 1
+    fi
+    
     echo "Database initialization finished successfully"
 ---
 # Job to initialize Home Assistant database

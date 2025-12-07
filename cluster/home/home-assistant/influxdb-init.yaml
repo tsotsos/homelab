@@ -135,6 +135,23 @@ data:
       -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-token\",\"value\":\"${TOKEN_BASE64}\"}]"
     
     echo "✓ Token stored in secret 'home-assistant-secrets'"
+    
+    # Verify token has proper access to the bucket
+    echo "Verifying token permissions..."
+    TOKEN_TEST=$(curl -s -w "\n%{http_code}" \
+      -H "Authorization: Token ${NEW_TOKEN}" \
+      "${INFLUX_URL}/api/v2/buckets/${BUCKET_ID}")
+    
+    HTTP_CODE=$(echo "$TOKEN_TEST" | tail -n1)
+    
+    if [ "$HTTP_CODE" = "200" ]; then
+      echo "✓ Token has valid read access to bucket '${BUCKET}'"
+    else
+      echo "✗ Token verification failed (HTTP ${HTTP_CODE})"
+      echo "Response: $(echo \"$TOKEN_TEST\" | head -n-1)"
+      exit 1
+    fi
+    
     echo "InfluxDB initialization completed successfully"
 ---
 # Job to initialize InfluxDB bucket and token
