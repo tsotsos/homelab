@@ -146,6 +146,7 @@ initContainers:
           - 10.244.0.0/16  # Pod network CIDR
           - 10.0.2.0/24     # Load balancer network
         EOF
+          chmod 666 /config/http.yaml
         else
           echo "✓ http.yaml already exists, skipping"
         fi
@@ -159,6 +160,7 @@ initContainers:
         purge_keep_days: 30
         commit_interval: 1
         EOF
+          chmod 666 /config/recorder.yaml
         else
           echo "✓ recorder.yaml already exists, skipping"
         fi
@@ -192,9 +194,18 @@ initContainers:
             - light
             - switch
         EOF
+          chmod 666 /config/influxdb.yaml
         else
           echo "✓ influxdb.yaml already exists, skipping"
         fi
+        
+        # Ensure existing files are writable by Code Server
+        echo "Setting permissions on configuration files..."
+        for file in /config/http.yaml /config/recorder.yaml /config/influxdb.yaml; do
+          if [ -f "$file" ]; then
+            chmod 666 "$file"
+          fi
+        done
         
         # Update configuration.yaml only if includes are missing
         if [ -f /config/configuration.yaml ]; then
