@@ -10,6 +10,9 @@ image:
 strategy:
   type: Recreate  # Required for RWO storage
 
+# Enable host network for mDNS/Zeroconf discovery (Apple TV, etc.)
+hostNetwork: true
+
 # Security context (needed for device access)
 securityContext:
   privileged: true
