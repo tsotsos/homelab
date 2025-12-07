@@ -88,6 +88,7 @@ data:
       
       if echo "$TOKEN_CHECK" | jq -e '.buckets' > /dev/null 2>&1; then
         echo "✓ Existing token is valid, using it"
+        echo "skip" > /shared/status
         exit 0
       else
         echo "⚠ Existing token is invalid, creating new one..."
@@ -208,7 +209,9 @@ spec:
                 sleep 1
               done
               
-              if [ "$(cat /shared/status)" = "done" ]; then
+              STATUS=$(cat /shared/status)
+              
+              if [ "$STATUS" = "done" ]; then
                 echo "Patching secret with new token..."
                 TOKEN=$(cat /shared/token)
                 TOKEN_BASE64=$(echo -n "${TOKEN}" | base64 -w0)
@@ -217,6 +220,8 @@ spec:
                   -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-token\",\"value\":\"${TOKEN_BASE64}\"}]"
                 
                 echo "✓ Token stored in secret 'home-assistant-secrets'"
+              elif [ "$STATUS" = "skip" ]; then
+                echo "✓ Token already valid, skipping patch"
               else
                 echo "✗ Token generation failed"
                 exit 1
