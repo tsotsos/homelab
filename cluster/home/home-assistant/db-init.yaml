@@ -1,34 +1,65 @@
 ---
-# ConfigMap with SQL to create Home Assistant database and user
+# ConfigMap with bash script for idempotent database initialization
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: homeassistant-db-init
+  name: homeassistant-db-init-script
   namespace: home-assistant
   annotations:
-    argocd.argoproj.io/sync-wave: "-8"
+    argocd.argoproj.io/sync-wave: "-10"
 data:
-  init-homeassistant-db.sql: |
-    -- Create Home Assistant database
-    SELECT 'CREATE DATABASE homeassistant'
-    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'homeassistant')\gexec
+  init-db.sh: |
+    #!/bin/bash
+    set -e
     
-    -- Create Home Assistant user
-    DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'homeassistant') THEN
-        CREATE USER homeassistant WITH PASSWORD 't4i49jyeHCEmCw3aLYrr66AE9bAL6pJVCRIUk/ReEp4=';
-      END IF;
-    END
-    $$;
+    echo "Reading configuration from secrets..."
+    # Read pre-defined credentials from home-assistant-secrets
+    DB_USER=$(cat /app-secrets/postgres-user)
+    DB_PASSWORD=$(cat /app-secrets/postgres-password)
+    DB_NAME=$(cat /app-secrets/postgres-database)
+    DB_HOST=$(cat /app-secrets/postgres-host)
     
-    -- Grant privileges
-    GRANT ALL PRIVILEGES ON DATABASE homeassistant TO homeassistant;
+    # Read postgres superuser password
+    POSTGRES_PASSWORD=$(cat /pg-secrets/postgres-password)
     
-    -- Connect to homeassistant database and grant schema privileges
-    \c homeassistant
-    GRANT ALL ON SCHEMA public TO homeassistant;
-    ALTER DATABASE homeassistant OWNER TO homeassistant;
+    echo "Checking if database '${DB_NAME}' exists..."
+    export PGPASSWORD="${POSTGRES_PASSWORD}"
+    
+    if psql -h ${DB_HOST} -U postgres -lqt | cut -d \| -f 1 | grep -qw ${DB_NAME}; then
+      echo "✓ Database '${DB_NAME}' already exists"
+      
+      # Check if user exists
+      USER_EXISTS=$(psql -h ${DB_HOST} -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'")
+      if [ "$USER_EXISTS" = "1" ]; then
+        echo "✓ User '${DB_USER}' already exists"
+      else
+        echo "Creating user '${DB_USER}'..."
+        psql -h ${DB_HOST} -U postgres <<-EOSQL
+          CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
+          GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
+        EOSQL
+        echo "✓ User '${DB_USER}' created"
+      fi
+    else
+      echo "Creating database '${DB_NAME}' and user '${DB_USER}'..."
+      psql -h ${DB_HOST} -U postgres <<-EOSQL
+        -- Create user
+        CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
+        
+        -- Create database
+        CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};
+        
+        -- Grant privileges
+        GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
+        
+        -- Connect to the new database and grant schema privileges
+        \c ${DB_NAME}
+        GRANT ALL ON SCHEMA public TO ${DB_USER};
+      EOSQL
+      echo "✓ Database setup completed"
+    fi
+    
+    echo "Database initialization finished successfully"
 ---
 # Job to initialize Home Assistant database
 apiVersion: batch/v1
@@ -37,61 +68,53 @@ metadata:
   name: homeassistant-db-init
   namespace: home-assistant
   annotations:
-    argocd.argoproj.io/sync-wave: "-5"
+    argocd.argoproj.io/sync-wave: "-8"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   ttlSecondsAfterFinished: 300
+  backoffLimit: 3
   template:
     spec:
       serviceAccountName: homeassistant-db-init
       restartPolicy: OnFailure
       initContainers:
-      # Fetch PostgreSQL admin password from postgresql namespace
-      - name: fetch-postgres-password
-        image: bitnami/kubectl:latest
-        command:
-        - sh
-        - -c
-        - |
-          kubectl get secret postgresql-secrets -n postgresql -o jsonpath='{.data.postgres-password}' | base64 -d > /shared/postgres-password
-        volumeMounts:
-        - name: shared-data
-          mountPath: /shared
+        - name: fetch-postgres-secret
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Fetching PostgreSQL superuser password..."
+              kubectl get secret postgresql-secrets -n postgresql -o jsonpath='{.data.postgres-password}' | base64 -d > /pg-secrets/postgres-password
+              echo "✓ Secret fetched"
+          volumeMounts:
+            - name: pg-secrets
+              mountPath: /pg-secrets
       containers:
-      - name: db-init
-        image: postgres:16-alpine
-        env:
-        - name: PGHOST
-          value: postgresql-primary.postgresql.svc.cluster.local
-        - name: PGPORT
-          value: "5432"
-        - name: PGUSER
-          value: postgres
-        command:
-        - /bin/sh
-        - -c
-        - |
-          set -e
-          export PGPASSWORD=$(cat /shared/postgres-password)
-          
-          echo "Waiting for PostgreSQL to be ready..."
-          until pg_isready; do
-            echo "Waiting for PostgreSQL..."
-            sleep 2
-          done
-          echo "PostgreSQL is ready, initializing Home Assistant database..."
-          psql -f /scripts/init-homeassistant-db.sql
-          echo "Home Assistant database initialized successfully"
-        volumeMounts:
-        - name: init-script
-          mountPath: /scripts
-        - name: shared-data
-          mountPath: /shared
+        - name: init-db
+          image: postgres:16-alpine
+          command: ["/bin/bash", "/scripts/init-db.sh"]
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+            - name: pg-secrets
+              mountPath: /pg-secrets
+              readOnly: true
+            - name: app-secrets
+              mountPath: /app-secrets
+              readOnly: true
       volumes:
-      - name: init-script
-        configMap:
-          name: homeassistant-db-init
-      - name: shared-data
-        emptyDir: {}
+        - name: init-script
+          configMap:
+            name: homeassistant-db-init-script
+            defaultMode: 0755
+        - name: pg-secrets
+          emptyDir:
+            medium: Memory
+        - name: app-secrets
+          secret:
+            secretName: home-assistant-secrets
 ---
 # ServiceAccount for database initialization
 apiVersion: v1

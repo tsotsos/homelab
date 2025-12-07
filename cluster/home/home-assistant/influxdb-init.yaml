@@ -1,57 +1,116 @@
 ---
-# ConfigMap to create InfluxDB bucket and token for Home Assistant
+# ConfigMap with script for idempotent InfluxDB initialization
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: homeassistant-influxdb-init
+  name: homeassistant-influxdb-init-script
   namespace: home-assistant
   annotations:
-    argocd.argoproj.io/sync-wave: "-8"
+    argocd.argoproj.io/sync-wave: "-10"
 data:
-  init-homeassistant.sh: |
+  init-influxdb.sh: |
     #!/bin/sh
     set -e
     
-    BUCKET_NAME="homeassistant"
-    ORG="influxdata"
-    TOKEN_DESCRIPTION="homeassistant-token"
+    # Install required tools
+    apk add --no-cache curl jq
     
-    echo "Waiting for InfluxDB to be ready..."
-    until influx ping > /dev/null 2>&1; do
-      echo "Waiting for InfluxDB..."
-      sleep 2
-    done
+    echo "Reading configuration from secrets..."
+    # Read pre-defined configuration from home-assistant-secrets
+    BUCKET=$(cat /app-secrets/influxdb-bucket)
+    ORG=$(cat /app-secrets/influxdb-org)
+    INFLUX_URL=$(cat /app-secrets/influxdb-url)
     
-    echo "InfluxDB is ready, checking bucket..."
+    # Read admin token from InfluxDB
+    ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
     
-    # Check if bucket exists
-    if influx bucket list --org "$ORG" | grep -q "$BUCKET_NAME"; then
-      echo "Bucket '$BUCKET_NAME' already exists"
+    echo "Checking if bucket '${BUCKET}' exists..."
+    BUCKET_CHECK=$(curl -s \
+      -H "Authorization: Token ${ADMIN_TOKEN}" \
+      "${INFLUX_URL}/api/v2/buckets?org=${ORG}&name=${BUCKET}" || echo "")
+    
+    if echo "${BUCKET_CHECK}" | grep -q "\"name\":\"${BUCKET}\""; then
+      echo "✓ Bucket '${BUCKET}' already exists"
+      BUCKET_ID=$(echo "${BUCKET_CHECK}" | jq -r ".buckets[] | select(.name==\"${BUCKET}\") | .id")
+      echo "  Bucket ID: ${BUCKET_ID}"
     else
-      echo "Creating bucket '$BUCKET_NAME'..."
-      influx bucket create \
-        --name "$BUCKET_NAME" \
-        --org "$ORG" \
-        --retention 0
-      echo "Bucket created successfully"
+      echo "Creating bucket '${BUCKET}'..."
+      BUCKET_RESPONSE=$(curl -s -X POST \
+        -H "Authorization: Token ${ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "${INFLUX_URL}/api/v2/buckets" \
+        -d "{\"orgID\":\"${ORG}\",\"name\":\"${BUCKET}\",\"retentionRules\":[]}")
+      
+      BUCKET_ID=$(echo "${BUCKET_RESPONSE}" | jq -r '.id')
+      
+      if [ -z "$BUCKET_ID" ] || [ "$BUCKET_ID" = "null" ]; then
+        echo "✗ Failed to create bucket"
+        echo "Response: ${BUCKET_RESPONSE}"
+        exit 1
+      fi
+      echo "✓ Bucket created with ID: ${BUCKET_ID}"
     fi
     
-    # Check if token exists
-    if influx auth list --org "$ORG" | grep -q "$TOKEN_DESCRIPTION"; then
-      echo "Token '$TOKEN_DESCRIPTION' already exists"
-      echo "Skipping token creation"
-    else
-      echo "Creating token for Home Assistant..."
-      influx auth create \
-        --org "$ORG" \
-        --description "$TOKEN_DESCRIPTION" \
-        --read-buckets \
-        --write-buckets
-      echo "Token created successfully"
-      echo "Note: Token can be retrieved with: influx auth list --org $ORG"
+    echo "Checking for existing Home Assistant token..."
+    # Check if we already have a token in the secret
+    EXISTING_TOKEN=$(cat /app-secrets/influxdb-token 2>/dev/null || echo "")
+    
+    if [ -n "$EXISTING_TOKEN" ]; then
+      echo "✓ Token already exists in secret, verifying it works..."
+      TOKEN_VALID=$(curl -s \
+        -H "Authorization: Token ${EXISTING_TOKEN}" \
+        "${INFLUX_URL}/api/v2/buckets?org=${ORG}" | grep -c "buckets" || echo "0")
+      
+      if [ "$TOKEN_VALID" -gt 0 ]; then
+        echo "✓ Existing token is valid, using it"
+        exit 0
+      else
+        echo "⚠ Existing token is invalid, creating new one..."
+      fi
     fi
     
-    echo "Home Assistant InfluxDB setup complete"
+    # Check if a token already exists in InfluxDB
+    EXISTING_AUTH=$(curl -s \
+      -H "Authorization: Token ${ADMIN_TOKEN}" \
+      "${INFLUX_URL}/api/v2/authorizations" | jq -r '.authorizations[] | select(.description=="homeassistant-token") | .token' | head -1)
+    
+    if [ -n "$EXISTING_AUTH" ] && [ "$EXISTING_AUTH" != "null" ]; then
+      echo "✓ Found existing token in InfluxDB, storing it..."
+      NEW_TOKEN="$EXISTING_AUTH"
+    else
+      echo "Creating new token for Home Assistant..."
+      TOKEN_RESPONSE=$(curl -s -X POST \
+        -H "Authorization: Token ${ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "${INFLUX_URL}/api/v2/authorizations" \
+        -d "{
+          \"orgID\":\"${ORG}\",
+          \"description\":\"homeassistant-token\",
+          \"permissions\":[
+            {\"action\":\"read\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG}\"}},
+            {\"action\":\"write\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG}\"}}
+          ]
+        }")
+      
+      NEW_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.token')
+      
+      if [ -z "$NEW_TOKEN" ] || [ "$NEW_TOKEN" = "null" ]; then
+        echo "✗ Failed to create token"
+        echo "Response: ${TOKEN_RESPONSE}"
+        exit 1
+      fi
+      echo "✓ Token created successfully"
+    fi
+    
+    # Store token in Kubernetes secret
+    echo "Storing token in Kubernetes secret..."
+    TOKEN_BASE64=$(echo -n "${NEW_TOKEN}" | base64 -w0)
+    
+    kubectl patch secret home-assistant-secrets -n home-assistant --type='json' \
+      -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-token\",\"value\":\"${TOKEN_BASE64}\"}]"
+    
+    echo "✓ Token stored in secret 'home-assistant-secrets'"
+    echo "InfluxDB initialization completed successfully"
 ---
 # Job to initialize InfluxDB bucket and token
 apiVersion: batch/v1
@@ -60,49 +119,53 @@ metadata:
   name: homeassistant-influxdb-init
   namespace: home-assistant
   annotations:
-    argocd.argoproj.io/sync-wave: "-5"
+    argocd.argoproj.io/sync-wave: "-8"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   ttlSecondsAfterFinished: 300
+  backoffLimit: 3
   template:
     spec:
       serviceAccountName: homeassistant-influxdb-init
       restartPolicy: OnFailure
       initContainers:
-      # Fetch InfluxDB admin token from influxdb namespace
-      - name: fetch-influxdb-token
-        image: bitnami/kubectl:latest
-        command:
-        - sh
-        - -c
-        - |
-          kubectl get secret influxdb-auth -n influxdb -o jsonpath='{.data.admin-user-token}' | base64 -d > /shared/influxdb-token
-        volumeMounts:
-        - name: shared-data
-          mountPath: /shared
+        - name: fetch-influxdb-secret
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Fetching InfluxDB admin token..."
+              kubectl get secret influxdb-auth -n influxdb -o jsonpath='{.data.admin-token}' | base64 -d > /influx-secrets/admin-token
+              echo "✓ Secret fetched"
+          volumeMounts:
+            - name: influx-secrets
+              mountPath: /influx-secrets
       containers:
-      - name: influxdb-init
-        image: influxdb:2.7-alpine
-        env:
-        - name: INFLUX_HOST
-          value: http://influxdb-influxdb2.influxdb.svc.cluster.local:8086
-        command:
-        - /bin/sh
-        - -c
-        - |
-          export INFLUX_TOKEN=$(cat /shared/influxdb-token)
-          /scripts/init-homeassistant.sh
-        volumeMounts:
-        - name: init-script
-          mountPath: /scripts
-        - name: shared-data
-          mountPath: /shared
+        - name: init-influxdb
+          image: alpine:latest
+          command: ["/bin/sh", "/scripts/init-influxdb.sh"]
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+            - name: influx-secrets
+              mountPath: /influx-secrets
+              readOnly: true
+            - name: app-secrets
+              mountPath: /app-secrets
+              readOnly: true
       volumes:
-      - name: init-script
-        configMap:
-          name: homeassistant-influxdb-init
-          defaultMode: 0755
-      - name: shared-data
-        emptyDir: {}
+        - name: init-script
+          configMap:
+            name: homeassistant-influxdb-init-script
+            defaultMode: 0755
+        - name: influx-secrets
+          emptyDir:
+            medium: Memory
+        - name: app-secrets
+          secret:
+            secretName: home-assistant-secrets
 ---
 # ServiceAccount for InfluxDB initialization
 apiVersion: v1

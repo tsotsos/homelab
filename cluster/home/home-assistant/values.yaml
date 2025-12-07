@@ -106,6 +106,27 @@ env:
       secretKeyRef:
         name: home-assistant-secrets
         key: postgres-url
+  # InfluxDB credentials (optional, can also be configured in configuration.yaml)
+  - name: INFLUXDB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: home-assistant-secrets
+        key: influxdb-token
+  - name: INFLUXDB_URL
+    valueFrom:
+      secretKeyRef:
+        name: home-assistant-secrets
+        key: influxdb-url
+  - name: INFLUXDB_ORG
+    valueFrom:
+      secretKeyRef:
+        name: home-assistant-secrets
+        key: influxdb-org
+  - name: INFLUXDB_BUCKET
+    valueFrom:
+      secretKeyRef:
+        name: home-assistant-secrets
+        key: influxdb-bucket
 
 # Init containers to ensure database is ready
 initContainers:
@@ -190,16 +211,16 @@ codeserver:
     className: cilium
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-dns
-      external-dns.alpha.kubernetes.io/hostname: home-code.kng.house
+      external-dns.alpha.kubernetes.io/hostname: code-home.kng.house
     hosts:
-      - host: home-code.kng.house
+      - host: code-home.kng.house
         paths:
           - path: /
             pathType: Prefix
     tls:
       - secretName: homeassistant-code-tls
         hosts:
-          - home-code.kng.house
+          - code-home.kng.house
   volumeMounts:
     - name: config
       mountPath: /config
