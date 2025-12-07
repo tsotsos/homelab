@@ -19,3 +19,9 @@ helmCharts:
     releaseName: home-assistant
     namespace: home-assistant
     valuesFile: values.yaml
+
+patches:
+  - path: argocd-ignore-patch.yaml
+    target:
+      kind: StatefulSet
+      name: home-assistant
