@@ -159,7 +159,8 @@ initContainers:
         # InfluxDB configuration for long-term metrics storage
         api_version: 2
         ssl: false
-        host: !env_var INFLUXDB_URL
+        host: influxdb-influxdb2.influxdb.svc.cluster.local
+        port: 8086
         token: !env_var INFLUXDB_TOKEN
         organization: !env_var INFLUXDB_ORG
         bucket: !env_var INFLUXDB_BUCKET
