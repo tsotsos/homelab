@@ -54,6 +54,9 @@ additionalVolumes:
   - name: secrets
     secret:
       secretName: home-assistant-secrets
+  - name: config-override
+    configMap:
+      name: homeassistant-config
 
 # Additional volume mounts
 additionalVolumeMounts:
@@ -61,6 +64,10 @@ additionalVolumeMounts:
     mountPath: /config/backups
   - name: secrets
     mountPath: /secrets
+    readOnly: true
+  - name: config-override
+    mountPath: /config/configuration.yaml
+    subPath: configuration.yaml
     readOnly: true
 
 # Resources

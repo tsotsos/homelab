@@ -5,6 +5,7 @@ namespace: home-assistant
 
 resources:
   - ns.yaml
+  - config.yaml
   - sealed-secret.yaml
   - backup-pvc.yaml
   - backup-cronjob.yaml
