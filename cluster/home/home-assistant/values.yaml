@@ -128,14 +128,15 @@ env:
         name: home-assistant-secrets
         key: influxdb-bucket
 
-# Init containers to ensure database is ready
+# Init containers to ensure database is ready and configure integrations
 initContainers:
-  - name: create-http-config
+  - name: create-configs
     image: busybox:latest
     command:
       - sh
       - -c
       - |
+        # Create http.yaml for reverse proxy
         cat > /config/http.yaml << 'EOF'
         # HTTP configuration for reverse proxy
         use_x_forwarded_for: true
@@ -144,13 +145,61 @@ initContainers:
           - 10.0.2.0/24     # Load balancer network
         EOF
         
-        # Update configuration.yaml to include http.yaml if not already present
-        if [ -f /config/configuration.yaml ] && ! grep -q "http: !include http.yaml" /config/configuration.yaml; then
-          echo "Updating configuration.yaml to include http.yaml"
-          # Insert after default_config line
-          sed -i '/^default_config:/a\\n# HTTP configuration for reverse proxy\nhttp: !include http.yaml' /config/configuration.yaml
+        # Create recorder.yaml for PostgreSQL
+        cat > /config/recorder.yaml << 'EOF'
+        # PostgreSQL database configuration
+        db_url: !env_var POSTGRES_URL
+        auto_purge: true
+        purge_keep_days: 30
+        commit_interval: 1
+        EOF
+        
+        # Create influxdb.yaml for metrics
+        cat > /config/influxdb.yaml << 'EOF'
+        # InfluxDB configuration for long-term metrics storage
+        api_version: 2
+        ssl: false
+        host: !env_var INFLUXDB_URL
+        token: !env_var INFLUXDB_TOKEN
+        organization: !env_var INFLUXDB_ORG
+        bucket: !env_var INFLUXDB_BUCKET
+        tags:
+          source: homeassistant
+        tags_attributes:
+          - friendly_name
+        default_measurement: units
+        exclude:
+          entities:
+            - zone.home
+          domains:
+            - persistent_notification
+            - person
+        include:
+          domains:
+            - sensor
+            - binary_sensor
+            - light
+            - switch
+        EOF
+        
+        # Update configuration.yaml to include these files if not already present
+        if [ -f /config/configuration.yaml ]; then
+          if ! grep -q "http: !include http.yaml" /config/configuration.yaml; then
+            echo "Adding http configuration to configuration.yaml"
+            sed -i '/^default_config:/a\\n# HTTP configuration for reverse proxy\nhttp: !include http.yaml' /config/configuration.yaml
+          fi
+          
+          if ! grep -q "recorder: !include recorder.yaml" /config/configuration.yaml; then
+            echo "Adding recorder configuration to configuration.yaml"
+            sed -i '/^default_config:/a\\n# PostgreSQL recorder\nrecorder: !include recorder.yaml' /config/configuration.yaml
+          fi
+          
+          if ! grep -q "influxdb: !include influxdb.yaml" /config/configuration.yaml; then
+            echo "Adding InfluxDB configuration to configuration.yaml"
+            sed -i '/^default_config:/a\\n# InfluxDB metrics\ninfluxdb: !include influxdb.yaml' /config/configuration.yaml
+          fi
         fi
-        echo "HTTP config setup complete"
+        echo "Configuration files created successfully"
     volumeMounts:
       - name: home-assistant
         mountPath: /config
