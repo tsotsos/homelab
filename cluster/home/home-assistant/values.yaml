@@ -12,6 +12,8 @@ strategy:
 
 # Enable host network for mDNS/Zeroconf discovery (Apple TV, etc.)
 hostNetwork: true
+# Use ClusterFirstWithHostNet to resolve k8s service names with hostNetwork
+dnsPolicy: ClusterFirstWithHostNet
 
 # Security context (needed for device access)
 securityContext:
