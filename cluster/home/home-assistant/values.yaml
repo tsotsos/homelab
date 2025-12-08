@@ -135,6 +135,73 @@ env:
 
 # Init containers to ensure database is ready and configure integrations
 initContainers:
+  - name: install-hacs
+    image: alpine:latest
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        HACS_DIR="/config/custom_components/hacs"
+        MANIFEST="$HACS_DIR/manifest.json"
+        
+        echo "=== HACS Installation/Update Check ==="
+        
+        # Install required tools
+        apk add --no-cache wget unzip jq curl
+        
+        # Get latest HACS version from GitHub
+        echo "Fetching latest HACS version..."
+        LATEST_VERSION=$(curl -s https://api.github.com/repos/hacs/integration/releases/latest | jq -r .tag_name)
+        echo "Latest HACS version: $LATEST_VERSION"
+        
+        # Check if HACS is installed
+        if [ -f "$MANIFEST" ]; then
+          INSTALLED_VERSION=$(jq -r .version "$MANIFEST")
+          echo "Installed HACS version: $INSTALLED_VERSION"
+          
+          if [ "$INSTALLED_VERSION" = "$LATEST_VERSION" ]; then
+            echo "✓ HACS is up to date"
+            exit 0
+          else
+            echo "⚠ HACS needs update: $INSTALLED_VERSION -> $LATEST_VERSION"
+            echo "Backing up current installation..."
+            mv "$HACS_DIR" "${HACS_DIR}.backup.$(date +%Y%m%d-%H%M%S)"
+          fi
+        else
+          echo "HACS not found, installing..."
+        fi
+        
+        # Download and install HACS
+        echo "Downloading HACS $LATEST_VERSION..."
+        wget -q -O /tmp/hacs.zip "https://github.com/hacs/integration/releases/latest/download/hacs.zip"
+        
+        # Verify download
+        if [ ! -f /tmp/hacs.zip ] || [ ! -s /tmp/hacs.zip ]; then
+          echo "✗ Failed to download HACS"
+          exit 1
+        fi
+        
+        echo "Extracting HACS..."
+        mkdir -p /config/custom_components
+        unzip -q /tmp/hacs.zip -d /config/custom_components/hacs
+        
+        # Verify installation
+        if [ ! -f "$MANIFEST" ]; then
+          echo "✗ Installation verification failed - manifest.json not found"
+          exit 1
+        fi
+        
+        NEW_VERSION=$(jq -r .version "$MANIFEST")
+        echo "✓ HACS $NEW_VERSION installed successfully"
+        
+        # Cleanup
+        rm -f /tmp/hacs.zip
+        
+        echo "=== HACS Installation Complete ==="
+    volumeMounts:
+      - name: home-assistant
+        mountPath: /config
   - name: create-configs
     image: busybox:latest
     command:
