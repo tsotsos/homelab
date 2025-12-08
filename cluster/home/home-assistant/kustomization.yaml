@@ -8,7 +8,6 @@ resources:
   - secret-patcher-rbac.yaml
   - sealed-secret.yaml
   - backup-pvc.yaml
-  - backup-cronjob.yaml
   - db-init.yaml
   - influxdb-init.yaml
 
