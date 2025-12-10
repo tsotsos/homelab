@@ -347,36 +347,3 @@ affinity:
             matchLabels:
               app.kubernetes.io/name: home-assistant
           topologyKey: kubernetes.io/hostname
-
-# Addons configuration
-addons:
-  # Code Server (VS Code in browser for config editing)
-  codeserver:
-    enabled: true
-    image:
-      repository: ghcr.io/coder/code-server
-      tag: "4.105.1"  # Chart default version
-      pullPolicy: IfNotPresent
-    auth:
-      enabled: false  # Disable auth for now, can enable with secret later
-    service:
-      type: ClusterIP
-      port: 12321  # Chart default port
-    ingress:
-      enabled: false  # Disable direct ingress, will use Authentik proxy instead
-      hosts:
-        - host: code-home.kng.house
-          paths:
-            - path: /
-              pathType: Prefix
-      tls:
-        - secretName: homeassistant-code-tls
-          hosts:
-            - code-home.kng.house
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
