@@ -1,0 +1,14 @@
+---
+# PersistentVolumeClaim for Home Assistant backups
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homeassistant-backups
+  namespace: home-assistant
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 50Gi
