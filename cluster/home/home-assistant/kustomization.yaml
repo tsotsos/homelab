@@ -10,6 +10,7 @@ resources:
   - backup-pvc.yaml
   - db-init.yaml
   - influxdb-init.yaml
+  - code-server-ingress.yaml
 
 helmCharts:
   - name: home-assistant
