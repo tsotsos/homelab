@@ -273,7 +273,7 @@ initContainers:
         
         # Ensure existing files are writable by Code Server
         echo "Setting permissions on configuration files..."
-        for file in /config/http.yaml /config/recorder.yaml /config/influxdb.yaml; do
+        for file in /config/http.yaml /config/recorder.yaml /config/influxdb.yaml /config/configuration.yaml; do
           if [ -f "$file" ]; then
             chmod 666 "$file"
           fi
