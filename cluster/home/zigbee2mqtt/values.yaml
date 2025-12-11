@@ -27,7 +27,12 @@ statefulset:
   # Disable liveness probe (no enabled flag in this chart, use empty object)
   livenessProbe: {}
   
-  # Security context - disable privileged mode (not needed for TCP adapter)
+  # Pod security context - disable seccomp profile that requires SYS_ADMIN
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  
+  # Container security context - disable privileged mode (not needed for TCP adapter)
   securityContext:
     privileged: false
     capabilities:
