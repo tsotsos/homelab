@@ -32,8 +32,9 @@ nodeSelector:
   node.kng/workload-storage: "true"
 
 # Ingress configuration for Cilium Ingress Controller
+# Disabled: Using Authentik proxy ingress (see ingress-auth.yaml)
 ingress:
-  enabled: true
+  enabled: false
   ingressClassName: cilium
   host: longhorn.kng.house
   path: /

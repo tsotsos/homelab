@@ -1,0 +1,28 @@
+---
+# Ingress for Longhorn with Authentik authentication
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn-auth
+  namespace: longhorn-system
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    external-dns.alpha.kubernetes.io/hostname: longhorn.kng.house
+spec:
+  ingressClassName: cilium
+  tls:
+    - hosts:
+        - longhorn.kng.house
+      secretName: longhorn-auth-tls
+  rules:
+    - host: longhorn.kng.house
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ak-outpost-authentik-embedded-outpost
+                namespace: authentik
+                port:
+                  number: 9000
