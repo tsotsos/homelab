@@ -9,8 +9,8 @@ resources:
 
 helmCharts:
   - name: zigbee2mqtt
-    repo: https://geek-cookbook.github.io/charts
-    version: 9.4.2
+    repo: https://koenkk.github.io/zigbee2mqtt-chart
+    version: 2.7.1
     releaseName: zigbee2mqtt
     namespace: zigbee2mqtt
     valuesFile: values.yaml

@@ -1,79 +1,71 @@
-# Zigbee2MQTT Configuration using geek-cookbook chart
+# Zigbee2MQTT Configuration using official Koenkk chart
 image:
   repository: koenkk/zigbee2mqtt
-  tag: latest
+  tag: null  # Use chart appVersion (2.7.1)
   pullPolicy: IfNotPresent
 
-# Ensure pod is scheduled in s01 zone
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: topology.kubernetes.io/zone
-              operator: In
-              values:
-                - s01
-
-# Probes configuration - only readiness, no liveness
-probes:
-  liveness:
-    enabled: false
-  readiness:
-    enabled: true
-
-# Service configuration
 service:
-  main:
-    ports:
-      http:
-        port: 8080
+  type: ClusterIP
+  port: 8080
 
 # Disable direct ingress - using Authentik proxy
 ingress:
-  main:
-    enabled: false
+  enabled: false
 
-# Persistent storage
-persistence:
-  data:
+statefulset:
+  # Ensure pod is scheduled in s01 zone
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - s01
+  
+  # Probes configuration - disable liveness, keep readiness
+  livenessProbe:
+    enabled: false
+  
+  # Persistent storage
+  storage:
     enabled: true
-    existingClaim: zigbee2mqtt-data
-    mountPath: /data
+    existingVolume: zigbee2mqtt-data
+    size: 5Gi
+    storageClassName: longhorn
+  
+  # Resources
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 # Zigbee2MQTT configuration
-config:
-  # MQTT settings - will connect to EMQX
+zigbee2mqtt:
+  homeassistant:
+    enabled: true
+  
+  permit_join: false
+  
   mqtt:
     server: mqtt://emqx.emqx.svc.cluster.local:1883
     base_topic: zigbee2mqtt
-    include_device_information: true
   
-  # Serial config for XZG device
   serial:
-    # Location of XZG
     port: tcp://10.0.5.10:6638
     baudrate: 115200
-    # Disable Zigbee led
     disable_led: false
   
-  # Advanced settings
+  frontend:
+    enabled: true
+    port: 8080
+  
   advanced:
-    # Set output power to max 20
     transmit_power: 20
-    network_key: GENERATE
-    pan_id: GENERATE
     channel: 11
     log_level: info
-  
-  # Home Assistant integration
-  homeassistant: true
-
-# Resources
-resources:
-  requests:
-    memory: "256Mi"
-    cpu: "100m"
-  limits:
-    memory: "512Mi"
-    cpu: "500m"
+    cache_state: true
