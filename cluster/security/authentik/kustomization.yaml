@@ -8,6 +8,8 @@ resources:
   - db-init-job.yaml
   - ingresses/code-server-ingress.yaml
   - ingresses/longhorn-ingress.yaml
+  - ingresses/zigbee2mqtt-ingress.yaml
+  - ingresses/emqx-ingress.yaml
 helmCharts:
   - name: authentik
     repo: https://charts.goauthentik.io

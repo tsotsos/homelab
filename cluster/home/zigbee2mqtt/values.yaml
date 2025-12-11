@@ -1,0 +1,94 @@
+# Zigbee2MQTT Configuration
+image:
+  repository: koenkk/zigbee2mqtt
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Ensure pod is scheduled in s01 zone
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - s01
+
+# Probes configuration - only readiness, no liveness
+probes:
+  liveness:
+    enabled: false
+  readiness:
+    enabled: true
+    httpGet:
+      path: /
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# Disable direct ingress - using Authentik proxy
+ingress:
+  enabled: false
+
+# Persistent storage
+persistence:
+  enabled: true
+  existingClaim: zigbee2mqtt-data
+  mountPath: /app/data
+
+# Zigbee2MQTT configuration
+config:
+  # MQTT settings - will connect to EMQX
+  mqtt:
+    server: mqtt://emqx.emqx.svc.cluster.local:1883
+    base_topic: zigbee2mqtt
+    include_device_information: true
+  
+  # Serial config for XZG device
+  serial:
+    # Location of XZG
+    port: tcp://10.0.5.10:6638
+    baudrate: 115200
+    # Disable Zigbee led
+    disable_led: false
+  
+  # Advanced settings
+  advanced:
+    # Set output power to max 20
+    transmit_power: 20
+    network_key: GENERATE
+    pan_id: GENERATE
+    channel: 11
+    log_level: info
+  
+  # Frontend configuration
+  frontend:
+    port: 8080
+    host: 0.0.0.0
+  
+  # Home Assistant integration
+  homeassistant: true
+
+# Resources
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Security context
+securityContext:
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000

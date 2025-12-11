@@ -1,0 +1,27 @@
+---
+# Ingress for Zigbee2MQTT with Authentik authentication
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zigbee2mqtt
+  namespace: authentik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    external-dns.alpha.kubernetes.io/hostname: z2m.kng.house
+spec:
+  ingressClassName: cilium
+  tls:
+    - hosts:
+        - z2m.kng.house
+      secretName: zigbee2mqtt-tls
+  rules:
+    - host: z2m.kng.house
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ak-outpost-authentik-embedded-outpost
+                port:
+                  number: 9000

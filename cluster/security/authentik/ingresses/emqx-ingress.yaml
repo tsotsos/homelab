@@ -1,0 +1,27 @@
+---
+# Ingress for EMQX Dashboard with Authentik authentication
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: emqx-dashboard
+  namespace: authentik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    external-dns.alpha.kubernetes.io/hostname: emqx.kng.house
+spec:
+  ingressClassName: cilium
+  tls:
+    - hosts:
+        - emqx.kng.house
+      secretName: emqx-dashboard-tls
+  rules:
+    - host: emqx.kng.house
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ak-outpost-authentik-embedded-outpost
+                port:
+                  number: 9000
