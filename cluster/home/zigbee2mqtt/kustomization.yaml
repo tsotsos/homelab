@@ -5,7 +5,6 @@ namespace: zigbee2mqtt
 
 resources:
   - ns.yaml
-  - pvc.yaml
 
 helmCharts:
   - name: zigbee2mqtt

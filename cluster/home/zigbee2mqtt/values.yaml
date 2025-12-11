@@ -40,12 +40,11 @@ statefulset:
       drop:
         - ALL
   
-  # Persistent storage - use existing PVC
+  # Persistent storage - chart manages via volumeClaimTemplates
   storage:
     enabled: true
     size: 5Gi
     storageClassName: longhorn
-    existingVolume: zigbee2mqtt-data
   
   # Resources
   resources:
