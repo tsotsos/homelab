@@ -36,6 +36,7 @@ statefulset:
   securityContext:
     privileged: false
     capabilities:
+      add: []
       drop:
         - ALL
   
