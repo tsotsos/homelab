@@ -20,6 +20,7 @@ spec:
     relabelings:
     - sourceLabels: [__param_ups]
       targetLabel: ups
+      action: replace
   - port: metrics
     interval: 30s
     scrapeTimeout: 10s
@@ -29,6 +30,7 @@ spec:
     relabelings:
     - sourceLabels: [__param_ups]
       targetLabel: ups
+      action: replace
   - port: metrics
     interval: 30s
     scrapeTimeout: 10s
@@ -38,3 +40,4 @@ spec:
     relabelings:
     - sourceLabels: [__param_ups]
       targetLabel: ups
+      action: replace
