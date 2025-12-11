@@ -68,7 +68,7 @@ zigbee2mqtt:
   
   serial:
     port: tcp://10.0.5.10:6638
-    adapter: zstack
+    # adapter: auto  # Let Z2M auto-detect the adapter type
     baudrate: 115200
     disable_led: false
   
@@ -81,6 +81,5 @@ zigbee2mqtt:
     channel: 11
     log_level: debug  # Enable debug logging to see more details
     cache_state: true
-    pan_id: 6754  # Custom PAN ID to avoid conflicts
-    network_key: GENERATE  # Let Z2M generate a random network key
-    ext_pan_id: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD]  # Custom extended PAN ID
+    adapter_concurrent: null  # Use default for Z-Stack
+    rtscts: false
