@@ -24,9 +24,8 @@ statefulset:
                 values:
                   - s01
   
-  # Probes configuration - disable liveness, keep readiness
-  livenessProbe:
-    enabled: false
+  # Disable liveness probe (no enabled flag in this chart, use empty object)
+  livenessProbe: {}
   
   # Persistent storage
   storage:
