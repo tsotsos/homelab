@@ -68,7 +68,7 @@ zigbee2mqtt:
   
   serial:
     port: tcp://10.0.5.10:6638
-    adapter: zigate  # XZG gateway uses ZiGate protocol
+    adapter: zstack
     baudrate: 115200
     disable_led: false
   
