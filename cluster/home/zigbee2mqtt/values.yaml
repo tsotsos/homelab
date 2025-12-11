@@ -79,5 +79,8 @@ zigbee2mqtt:
   advanced:
     transmit_power: 20
     channel: 11
-    log_level: info
+    log_level: debug  # Enable debug logging to see more details
     cache_state: true
+    pan_id: 6754  # Custom PAN ID to avoid conflicts
+    network_key: GENERATE  # Let Z2M generate a random network key
+    ext_pan_id: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD]  # Custom extended PAN ID
