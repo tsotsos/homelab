@@ -6,7 +6,8 @@ resources:
   - sealed-secret.yaml
   - db-init-sa.yaml
   - db-init-job.yaml
-  - code-server-ingress.yaml
+  - ingresses/code-server-ingress.yaml
+  - ingresses/longhorn-ingress.yaml
 helmCharts:
   - name: authentik
     repo: https://charts.goauthentik.io
