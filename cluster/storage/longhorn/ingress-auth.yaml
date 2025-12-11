@@ -1,4 +1,18 @@
 ---
+# ExternalName service to reference Authentik outpost in authentik namespace
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentik-outpost-proxy
+  namespace: longhorn-system
+spec:
+  type: ExternalName
+  externalName: ak-outpost-authentik-embedded-outpost.authentik.svc.cluster.local
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+---
 # Ingress for Longhorn with Authentik authentication
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -22,7 +36,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: ak-outpost-authentik-embedded-outpost
-                namespace: authentik
+                name: authentik-outpost-proxy
                 port:
                   number: 9000
