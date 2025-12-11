@@ -30,7 +30,6 @@ statefulset:
   # Persistent storage
   storage:
     enabled: true
-    existingVolume: zigbee2mqtt-data
     size: 5Gi
     storageClassName: longhorn
   
