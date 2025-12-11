@@ -27,6 +27,13 @@ statefulset:
   # Disable liveness probe (no enabled flag in this chart, use empty object)
   livenessProbe: {}
   
+  # Security context - disable privileged mode (not needed for TCP adapter)
+  securityContext:
+    privileged: false
+    capabilities:
+      drop:
+        - ALL
+  
   # Persistent storage
   storage:
     enabled: true
