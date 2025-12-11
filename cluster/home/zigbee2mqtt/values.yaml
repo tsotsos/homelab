@@ -68,6 +68,7 @@ zigbee2mqtt:
   
   serial:
     port: tcp://10.0.5.10:6638
+    adapter: ezsp  # XZG uses EZSP protocol (Silicon Labs)
     baudrate: 115200
     disable_led: false
   
