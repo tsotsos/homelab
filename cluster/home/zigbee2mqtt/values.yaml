@@ -68,7 +68,7 @@ zigbee2mqtt:
   
   serial:
     port: tcp://10.0.5.10:6638
-    adapter: ember  # XZG - using newer ember driver instead of deprecated ezsp
+    adapter: zigate  # XZG gateway uses ZiGate protocol
     baudrate: 115200
     disable_led: false
   
