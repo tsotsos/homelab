@@ -1,4 +1,4 @@
-# Zigbee2MQTT Configuration
+# Zigbee2MQTT Configuration using geek-cookbook chart
 image:
   repository: koenkk/zigbee2mqtt
   tag: latest
@@ -21,28 +21,25 @@ probes:
     enabled: false
   readiness:
     enabled: true
-    httpGet:
-      path: /
-      port: 8080
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
 
 # Service configuration
 service:
-  type: ClusterIP
-  port: 8080
+  main:
+    ports:
+      http:
+        port: 8080
 
 # Disable direct ingress - using Authentik proxy
 ingress:
-  enabled: false
+  main:
+    enabled: false
 
 # Persistent storage
 persistence:
-  enabled: true
-  existingClaim: zigbee2mqtt-data
-  mountPath: /app/data
+  data:
+    enabled: true
+    existingClaim: zigbee2mqtt-data
+    mountPath: /data
 
 # Zigbee2MQTT configuration
 config:
@@ -69,11 +66,6 @@ config:
     channel: 11
     log_level: info
   
-  # Frontend configuration
-  frontend:
-    port: 8080
-    host: 0.0.0.0
-  
   # Home Assistant integration
   homeassistant: true
 
@@ -85,10 +77,3 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "500m"
-
-# Security context
-securityContext:
-  privileged: false
-  runAsNonRoot: true
-  runAsUser: 1000
-  fsGroup: 1000

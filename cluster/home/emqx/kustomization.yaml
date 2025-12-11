@@ -9,7 +9,7 @@ resources:
 helmCharts:
   - name: emqx
     repo: https://repos.emqx.io/charts
-    version: 5.10.0
+    version: 5.8.8
     releaseName: emqx
     namespace: emqx
     valuesFile: values.yaml
