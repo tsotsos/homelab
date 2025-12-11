@@ -1,0 +1,7 @@
+ignoreDifferences:
+  - group: apps
+    kind: StatefulSet
+    jqPathExpressions:
+      - '.spec.volumeClaimTemplates[]?.status'
+      - '.spec.volumeClaimTemplates[]?.apiVersion'
+      - '.spec.volumeClaimTemplates[]?.kind'

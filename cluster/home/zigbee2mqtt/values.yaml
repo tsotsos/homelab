@@ -40,9 +40,11 @@ statefulset:
       drop:
         - ALL
   
-  # Persistent storage - use existing PVC to avoid StatefulSet volumeClaimTemplates
+  # Persistent storage - use existing PVC
   storage:
-    enabled: false  # Disable volumeClaimTemplates
+    enabled: true
+    size: 5Gi
+    storageClassName: longhorn
     existingVolume: zigbee2mqtt-data
   
   # Resources
