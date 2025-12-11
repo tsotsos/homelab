@@ -17,12 +17,10 @@ service:
   wss: 8084
   dashboard: 18083
 
-# Persistent storage for HA cluster
+# Persistence disabled - not needed for transient MQTT messages
+# Configuration is managed via values.yaml
 persistence:
-  enabled: true
-  storageClassName: longhorn
-  size: 5Gi
-  accessMode: ReadWriteOnce
+  enabled: false
 
 # EMQX Configuration
 emqxConfig:
