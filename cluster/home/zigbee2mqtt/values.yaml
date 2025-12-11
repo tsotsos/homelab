@@ -68,7 +68,7 @@ zigbee2mqtt:
   
   serial:
     port: tcp://10.0.5.10:6638
-    # adapter: auto  # Let Z2M auto-detect the adapter type
+    adapter: zstack  # CC2652P2 uses TI Z-Stack
     baudrate: 115200
     disable_led: false
   
@@ -79,7 +79,11 @@ zigbee2mqtt:
   advanced:
     transmit_power: 20
     channel: 11
-    log_level: debug  # Enable debug logging to see more details
+    log_level: info
     cache_state: true
-    adapter_concurrent: null  # Use default for Z-Stack
+    adapter_concurrent: null
     rtscts: false
+    # Network configuration - will form new network on first start
+    pan_id: GENERATE
+    network_key: GENERATE
+    ext_pan_id: GENERATE
