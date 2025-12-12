@@ -78,7 +78,7 @@ prometheus:
   enabled: true
   
   prometheusSpec:
-    replicas: 2
+    replicas: 3  # One replica per zone for full redundancy
     
     # Storage
     storageSpec:

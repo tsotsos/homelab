@@ -26,7 +26,7 @@ global:
 
 # Server configuration
 server:
-  replicas: 2
+  replicas: 3  # One replica per zone for full redundancy
   
   # Pod Anti-Affinity: Distribute across zones
   affinity:
@@ -72,7 +72,7 @@ server:
 
 # Worker configuration
 worker:
-  replicas: 2
+  replicas: 3  # One replica per zone for full redundancy
   
   # Pod Anti-Affinity: Distribute across zones
   affinity:

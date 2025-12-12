@@ -66,9 +66,9 @@ primary:
     min_wal_size = 1GB
     max_wal_size = 4GB
 
-# Read Replicas configuration (2 replicas across remaining zones)
+# Read Replicas configuration (3 replicas for full zone coverage)
 readReplicas:
-  replicaCount: 2
+  replicaCount: 3  # One replica per zone for full redundancy
   
   # Extended configuration to match primary
   extendedConfiguration: |
