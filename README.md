@@ -2,8 +2,6 @@
 
 Production-ready Kubernetes cluster on Talos Linux with GitOps deployment.
 
-**License:** GPL-3.0 - See [LICENSE](LICENSE)
-
 ## Quick Start
 
 ```bash
