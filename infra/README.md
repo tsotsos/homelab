@@ -1,765 +1,156 @@
-# 🚀 Homelab Talos Kubernetes Infrastructure
+# Infrastructure
 
-Enterprise-grade, production-ready Talos Kubernetes deployment system with advanced automation and operational excellence.
+**License:** GPL-3.0 - See [LICENSE](../LICENSE)
 
-## ✨ Key Features
+Terraform automation for deploying Talos Linux Kubernetes cluster on Proxmox VE.
 
-- **🏗️ Intelligent Infrastructure**: Terraform-managed Proxmox VMs with per-node customization
-- **⚡ Parallel Deployment**: 67% faster deployments (15-20 mins vs 45+ mins)
-- **🎛️ Per-VM Configuration**: Individual CPU, memory, disk allocation per node
-- **🌐 External Node Support**: Add nodes from any infrastructure to existing clusters  
-- **🔧 Single Source of Truth**: YAML configuration drives both Terraform and deployment
-- **🏥 Built-in Diagnostics**: Comprehensive health checks and troubleshooting
-- **🛡️ Professional Grade**: Enterprise error handling, logging, and recovery
-- **🚀 Modern CNI**: Cilium for high-performance networking with eBPF
+## Prerequisites
 
-## 🏗️ Cluster Architecture
+**Infrastructure:**
+- Proxmox VE cluster (3+ nodes recommended)
+- Talos Linux template uploaded to Proxmox
+- Network bridge configured (default: vmbr1)
+- Storage pools available (local-lvm, etc.)
 
-```
-High-Availability Talos Kubernetes Cluster
-├── Control Plane (3 nodes)
-│   ├── Node 1 - Distributed across physical hosts
-│   ├── Node 2 - for high availability
-│   └── Node 3
-├── Worker Nodes (6 nodes)
-│   ├── Infrastructure Tier (3 nodes)
-│   │   └── Core services: ArgoCD, Ingress, Cert-Manager
-│   └── Storage Tier (3 nodes)
-│       └── Longhorn distributed storage
-└── Virtual IP: High-availability load balancer
-```
-
-## 📋 Prerequisites
-
-### Infrastructure Requirements
-
-- **3 Proxmox VE nodes** in cluster configuration
-- **Talos Linux template** available (see setup below)
-- **Network bridge** `vmbr1` configured for VM networking
-- **Storage pools**:
-  - `local-lvm` for OS disks
-  - `zfs-pool` for data storage
-
-### Tools Installation
-
+**Tools:**
 ```bash
-# Install required tools
 brew install terraform
 curl -sL https://talos.dev/install | sh
-brew install kubectl
+brew install kubectl helm kustomize yq jq
 ```
 
-### Talos Template Setup
+## Configuration
 
+1. **Copy example configs:**
 ```bash
-# Download and prepare Talos template
-wget https://github.com/siderolabs/talos/releases/download/v1.8.0/nocloud-amd64.raw.xz
-xz -d nocloud-amd64.raw.xz
-
-# Create template in Proxmox
-qm create 9000 --name talos-template --memory 2048 --net0 virtio,bridge=vmbr1
-qm importdisk 9000 nocloud-amd64.raw local-lvm
-qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:9000/vm-9000-disk-0.raw
-qm set 9000 --boot c --bootdisk scsi0
-qm template 9000
-```
-
-## ⚙️ Configuration
-
-### 1. Secrets Setup
-
-Create `../secrets.env` with Proxmox credentials:
-
-```bash
-proxmox_ur=https://your-proxmox-ip:8006/api2/json
-proxmox_user=root@pam
-proxmox_secret=your-password-or-token
-```
-
-### 2. Terraform Configuration
-
-```bash
-# Copy example configuration
+cp cluster-config.yaml.example cluster-config.yaml
 cp terraform.tfvars.example terraform.tfvars
-
-# Edit for your environment
-nano terraform.tfvars
 ```
 
-**Default Software Versions (configured in cluster-config.yaml):**
-- **Talos Linux**: v1.11.5  
-- **Kubernetes**: v1.34.1
-- **CNI**: Cilium (high-performance eBPF networking)
+2. **Edit cluster-config.yaml:**
+Define your cluster nodes with IPs, MACs, roles, CPU, RAM, disk sizes.
 
-### 3. Advanced Configuration (Optional)
+3. **Edit terraform.tfvars:**
+Add Proxmox endpoint and credentials.
 
-Create `cluster-config.yaml` from the provided example:
+4. **Create secrets.env (gitignored):**
+```bash
+proxmox_ur=https://proxmox-ip:8006/api2/json
+proxmox_user=root@pam
+proxmox_secret=your-password
+```
+
+## Deployment
+
+```bash
+# Source secrets
+source ../secrets.env
+
+# Initialize and apply
+terraform init
+terraform apply
+
+# Outputs generated in talos-config/:
+# - talosconfig (Talos CLI config)
+# - controlplane.yaml, worker.yaml (machine configs)
+# - Kubeconfig (after cluster bootstrap)
+```
+
+## Cluster Bootstrap
+
+After Terraform creates VMs:
+
+```bash
+cd ../scripts
+./deploy.sh          # Applies Talos configs and bootstraps K8s
+./bootstrap.sh       # Installs CNI and core components
+```
+
+See [scripts/README.md](../scripts/README.md) for details.
+
+## cluster-config.yaml Structure
 
 ```yaml
 cluster:
   name: "my-cluster"
-  vip: "192.168.1.100"                     # Your VIP
-  endpoint: "https://192.168.1.100:6443"  # Your endpoint
-
-deployment:
-  parallel: true
-  max_parallel_jobs: 3
-  timeout_minutes: 30
+  vip: "10.0.0.100"
+  endpoint: "https://10.0.0.100:6443"
+  
+  versions:
+    talos: "v1.11.5"
+    kubernetes: "v1.34.1"
 
 nodes:
-  - name: "cp-1"
-    ip: "192.168.1.101"                    # Your IP range
+  cp-1:
+    vm_id: 101
+    ip_address: "10.0.0.101"
+    mac_address: "BC:24:11:XX:XX:XX"
+    proxmox_node: "pve1"
     role: "controlplane"
-    # Optional per-node overrides
-    memory: 16384  # 16GB for this node
-    cpu: 8         # 8 cores for this node
-  
-  # Add more nodes with individual customization...
+    cpu: 4
+    memory: 8192
+    disk_size: 150
+    
+  worker-1:
+    # ... similar structure
 ```
 
-## 🚀 Deployment
+Each node can have individual resource allocation.
 
-### Streamlined Deployment Script
+## Talos Configuration
 
-Use the deployment script for all operations:
+The parser script (`config-parser.sh`) generates:
+- Machine configs for control plane and workers
+- Talosconfig for CLI access
+- Cluster patches (VIP, sysctls, extensions)
 
+Extensions included:
+- qemu-guest-agent
+- iscsi-tools (for Longhorn)
+- util-linux-tools
+
+## Operations
+
+**View cluster status:**
 ```bash
-# Full deployment (infrastructure + cluster)
-cd ../scripts
-./deploy.sh deploy
-
-# View all available commands
-./deploy.sh
-
-# Step-by-step deployment
-./deploy.sh init          # Generate configs
-./deploy.sh apply         # Install Talos
-./deploy.sh bootstrap     # Start Kubernetes
+export TALOSCONFIG=talos-config/talosconfig
+talosctl --nodes <NODE_IP> health
+talosctl --nodes <NODE_IP> version
 ```
 
-### Manual Step-by-Step
-
-For debugging or custom workflows:
-
+**Access cluster:**
 ```bash
-# 1. Initialize Terraform
-source ../secrets.env
-export TF_VAR_proxmox_ve_endpoint="$proxmox_ur"
-export TF_VAR_proxmox_ve_username="$proxmox_user"  
-export TF_VAR_proxmox_ve_password="$proxmox_secret"
-
-terraform init
-terraform plan
-terraform apply
-
-# 2. Deploy Talos cluster
-cd ../scripts
-./deploy.sh deploy
-
-# Verify deployment
-export KUBECONFIG="$PWD/../infra/talos-config/kubeconfig"
-kubectl get nodes
-
-# 3. Bootstrap core services
-./bootstrap.sh
-```
-
-## 🎯 Post-Deployment
-
-### Configuration Files
-
-Generated in `talos-config/`:
-```
-talos-config/
-├── talosconfig              # Talos client config
-├── kubeconfig               # Kubernetes client config
-├── controlplane-*.yaml      # Control plane node configs
-└── worker-*.yaml           # Worker node configs
-```
-
-### Environment Setup
-
-```bash
-# Set environment variables
-export TALOSCONFIG="$(pwd)/talos-config/talosconfig"
-export KUBECONFIG="$(pwd)/talos-config/kubeconfig"
-
-# Verify cluster
+export KUBECONFIG=talos-config/kubeconfig
 kubectl get nodes -o wide
-kubectl get pods -A
 ```
 
-## 🔧 Operations
-
-### Cluster Management
-
+**Upgrade Talos:**
+Update `cluster-config.yaml` versions, then:
 ```bash
-# Check cluster status
-./deploy-talos-cluster.sh status
-
-# Run comprehensive health check
-./deploy-talos-cluster.sh diagnostics
-
-# Check node health
-./deploy-talos-cluster.sh health-check
-
-# View deployment logs
-./deploy-talos-cluster.sh logs
-```
-
-### Scaling Operations
-
-```bash
-# Add external node (physical server, cloud VM, etc.)
-./deploy-talos-cluster.sh add-external-node "worker-ext-1" "192.168.1.100" "worker" "amd64"
-
-# Reset specific node
-./deploy-talos-cluster.sh reset-node "kng-worker-3"
-
-# Scale worker nodes (edit terraform.tfvars)
 terraform apply
+talosctl upgrade --image ghcr.io/siderolabs/installer:v1.11.5
 ```
 
-### Maintenance
-
-```bash
-# Upgrade Talos
-talosctl upgrade --image ghcr.io/siderolabs/installer:v1.8.1
-
-# Backup cluster configuration
-tar czf talos-backup-$(date +%Y%m%d).tar.gz talos-config/
-
-# Clean up old deployments
-./deploy-talos-cluster.sh cleanup
-```
-
-## 🛠️ Troubleshooting
-
-### Quick Diagnostics
-
-```bash
-# Comprehensive system check
-./deploy-talos-cluster.sh diagnostics
-
-# Check specific node
-talosctl -n <NODE_IP> version
-talosctl -n <NODE_IP> logs -f
-
-# Network connectivity
-ping <VIP_ADDRESS>    # VIP
-ping <NODE_IP>        # Control plane node
-```
-
-### Common Issues
-
-**VM Creation Failures:**
-```bash
-# Check Proxmox logs
-journalctl -u pveproxy -f
-
-# Verify template exists
-qm list | grep talos
-```
-
-**Network Issues:**
-```bash
-# Test node connectivity
-./deploy-talos-cluster.sh status
-
-# Check bridge configuration
-ip addr show vmbr1
-```
-
-**Bootstrap Problems:**
-```bash
-# Check Talos API
-talosctl version --nodes <NODE_IP>
-
-# View bootstrap logs
-talosctl logs --follow --nodes <NODE_IP>
-```
-
-## 🔒 Security Features
-
-- **RBAC** enabled by default
-- **Pod Security Standards** enforced
-- **Network policies** ready for implementation
-- **Certificate management** with proper SANs
-- **SSH emergency access** configured
-- **Kernel protection** enabled
-- **Secrets management** via sealed-secrets
-
-## 📊 Monitoring & Observability
-
-### Built-in Health Checks
-
-```bash
-# Cluster health overview
-./deploy-talos-cluster.sh health-check
-
-# Detailed diagnostics
-./deploy-talos-cluster.sh diagnostics
-
-# Node-specific checks
-talosctl health --nodes <NODE_IP>,<CP2_IP>,<CP3_IP>
-```
-
-### Integration Points
-
-- **Prometheus** metrics available on all nodes
-- **Log aggregation** via Talos logging
-- **Event monitoring** through Kubernetes events
-- **Resource monitoring** via kubectl top
-
-## 📈 Performance
-
-### Deployment Speed
-
-- **Parallel processing**: 3x faster than sequential
-- **Optimized timeouts**: Intelligent retry logic
-- **Resource efficiency**: Per-VM resource optimization
-- **Network optimization**: Concurrent node preparation
-
-### Resource Optimization
-
-```yaml
-# cluster-config.yaml example
-nodes:
-  - name: "kng-cp-1"
-    memory: 8192    # 8GB for control plane
-    cpu: 4          # 4 cores
-    disk_size: "30G"
-  
-  - name: "kng-worker-1" 
-    memory: 16384   # 16GB for compute-heavy workloads
-    cpu: 8          # 8 cores
-    disk_size: "50G"
-```
-
-## 🔄 Backup & Recovery
-
-### Automated Backups
-
-```bash
-# etcd snapshots (automatic)
-talosctl etcd snapshot
-
-# Configuration backup
-tar czf backup-$(date +%Y%m%d).tar.gz talos-config/ cluster-config.yaml terraform.tfvars
-```
-
-### Disaster Recovery
-
-```bash
-# Infrastructure recovery
-terraform destroy
-terraform apply
-
-# Cluster recovery from snapshot
-talosctl etcd snapshot restore --from snapshot.db
-```
-
-## 🚀 Advanced Features
-
-### External Node Integration
-
-Add nodes from any infrastructure:
-
-```bash
-# Physical servers
-./deploy-talos-cluster.sh add-external-node "metal-1" "192.168.1.50" "worker"
-
-# Cloud VMs  
-./deploy-talos-cluster.sh add-external-node "aws-worker-1" "10.1.0.100" "worker" "arm64"
-
-# Edge devices
-./deploy-talos-cluster.sh add-external-node "pi-worker-1" "192.168.1.200" "worker" "arm64"
-```
-
-### Multi-Architecture Support
-
-```yaml
-# Support for mixed architectures
-nodes:
-  - name: "amd64-worker"
-    arch: "amd64"
-  - name: "arm64-worker" 
-    arch: "arm64"
-```
-
-## 📚 Documentation & Support
-
-### File Structure
-
-```
-infra/
-├── README.md                    # This comprehensive guide
-├── deploy-talos-cluster.sh      # Unified deployment script
-├── cluster-config.yaml          # Advanced configuration
-├── config-parser.sh            # Configuration utilities
-├── terraform.tfvars.example    # Configuration template
-├── main.tf                     # Infrastructure definition
-├── variables.tf                # Variable definitions
-├── outputs.tf                  # Output definitions
-└── talos-config/               # Generated configurations
-```
-
-### External Resources
-
-- [Talos Linux Documentation](https://www.talos.dev/)
-- [Proxmox VE Documentation](https://pve.proxmox.com/wiki/Main_Page)
-- [Terraform Proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
-
----
-
-## 🎯 Quick Start Summary
-
-```bash
-# 1. Setup prerequisites and configuration
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your settings
-
-# 2. Deploy everything
-./deploy-talos-cluster.sh
-
-# 3. Verify deployment
-./deploy-talos-cluster.sh diagnostics
-kubectl get nodes -o wide
-
-# 4. Start using your cluster!
-```
-
-**🎉 You now have a production-ready, highly available Talos Kubernetes cluster!**
-
-# Install Talos CLI
-curl -sL https://talos.dev/install | sh
-
-# Install kubectl
-brew install kubectl
-```
-
-## ⚙️ Configuration
-
-### 1. Environment Setup
-
-Create/update `../secrets.env` with your Proxmox credentials:
-
-```bash
-proxmox_ur=https://your-proxmox-ip:8006/api2/json
-proxmox_user=root@pam
-proxmox_secret=your-password-or-api-token
-```
-
-### 2. Customize Deployment
-
-```bash
-# Copy the example configuration
-cp terraform.tfvars.example terraform.tfvars
-
-# Edit with your specific settings
-nano terraform.tfvars
-```
-
-**Key configurations to update:**
-
-- `ssh_public_key`: Your SSH public key for emergency access
-- `proxmox_nodes`: Your actual Proxmox node names
-- `vm_storage`/`vm_storage_secondary`: Verify storage pool names
-- `network_gateway`/`dns_servers`: Network settings for your environment
-- `cluster_vip`/`cluster_endpoint`: Adjust for your IP range
-
-### 3. Resource Allocation
-
-Fine-tune VM resources based on your hardware:
-
-```hcl
-vm_cpu_cores = 4          # CPU cores per VM
-vm_memory    = 8192       # RAM in MB per VM  
-vm_disk_size = "30G"      # Primary disk size
-
-# Additional storage
-control_plane_etcd_disk_size = 10   # GB for etcd data
-worker_storage_disk_size     = 50   # GB for containers
-```
-
-## 🚀 Deployment
-
-### Using the Deploy Script (Recommended)
-
-The `deploy.sh` script is located in the `scripts/` folder:
-
-```bash
-cd ../scripts
-
-# Initialize and generate configs
-./deploy.sh init
-
-# Apply configurations (install Talos)
-./deploy.sh apply
-
-# Bootstrap Kubernetes cluster
-./deploy.sh bootstrap
-
-# Or full deployment in one command
-./deploy.sh deploy
-
-# Check cluster status
-./deploy.sh status
-```
-
-### Manual Deployment
-
-```bash
-# Source environment variables
-source ../secrets.env
-export TF_VAR_proxmox_ve_endpoint="$proxmox_ur"
-export TF_VAR_proxmox_ve_username="$proxmox_user"
-export TF_VAR_proxmox_ve_password="$proxmox_secret"
-
-# Deploy with Terraform
-terraform init
-terraform plan
-terraform apply
-```
-
-## 🎯 Post-Deployment
-
-### Generated Configuration Files
-
-After deployment, configuration files are created in `talos-config/`:
-
-```
-talos-config/
-├── talosconfig                    # Talos client configuration
-├── kubeconfig                     # Kubernetes client configuration  
-├── controlplane-kng-cp-*.yaml     # Control plane node configs
-└── worker-kng-worker-*.yaml       # Worker node configurations
-```
-
-### Cluster Bootstrap
-
-1. **Export configuration paths**:
-   ```bash
-   export TALOSCONFIG="$(pwd)/talos-config/talosconfig"
-   export KUBECONFIG="$(pwd)/talos-config/kubeconfig"
-   ```
-
-2. **Wait for VMs to boot**:
-   ```bash
-   for ip in <NODE_IP> <CP2_IP> <CP3_IP>; do
-     until ping -c1 $ip >/dev/null 2>&1; do 
-       echo "Waiting for $ip..."
-       sleep 5
-     done
-     echo "✓ $ip is responding"
-   done
-   ```
-
-3. **Bootstrap the cluster**:
-   ```bash
-   talosctl bootstrap \\
-     --nodes <NODE_IP> \\
-     --endpoints <NODE_IP>,<CP2_IP>,<CP3_IP>
-   ```
-
-4. **Verify cluster health**:
-   ```bash
-   talosctl health --nodes <NODE_IP>,<CP2_IP>,<CP3_IP>
-   ```
-
-5. **Retrieve kubeconfig**:
-   ```bash
-   talosctl kubeconfig --nodes <NODE_IP>
-   ```
-
-6. **Verify Kubernetes cluster**:
-   ```bash
-   kubectl get nodes -o wide
-   kubectl get pods -A
-   ```
-
-## 🔧 Advanced Configuration
-
-### CNI Selection
-
-Choose your preferred Container Network Interface:
-
-```hcl
-cluster_cni = "flannel"  # Options: flannel, cilium, calico
-```
-
-### System Tuning
-
-Customize kernel parameters and kubelet settings:
-
-```hcl
-control_plane_sysctls = {
-  "net.core.somaxconn"     = "65535"
-  "kernel.pid_max"         = "4194304"
-  # Add more as needed
-}
-
-control_plane_kubelet_extra_args = {
-  "max-pods"               = "250"
-  "event-qps"              = "50"
-  # Add more as needed  
-}
-```
-
-### MAC Address Management
-
-Specify custom MAC addresses for consistent networking:
-
-```hcl
-control_plane_mac_addresses = [
-  "52:54:00:12:34:01",
-  "52:54:00:12:34:02", 
-  "52:54:00:12:34:03"
-]
-```
-
-## 📊 Monitoring & Management
-
-### Terraform Outputs
-
-View deployment information:
-
-```bash
-terraform output deployment_summary     # Cluster overview
-terraform output bootstrap_instructions # Setup guide
-terraform output quick_commands         # Useful commands
-```
-
-### Cluster Operations
-
-```bash
-# View cluster members
-talosctl get members
-
-# Check system logs  
-talosctl logs --follow
-
-# Apply configuration patches
-talosctl patch mc --patch @patch.yaml
-
-# Upgrade Talos nodes
-talosctl upgrade --image ghcr.io/siderolabs/installer:v1.8.0
-```
-
-## 🔒 Security
-
-- **RBAC enabled** by default
-- **Pod Security Standards** enforced (baseline)  
-- **SSH access** configured for emergency situations
-- **Certificate SANs** properly configured for VIP
-- **Network policies** can be applied post-deployment
-- **Kernel protection** enabled with `protect-kernel-defaults`
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-1. **VM Creation Failures**:
-   ```bash
-   # Check Proxmox logs
-   journalctl -u pveproxy -f
-   
-   # Verify template exists
-   qm list | grep talos
-   ```
-
-2. **Network Connectivity**:
-   ```bash
-   # Test VM network
-   ping <NODE_IP>
-   
-   # Check bridge configuration  
-   ip addr show vmbr1
-   ```
-
-3. **Bootstrap Issues**:
-   ```bash
-   # Check Talos logs
-   talosctl logs -f --nodes <NODE_IP>
-   
-   # Verify API access
-   talosctl version --nodes <NODE_IP>
-   ```
-
-### Log Analysis
-
-```bash
-# Proxmox VM logs
-tail -f /var/log/pve/tasks/active
-
-# Talos system logs
-talosctl logs --follow --nodes <NODE_IP>
-
-# Kubernetes events
-kubectl get events --all-namespaces
-```
-
-## 📈 Scaling
-
-### Adding Worker Nodes
-
-```hcl
-# Increase worker count
-worker_count_per_proxmox_node = 3  # Was 2
-
-# Apply changes
-terraform plan
-terraform apply
-```
-
-### Resource Scaling
-
-```hcl
-# Scale up VM resources
-vm_cpu_cores = 8     # From 4
-vm_memory    = 16384 # From 8192
-
-# Note: Requires VM restart
-terraform apply
-```
-
-## 🔄 Maintenance
-
-### Backup Strategy
-
-```bash
-# Backup etcd (automated in Talos)
-talosctl etcd snapshot
-
-# Backup configurations
-tar czf talos-backup-$(date +%Y%m%d).tar.gz talos-config/
-```
-
-### Updates
-
-```bash
-# Update Talos
-terraform apply -var="talos_version=v1.8.1"
-
-# Update Kubernetes  
-terraform apply -var="kubernetes_version=v1.31.2"
-```
-
-### Disaster Recovery
-
-```bash
-# Restore from etcd snapshot
-talosctl etcd snapshot restore --from snapshot.db
-
-# Recreate infrastructure
-terraform destroy
-terraform apply
-```
-
-## 📚 References
-
-- [Talos Documentation](https://www.talos.dev/)
-- [BPG Proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
-- [Terraform Best Practices](https://www.terraform.io/docs/cloud/guides/recommended-practices/)
+## Files Generated
+
+- `talos-config/talosconfig` - Talos CLI configuration
+- `talos-config/controlplane.yaml` - Control plane machine config
+- `talos-config/worker.yaml` - Worker machine config
+- `talos-config/kubeconfig` - Kubernetes access (after bootstrap)
+- `terraform.tfstate` - Terraform state (gitignored)
+
+## Troubleshooting
+
+**Terraform fails to connect:**
+- Check Proxmox credentials in terraform.tfvars
+- Verify Proxmox API endpoint is accessible
+- Ensure API token has necessary permissions
+
+**VMs created but Talos not applied:**
+- Run `../scripts/deploy.sh apply` to push configs
+- Check node IPs are reachable from your machine
+
+**Bootstrap fails:**
+- Ensure VIP is not in use on network
+- Verify cluster endpoint matches VIP in cluster-config.yaml
+- Check etcd health: `talosctl --nodes <CP_IP> etcd members`

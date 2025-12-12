@@ -1,83 +1,55 @@
-# Scripts Directory
+# Deployment Scripts
 
-This directory contains deployment and utility scripts for managing the Talos Kubernetes cluster.
+**License:** GPL-3.0 - See [LICENSE](../LICENSE)
 
-## 📜 Scripts
+## deploy.sh
 
-### 🚀 deploy.sh
-**Main Talos cluster deployment script**
-
-Deploys Talos Linux to VMs and bootstraps Kubernetes cluster (without CNI).
+Deploys Talos Linux and bootstraps Kubernetes cluster (without CNI).
 
 ```bash
-./deploy.sh              # Full deployment (apply + bootstrap)
-./deploy.sh apply        # Apply Talos configs to VMs (installs Talos)
-./deploy.sh bootstrap    # Bootstrap Kubernetes cluster
+./deploy.sh              # Full deployment
+./deploy.sh apply        # Apply Talos configs only
+./deploy.sh bootstrap    # Bootstrap Kubernetes only
 ./deploy.sh status       # Check cluster status
 ```
 
-**What it does:**
-1. Uses Terraform-generated configs from `infra/talos-config/`
-2. Applies machine configs to all nodes with `--insecure` flag
-3. Waits for nodes to be ready (2-5 minutes per node)
-4. Bootstraps Kubernetes on first control plane (10.0.2.101)
-5. Retrieves kubeconfig to `infra/talos-config/kubeconfig`
+Process:
+1. Applies machine configs from `infra/talos-config/`
+2. Waits for nodes to be ready
+3. Bootstraps Kubernetes on first control plane
+4. Saves kubeconfig to `infra/talos-config/kubeconfig`
 
-**After deployment:** Nodes will be **NotReady** until CNI is installed (run `bootstrap.sh`)
+Nodes will be NotReady until CNI is installed (run `bootstrap.sh`).
 
----
+## bootstrap.sh
 
-### 🎯 bootstrap.sh
-**Comprehensive Kubernetes bootstrap script**
-
-Installs all core infrastructure components and seals secrets automatically.
+Installs core infrastructure and seals secrets.
 
 ```bash
-./bootstrap.sh                    # Run full bootstrap (or resume)
-./bootstrap.sh --step <N>         # Resume from specific step
-./bootstrap.sh --seal-secrets     # Only seal secrets
-./bootstrap.sh --reset            # Clear state and start fresh
-./bootstrap.sh --help             # Show help
+./bootstrap.sh                    # Full bootstrap or resume
+./bootstrap.sh --step <N>         # Resume from step N
+./bootstrap.sh --seal-secrets     # Seal secrets only
+./bootstrap.sh --reset            # Clear state
 ```
 
-**Bootstrap Steps:**
+**Steps:**
+0. Apply node labels
+1. Cilium CNI
+2. kube-vip
+3. Sealed Secrets (auto-seals from secrets-un/)
+4. external-dns
+5. cert-manager
+6. Longhorn
+7. ArgoCD
 
-0. **Apply Node Labels** - Labels nodes based on cluster-config.yaml
-1. **Cilium CNI** - Network plugin with eBPF optimization
-2. **Kube-VIP** - Load balancer for services
-3. **Sealed Secrets** - Encrypts and seals all secrets from secrets-un/
-4. **External-DNS** - Automatic DNS management
-5. **Cert-Manager** - TLS certificate automation
-6. **Longhorn** - Distributed storage system
-7. **ArgoCD** - GitOps continuous delivery
-
-**Features:**
-- ✅ Automatic secret sealing with namespace detection
-- ✅ State management for resumable bootstraps
-- ✅ Helm chart cleanup after installation
-- ✅ Removes problematic creationTimestamp fields
-- ✅ Displays ArgoCD admin password on completion
-**Secret Management:**
-The bootstrap script automatically finds and seals all secrets in `secrets-un/` directory:
-- Detects namespace from secret YAML
-- Finds matching directory in cluster/
-- Seals using kubeseal (direct cluster access)
+**Secret sealing:**
+- Finds secrets in `secrets-un/`
+- Detects namespace
+- Seals with kubeseal
+- Places sealed-secret.yaml in correct cluster/ directory
 - Removes problematic creationTimestamp fields
-- Places sealed-secret.yaml in correct app folder
 
-**Resuming Failed Bootstrap:**
-If bootstrap fails at any step:
-```bash
-./bootstrap.sh --step 3  # Resume from step 3 (sealed-secrets)
-```
-
-Or let it auto-resume:
-```bash
-./bootstrap.sh  # Prompts to resume from last completed step
-```
-
-**Resealing Secrets Later:**
-After cluster is running with sealed-secrets controller:
+**Resuming:** Script tracks state and can resume from any step if interrupted.
 ```bash
 ./bootstrap.sh --seal-secrets  # Only reseal all secrets
 ```
@@ -106,117 +78,37 @@ cd ../scripts/
 # 3. Bootstrap services
 ./bootstrap.sh
 
-# 4. Check status
-./deploy.sh status
-kubectl get nodes -o wide
-```
+## seal-secrets.sh
 
-### Redeploy Cluster
+Validates and seals secrets from `secrets-un/`.
 
 ```bash
-# Destroy and recreate
-cd ../infra/
-terraform destroy
-terraform apply
-
-cd ../scripts/
-./deploy.sh
-./bootstrap.sh
+./seal-secrets.sh            # Interactive mode
+./seal-secrets.sh validate   # Check unsealed secrets
+./seal-secrets.sh seal       # Seal all secrets
 ```
 
-### Update Secrets
+Places sealed secrets in correct cluster/ directories based on namespace.
 
-```bash
-# Edit unsealed secrets
-vi ../secrets-un/cert-manager.yaml
+## label-nodes.sh
 
-# Validate and seal
-./sealed-secrets.sh validate
-./sealed-secrets.sh seal
+Applies node labels from cluster-config.yaml. Called automatically by bootstrap.sh.
 
-# Commit sealed secrets
-git add ../cluster/cert-manager/sealed-secret.yaml
-git commit -m "Update Cloudflare API token"
-git push
+## Dependencies
 
-# ArgoCD auto-syncs the sealed secret!
-```
+Required tools: `talosctl`, `kubectl`, `helm`, `kustomize`, `yq`, `jq`, `kubeseal`
 
-### Troubleshooting
+Required files:
+- `infra/cluster-config.yaml`
+- `infra/talos-config/talosconfig`
+- `infra/talos-config/kubeconfig`
 
-```bash
-# Check cluster status
-./deploy.sh status
+## Security
 
-# View Talos logs
-export TALOSCONFIG="../infra/talos-config/talosconfig"
-talosctl --nodes 10.0.2.101 logs
+**Never commit to git:**
+- `secrets-un/*.yaml` (plaintext secrets)
+- `secrets.env` (credentials)
+- `infra/talos-config/*` (certificates and configs)
 
-# View Kubernetes events
-export KUBECONFIG="../infra/talos-config/kubeconfig"
-kubectl get events -A --sort-by='.lastTimestamp'
-
-# Check ArgoCD apps
-kubectl get applications -n argocd
-```
-
----
-
-## 📋 Script Dependencies
-
-### Required Environment
-- `talosctl` - Talos CLI
-- `kubectl` - Kubernetes CLI
-- `helm` - Helm package manager
-- `kustomize` - Kustomize CLI
-- `yq` - YAML processor
-- `jq` - JSON processor
-
-### File Dependencies
-- `../infra/cluster-config.yaml` - Cluster configuration
-- `../infra/talos-config/` - Terraform-generated configs
-- `../infra/talos-config/talosconfig` - Talos client config
-- `../infra/talos-config/kubeconfig` - Kubernetes client config
-- `../secrets-un/` - Unsealed secrets (git-ignored)
-- `../cluster/` - Cluster manifests
-
----
-
-## 🛡️ Security Notes
-
-### Secrets Management
-
-**NEVER commit unsealed secrets to git!**
-
-- ✅ **Safe**: `cluster/*/sealed-secret.yaml` (encrypted)
-- ❌ **UNSAFE**: `secrets-un/*.yaml` (plaintext, git-ignored)
-- ❌ **UNSAFE**: `secrets.env` (credentials, git-ignored)
-
-### Certificate Management
-
-**NEVER regenerate Talos certificates manually!**
-
-- Always use Terraform-generated configs
-- Located in: `infra/talos-config/`
-- Regenerate via: `terraform apply -target=local_file.talosconfig`
-
-### Git Ignore
-
-Ensure `.gitignore` excludes:
-```
-talos-config/
-*.talosconfig
-secrets-un/
-secrets.env
-*.key
-*.pem
-```
-
----
-
-## 📚 References
-
-- [Talos Linux Documentation](https://www.talos.dev/v1.11/)
-- [Cilium Documentation](https://docs.cilium.io/en/stable/)
-- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
-- [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets)
+**Safe to commit:**
+- `cluster/*/sealed-secret.yaml` (encrypted)
