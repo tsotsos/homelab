@@ -22,8 +22,20 @@ data:
     INFLUX_URL="http://influxdb.influxdb.svc.cluster.local:8086"
     ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
     
+    if [ -z "$ADMIN_TOKEN" ]; then
+      echo "ERROR: Admin token is empty"
+      exit 1
+    fi
+    echo "Admin token loaded (${#ADMIN_TOKEN} chars)"
+    
+    echo "Testing InfluxDB connectivity..."
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${INFLUX_URL}/health")
+    echo "InfluxDB health check: HTTP ${HTTP_CODE}"
+    
     echo "Fetching organization ID for '${ORG}'..."
-    ORG_ID=$(curl -s --max-time 10 -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs?org=${ORG}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
+    ORG_RESPONSE=$(curl -s --max-time 10 -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs?org=${ORG}")
+    echo "Org API response: ${ORG_RESPONSE}"
+    ORG_ID=$(echo "${ORG_RESPONSE}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
     
     if [ -z "$ORG_ID" ] || [ "$ORG_ID" = "null" ]; then
       echo "Failed to get organization ID for '${ORG}'"
