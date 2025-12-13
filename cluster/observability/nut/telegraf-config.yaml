@@ -9,11 +9,9 @@ metadata:
 data:
   telegraf.conf: |
     [[inputs.prometheus]]
-      urls = ["http://127.0.0.1:9199/metrics"]
+      urls = ["http://127.0.0.1:9199/ups_metrics"]
       metric_version = 2
       interval = "30s"
-      # Only collect UPS/NUT metrics, exclude Go runtime and promhttp metrics
-      namepass = ["network_ups_*"]
 
     [[outputs.influxdb_v2]]
       urls = ["http://influxdb-influxdb2.influxdb.svc.cluster.local:8086"]
