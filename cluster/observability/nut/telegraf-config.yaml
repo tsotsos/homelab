@@ -8,8 +8,21 @@ metadata:
 
 data:
   telegraf.conf: |
+    # Scrape UPS1 metrics
     [[inputs.prometheus]]
-      urls = ["http://127.0.0.1:9199/ups_metrics"]
+      urls = ["http://127.0.0.1:9199/ups_metrics?ups=ups1"]
+      metric_version = 2
+      interval = "30s"
+
+    # Scrape PDU1 metrics
+    [[inputs.prometheus]]
+      urls = ["http://127.0.0.1:9199/ups_metrics?ups=pdu1"]
+      metric_version = 2
+      interval = "30s"
+
+    # Scrape PDU2 metrics
+    [[inputs.prometheus]]
+      urls = ["http://127.0.0.1:9199/ups_metrics?ups=pdu2"]
       metric_version = 2
       interval = "30s"
 
