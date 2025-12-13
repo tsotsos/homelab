@@ -19,7 +19,7 @@ data:
     echo "Reading configuration..."
     BUCKET="default"
     ORG="kng"
-    INFLUX_URL="http://influxdb.influxdb.svc.cluster.local:8086"
+    INFLUX_URL="http://influxdb-influxdb2.influxdb.svc.cluster.local:8086"
     ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
     
     if [ -z "$ADMIN_TOKEN" ]; then

@@ -17,7 +17,7 @@ data:
       interval = "30s"
 
     [[outputs.influxdb_v2]]
-      urls = ["http://influxdb.influxdb.svc.cluster.local:8086"]
+      urls = ["http://influxdb-influxdb2.influxdb.svc.cluster.local:8086"]
       token = "$INFLUXDB_TOKEN"
       organization = "kng"
       bucket = "default"
