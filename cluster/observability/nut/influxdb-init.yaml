@@ -175,10 +175,16 @@ spec:
             - |
               while [ ! -f /shared/status ]; do sleep 1; done
               STATUS=$(cat /shared/status)
+              echo "Status: $STATUS"
               if [ "$STATUS" = "done" ]; then
                 TOKEN=$(cat /shared/token)
+                echo "Token length: ${#TOKEN}"
+                echo "Token (first 20 chars): ${TOKEN:0:20}..."
                 TOKEN_BASE64=$(echo -n "${TOKEN}" | base64 -w0)
+                echo "Base64 length: ${#TOKEN_BASE64}"
+                echo "Patching secret..."
                 kubectl patch secret nut-influxdb-secrets -n monitoring --type='json' -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-nut-token\",\"value\":\"${TOKEN_BASE64}\"}]"
+                echo "Patch complete"
               fi
           volumeMounts:
             - name: shared
