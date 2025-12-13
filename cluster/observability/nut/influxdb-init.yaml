@@ -1,0 +1,129 @@
+---
+# ConfigMap with script for idempotent InfluxDB token initialization for NUT/Telegraf
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nut-influxdb-init-script
+  namespace: monitoring
+data:
+  init-influxdb.sh: |
+    #!/bin/sh
+    set -e
+    apk add --no-cache curl jq
+
+    BUCKET="default"
+    ORG="kng"
+    INFLUX_URL="http://influxdb.influxdb.svc.cluster.local:8086"
+    ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
+
+    ORG_ID=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs?org=${ORG}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
+    BUCKET_ID=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/buckets?org=${ORG}&name=${BUCKET}" | jq -r ".buckets[]? | select(.name==\"${BUCKET}\") | .id")
+
+    EXISTING_TOKEN=$(cat /app-secrets/influxdb-nut-token 2>/dev/null || echo "")
+    if [ -n "$EXISTING_TOKEN" ]; then
+      TOKEN_CHECK=$(curl -s -H "Authorization: Token ${EXISTING_TOKEN}" "${INFLUX_URL}/api/v2/buckets?org=${ORG}")
+      if echo "$TOKEN_CHECK" | jq -e '.buckets' > /dev/null 2>&1; then
+        echo "skip" > /shared/status
+        exit 0
+      fi
+    fi
+
+    EXISTING_AUTH=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/authorizations" | jq -r '.authorizations[] | select(.description=="nut-telegraf-token") | .token' | head -1)
+    if [ -n "$EXISTING_AUTH" ] && [ "$EXISTING_AUTH" != "null" ]; then
+      NEW_TOKEN="$EXISTING_AUTH"
+    else
+      TOKEN_RESPONSE=$(curl -s -X POST -H "Authorization: Token ${ADMIN_TOKEN}" -H "Content-Type: application/json" "${INFLUX_URL}/api/v2/authorizations" -d "{\"orgID\":\"${ORG_ID}\",\"description\":\"nut-telegraf-token\",\"permissions\":[{\"action\":\"write\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG_ID}\"}}]}")
+      NEW_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.token')
+      if [ -z "$NEW_TOKEN" ] || [ "$NEW_TOKEN" = "null" ]; then
+        exit 1
+      fi
+    fi
+
+    echo -n "${NEW_TOKEN}" > /shared/token
+    echo "done" > /shared/status
+---
+# Secret to store the NUT/Telegraf InfluxDB token
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nut-influxdb-secrets
+  namespace: monitoring
+type: Opaque
+data:
+  influxdb-nut-token: ""
+---
+# ServiceAccount for the init job
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nut-influxdb-init
+  namespace: monitoring
+---
+---
+# Job to initialize the NUT/Telegraf InfluxDB token
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nut-influxdb-init
+  namespace: monitoring
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    spec:
+      serviceAccountName: nut-influxdb-init
+      restartPolicy: OnFailure
+      initContainers:
+        - name: fetch-influxdb-secret
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              kubectl get secret influxdb-auth -n influxdb -o jsonpath='{.data.admin-user-token}' | base64 -d > /influx-secrets/admin-token
+          volumeMounts:
+            - name: influx-secrets
+              mountPath: /influx-secrets
+      containers:
+        - name: init-influxdb
+          image: alpine:latest
+          command: ["/bin/sh", "/scripts/init-influxdb.sh"]
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+            - name: influx-secrets
+              mountPath: /influx-secrets
+              readOnly: true
+            - name: app-secrets
+              mountPath: /app-secrets
+              readOnly: true
+            - name: shared
+              mountPath: /shared
+        - name: token-patcher
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              while [ ! -f /shared/status ]; do sleep 1; done
+              STATUS=$(cat /shared/status)
+              if [ "$STATUS" = "done" ]; then
+                TOKEN=$(cat /shared/token)
+                TOKEN_BASE64=$(echo -n "${TOKEN}" | base64 -w0)
+                kubectl patch secret nut-influxdb-secrets -n monitoring --type='json' -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-nut-token\",\"value\":\"${TOKEN_BASE64}\"}]"
+              fi
+          volumeMounts:
+            - name: shared
+              mountPath: /shared
+      volumes:
+        - name: init-script
+          configMap:
+            name: nut-influxdb-init-script
+            defaultMode: 0755
+        - name: influx-secrets
+          emptyDir: {}
+        - name: shared
+          emptyDir: {}
+        - name: app-secrets
+          secret:
+            secretName: nut-influxdb-secrets
