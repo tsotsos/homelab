@@ -104,13 +104,14 @@ spec:
       - name: nut-exporter
         image: ghcr.io/druggeri/nut_exporter:3.1.1
         imagePullPolicy: IfNotPresent
-        command:
-        - sh
-        - -c
-        - |
-          echo "Waiting 15 seconds for NUT server to start..."
-          sleep 15
-          exec /bin/nut_exporter --nut.server=127.0.0.1 --nut.ups_list=ups1,pdu1,pdu2 --nut.vars_enable=battery.charge,battery.runtime,battery.voltage,battery.date,battery.packs,battery.runtime.low,input.voltage,input.frequency,input.voltage.maximum,input.voltage.minimum,input.transfer.high,input.transfer.low,output.voltage,output.current,output.frequency,output.voltage.nominal,ups.load,ups.status,ups.temperature,ups.power,ups.realpower,ups.test.result,ups.firmware,ups.mfr.date,outlet.count,outlet.1.status,outlet.2.status,outlet.3.status,outlet.4.status,outlet.5.status,outlet.6.status,outlet.7.status,outlet.8.status
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sleep", "15"]
+        args:
+        - --nut.server=127.0.0.1
+        - --nut.ups_list=ups1,pdu1,pdu2
+        - --nut.vars_enable=battery.charge,battery.runtime,battery.voltage,battery.date,battery.packs,battery.runtime.low,input.voltage,input.frequency,input.voltage.maximum,input.voltage.minimum,input.transfer.high,input.transfer.low,output.voltage,output.current,output.frequency,output.voltage.nominal,ups.load,ups.status,ups.temperature,ups.power,ups.realpower,ups.test.result,ups.firmware,ups.mfr.date,outlet.count,outlet.1.status,outlet.2.status,outlet.3.status,outlet.4.status,outlet.5.status,outlet.6.status,outlet.7.status,outlet.8.status
         env:
         - name: NUT_EXPORTER_USERNAME
           value: "mon"
