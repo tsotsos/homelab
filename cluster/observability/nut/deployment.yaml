@@ -104,7 +104,7 @@ spec:
         imagePullPolicy: IfNotPresent
         args:
         - --nut.server=127.0.0.1
-        # Export all available variables (no filter = all variables exported)
+        - --nut.vars_enable=battery.charge,battery.runtime,battery.voltage,battery.date,battery.packs,battery.runtime.low,input.voltage,input.frequency,input.voltage.maximum,input.voltage.minimum,input.transfer.high,input.transfer.low,output.voltage,output.current,output.frequency,output.voltage.nominal,ups.load,ups.status,ups.temperature,ups.power,ups.realpower,ups.test.result,ups.firmware,ups.mfr.date
         env:
         - name: NUT_EXPORTER_USERNAME
           value: "mon"
