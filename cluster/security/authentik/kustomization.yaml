@@ -10,6 +10,7 @@ resources:
   - ingresses/longhorn-ingress.yaml
   - ingresses/zigbee2mqtt-ingress.yaml
   - ingresses/emqx-ingress.yaml
+  - ingresses/peaut-ingress.yaml
 helmCharts:
   - name: authentik
     repo: https://charts.goauthentik.io
