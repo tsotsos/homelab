@@ -15,6 +15,19 @@ spec:
       labels:
         app: nut-server
     spec:
+      initContainers:
+      - name: wait-for-nut
+        image: busybox:latest
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for NUT server to be ready..."
+          until nc -z 127.0.0.1 3493 2>/dev/null; do
+            echo "NUT server not ready yet, waiting..."
+            sleep 2
+          done
+          echo "NUT server is ready!"
       containers:
       - name: nut-upsd
         image: instantlinux/nut-upsd:latest
