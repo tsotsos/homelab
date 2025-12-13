@@ -145,4 +145,5 @@ spec:
           mountPath: /config
       volumes:
       - name: peanut-config
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: peanut-config
