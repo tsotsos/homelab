@@ -63,19 +63,27 @@ data:
       fi
     fi
 
+    echo "Checking for existing nut-telegraf-token..."
     EXISTING_AUTH=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/authorizations" | jq -r '.authorizations[] | select(.description=="nut-telegraf-token") | .token' | head -1)
     if [ -n "$EXISTING_AUTH" ] && [ "$EXISTING_AUTH" != "null" ]; then
+      echo "Found existing token"
       NEW_TOKEN="$EXISTING_AUTH"
     else
+      echo "Creating new token..."
       TOKEN_RESPONSE=$(curl -s -X POST -H "Authorization: Token ${ADMIN_TOKEN}" -H "Content-Type: application/json" "${INFLUX_URL}/api/v2/authorizations" -d "{\"orgID\":\"${ORG_ID}\",\"description\":\"nut-telegraf-token\",\"permissions\":[{\"action\":\"write\",\"resource\":{\"type\":\"buckets\",\"id\":\"${BUCKET_ID}\",\"orgID\":\"${ORG_ID}\"}}]}")
+      echo "Token response: ${TOKEN_RESPONSE}"
       NEW_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.token')
       if [ -z "$NEW_TOKEN" ] || [ "$NEW_TOKEN" = "null" ]; then
+        echo "Failed to create token"
         exit 1
       fi
+      echo "Token created successfully"
     fi
 
+    echo "Storing token (${#NEW_TOKEN} chars)..."
     echo -n "${NEW_TOKEN}" > /shared/token
     echo "done" > /shared/status
+    echo "Initialization complete"
 ---
 # Secret to store the NUT/Telegraf InfluxDB token
 apiVersion: v1
