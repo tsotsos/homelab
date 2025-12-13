@@ -9,12 +9,20 @@ data:
   init-influxdb.sh: |
     #!/bin/sh
     set -e
-    apk add --no-cache curl jq
-
+    
+    echo "Installing dependencies..."
+    apk add --no-cache curl jq || {
+      echo "Failed to install curl/jq"
+      exit 1
+    }
+    
+    echo "Reading configuration..."
     BUCKET="default"
     ORG="kng"
     INFLUX_URL="http://influxdb.influxdb.svc.cluster.local:8086"
     ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
+    
+    echo "Fetching organization ID for '${ORG}'..."
 
     ORG_ID=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs?org=${ORG}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
     BUCKET_ID=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/buckets?org=${ORG}&name=${BUCKET}" | jq -r ".buckets[]? | select(.name==\"${BUCKET}\") | .id")
