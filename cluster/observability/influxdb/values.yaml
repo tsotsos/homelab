@@ -15,7 +15,7 @@ auth:
 persistence:
   enabled: true
   storageClass: longhorn
-  size: 50Gi
+  size: 200Gi
   accessMode: ReadWriteOnce
 
 # Resources
@@ -29,7 +29,7 @@ resources:
 
 # Node selector for storage nodes
 nodeSelector:
-  node.kng/workload-storage: "true"
+  kubernetes.io/hostname: s01
 
 # Service configuration
 service:

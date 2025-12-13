@@ -122,6 +122,25 @@ spec:
             memory: 32Mi
           limits:
             memory: 64Mi
+      - name: telegraf
+        image: telegraf:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: INFLUXDB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-auth
+              key: token
+        volumeMounts:
+        - name: telegraf-config
+          mountPath: /etc/telegraf/telegraf.conf
+          subPath: telegraf.conf
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
       - name: peanut
         image: brandawg93/peanut:latest
         imagePullPolicy: IfNotPresent
@@ -147,3 +166,6 @@ spec:
       - name: peanut-config
         persistentVolumeClaim:
           claimName: peanut-config
+      - name: telegraf-config
+        configMap:
+          name: telegraf-config
