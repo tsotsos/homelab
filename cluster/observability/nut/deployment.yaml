@@ -129,8 +129,8 @@ spec:
         - name: INFLUXDB_TOKEN
           valueFrom:
             secretKeyRef:
-              name: influxdb-auth
-              key: token
+              name: nut-influxdb-secrets
+              key: influxdb-nut-token
         volumeMounts:
         - name: telegraf-config
           mountPath: /etc/telegraf/telegraf.conf
