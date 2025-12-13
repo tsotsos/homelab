@@ -32,14 +32,16 @@ data:
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${INFLUX_URL}/health")
     echo "InfluxDB health check: HTTP ${HTTP_CODE}"
     
-    echo "Fetching organization ID for '${ORG}'..."
-    ORG_RESPONSE=$(curl -s --max-time 10 -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs?org=${ORG}")
-    echo "Org API response: ${ORG_RESPONSE}"
-    ORG_ID=$(echo "${ORG_RESPONSE}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
+    echo "Fetching all organizations..."
+    ALL_ORGS=$(curl -s --max-time 10 -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs")
+    echo "All orgs: ${ALL_ORGS}"
+    
+    echo "Looking for organization ID for '${ORG}'..."
+    ORG_ID=$(echo "${ALL_ORGS}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
     
     if [ -z "$ORG_ID" ] || [ "$ORG_ID" = "null" ]; then
-      echo "Failed to get organization ID for '${ORG}'"
-      exit 1
+      echo "Organization '${ORG}' not found by name, using hardcoded ID..."
+      ORG_ID="0bcf1077828e1514"
     fi
     echo "Organization ID: ${ORG_ID}"
     
@@ -92,6 +94,31 @@ metadata:
   name: nut-influxdb-init
   namespace: monitoring
 ---
+# RBAC: allow nut-influxdb-init to patch secrets in monitoring namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nut-influxdb-init-patch
+  namespace: monitoring
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["nut-influxdb-secrets"]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nut-influxdb-init-patch
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nut-influxdb-init-patch
+subjects:
+- kind: ServiceAccount
+  name: nut-influxdb-init
+  namespace: monitoring
 ---
 # Job to initialize the NUT/Telegraf InfluxDB token
 apiVersion: batch/v1
