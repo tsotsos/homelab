@@ -23,9 +23,22 @@ data:
     ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
     
     echo "Fetching organization ID for '${ORG}'..."
-
-    ORG_ID=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs?org=${ORG}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
-    BUCKET_ID=$(curl -s -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/buckets?org=${ORG}&name=${BUCKET}" | jq -r ".buckets[]? | select(.name==\"${BUCKET}\") | .id")
+    ORG_ID=$(curl -s --max-time 10 -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/orgs?org=${ORG}" | jq -r ".orgs[] | select(.name==\"${ORG}\") | .id")
+    
+    if [ -z "$ORG_ID" ] || [ "$ORG_ID" = "null" ]; then
+      echo "Failed to get organization ID for '${ORG}'"
+      exit 1
+    fi
+    echo "Organization ID: ${ORG_ID}"
+    
+    echo "Fetching bucket ID for '${BUCKET}'..."
+    BUCKET_ID=$(curl -s --max-time 10 -H "Authorization: Token ${ADMIN_TOKEN}" "${INFLUX_URL}/api/v2/buckets?org=${ORG}&name=${BUCKET}" | jq -r ".buckets[]? | select(.name==\"${BUCKET}\") | .id")
+    
+    if [ -z "$BUCKET_ID" ] || [ "$BUCKET_ID" = "null" ]; then
+      echo "Failed to get bucket ID for '${BUCKET}'"
+      exit 1
+    fi
+    echo "Bucket ID: ${BUCKET_ID}"
 
     EXISTING_TOKEN=$(cat /app-secrets/influxdb-nut-token 2>/dev/null || echo "")
     if [ -n "$EXISTING_TOKEN" ]; then
