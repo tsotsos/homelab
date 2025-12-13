@@ -85,16 +85,6 @@ data:
     echo "done" > /shared/status
     echo "Initialization complete"
 ---
-# Secret to store the NUT/Telegraf InfluxDB token
-apiVersion: v1
-kind: Secret
-metadata:
-  name: nut-influxdb-secrets
-  namespace: monitoring
-type: Opaque
-data:
-  influxdb-nut-token: ""
----
 # ServiceAccount for the init job
 apiVersion: v1
 kind: ServiceAccount
