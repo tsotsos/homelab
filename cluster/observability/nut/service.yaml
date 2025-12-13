@@ -16,5 +16,9 @@ spec:
     targetPort: 9199
     protocol: TCP
     name: metrics
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: web
   selector:
     app: nut-server

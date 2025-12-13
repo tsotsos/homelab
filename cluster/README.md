@@ -79,6 +79,7 @@ Monitoring and logging (sync-wave 4-6):
 - **kube-prometheus-stack**: Metrics, Grafana, Alertmanager (wave 4)
 - **loki**: Log aggregation backend (wave 5)
 - **alloy**: Log collection with syslog support (wave 6)
+- **nut**: UPS/PDU monitoring with PeaNUT web UI (wave 6)
 
 ## 🔧 Usage
 

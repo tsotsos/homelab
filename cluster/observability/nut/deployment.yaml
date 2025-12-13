@@ -35,19 +35,21 @@ spec:
             mibs = apcc
             desc = "UPS 10.0.1.8"
 
-          [ups2]
+          [pdu1]
             driver = snmp-ups
             port = 10.0.1.9
             snmp_version = v1
             community = network
+            mibs = apc_pdu
             pollfreq = 30
             desc = "PDU 10.0.1.9"
 
-          [ups3]
+          [pdu2]
             driver = snmp-ups
             port = 10.0.1.10
             snmp_version = v1
             community = network
+            mibs = apc_pdu
             pollfreq = 30
             desc = "PDU 10.0.1.10"
           EOF
@@ -104,7 +106,7 @@ spec:
         imagePullPolicy: IfNotPresent
         args:
         - --nut.server=127.0.0.1
-        - --nut.vars_enable=battery.charge,battery.runtime,battery.voltage,battery.date,battery.packs,battery.runtime.low,input.voltage,input.frequency,input.voltage.maximum,input.voltage.minimum,input.transfer.high,input.transfer.low,output.voltage,output.current,output.frequency,output.voltage.nominal,ups.load,ups.status,ups.temperature,ups.power,ups.realpower,ups.test.result,ups.firmware,ups.mfr.date
+        - --nut.vars_enable=battery.charge,battery.runtime,battery.voltage,battery.date,battery.packs,battery.runtime.low,input.voltage,input.frequency,input.voltage.maximum,input.voltage.minimum,input.transfer.high,input.transfer.low,output.voltage,output.current,output.frequency,output.voltage.nominal,ups.load,ups.status,ups.temperature,ups.power,ups.realpower,ups.test.result,ups.firmware,ups.mfr.date,outlet.count,outlet.1.status,outlet.2.status,outlet.3.status,outlet.4.status,outlet.5.status,outlet.6.status,outlet.7.status,outlet.8.status
         env:
         - name: NUT_EXPORTER_USERNAME
           value: "mon"
@@ -120,3 +122,27 @@ spec:
             memory: 32Mi
           limits:
             memory: 64Mi
+      - name: peanut
+        image: brandawg93/peanut:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: WEB_PORT
+          value: "8080"
+        - name: WEB_HOST
+          value: "0.0.0.0"
+        ports:
+        - containerPort: 8080
+          name: web
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        volumeMounts:
+        - name: peanut-config
+          mountPath: /config
+      volumes:
+      - name: peanut-config
+        emptyDir: {}
