@@ -8,18 +8,15 @@ metadata:
 
 data:
   telegraf.conf: |
-    [[inputs.nut]]
-      servers = [
-        { name = "ups1", address = "nut-server.monitoring.svc.cluster.local", port = 3493, username = "mon", password = "monpass" },
-        { name = "pdu1", address = "nut-server.monitoring.svc.cluster.local", port = 3493, username = "mon", password = "monpass" },
-        { name = "pdu2", address = "nut-server.monitoring.svc.cluster.local", port = 3493, username = "mon", password = "monpass" }
-      ]
+    [[inputs.prometheus]]
+      urls = ["http://127.0.0.1:9199/metrics"]
+      metric_version = 2
       interval = "30s"
 
     [[outputs.influxdb_v2]]
       urls = ["http://influxdb-influxdb2.influxdb.svc.cluster.local:8086"]
       token = "$INFLUXDB_TOKEN"
-      organization = "kng"
+      organization = "influxdata"
       bucket = "default"
 
     [global_tags]
