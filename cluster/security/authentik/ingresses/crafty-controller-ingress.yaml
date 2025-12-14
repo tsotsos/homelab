@@ -1,0 +1,27 @@
+---
+# Ingress for Crafty Controller with Authentik authentication
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: crafty-controller
+  namespace: authentik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    external-dns.alpha.kubernetes.io/hostname: crafty.kng.house
+spec:
+  ingressClassName: cilium
+  tls:
+    - hosts:
+        - crafty.kng.house
+      secretName: crafty-tls
+  rules:
+    - host: crafty.kng.house
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ak-outpost-authentik-embedded-outpost
+                port:
+                  number: 9000

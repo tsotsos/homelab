@@ -11,6 +11,7 @@ resources:
   - ingresses/zigbee2mqtt-ingress.yaml
   - ingresses/emqx-ingress.yaml
   - ingresses/peanut-ingress.yaml
+  - ingresses/crafty-controller-ingress.yaml
 helmCharts:
   - name: authentik
     repo: https://charts.goauthentik.io

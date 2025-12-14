@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crafty-controller
+  namespace: crafty-controller
+  labels:
+    app: crafty-controller
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: crafty-controller
+  template:
+    metadata:
+      labels:
+        app: crafty-controller
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - s01
+              - key: node.kng/workload-apps
+                operator: In
+                values:
+                - "true"
+      containers:
+      - name: crafty-controller
+        image: registry.gitlab.com/crafty-controller/crafty-4:latest
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: https
+          containerPort: 8443
+          protocol: TCP
+        - name: dynmap
+          containerPort: 8123
+          protocol: TCP
+        - name: minecraft
+          containerPort: 25565
+          protocol: TCP
+        env:
+        - name: TZ
+          value: "Europe/Athens"
+        volumeMounts:
+        - name: crafty-data
+          mountPath: /crafty/backups
+          subPath: backups
+        - name: crafty-data
+          mountPath: /crafty/logs
+          subPath: logs
+        - name: crafty-data
+          mountPath: /crafty/servers
+          subPath: servers
+        - name: crafty-data
+          mountPath: /crafty/config
+          subPath: config
+        - name: crafty-data
+          mountPath: /crafty/import
+          subPath: import
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: crafty-data
+        persistentVolumeClaim:
+          claimName: crafty-data
