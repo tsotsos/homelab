@@ -21,6 +21,11 @@ spec:
     - sourceLabels: [__param_ups]
       targetLabel: ups
       action: replace
+    metricRelabelings:
+    - action: labeldrop
+      regex: 'pod'
+    - action: labeldrop
+      regex: 'instance'
   - port: metrics
     interval: 30s
     scrapeTimeout: 10s
@@ -31,6 +36,11 @@ spec:
     - sourceLabels: [__param_ups]
       targetLabel: ups
       action: replace
+    metricRelabelings:
+    - action: labeldrop
+      regex: 'pod'
+    - action: labeldrop
+      regex: 'instance'
   - port: metrics
     interval: 30s
     scrapeTimeout: 10s
@@ -41,3 +51,8 @@ spec:
     - sourceLabels: [__param_ups]
       targetLabel: ups
       action: replace
+    metricRelabelings:
+    - action: labeldrop
+      regex: 'pod'
+    - action: labeldrop
+      regex: 'instance'
