@@ -75,8 +75,8 @@ spec:
         livenessProbe:
           httpGet:
             path: /
-            port: 8000
-            scheme: HTTP
+            port: 8443
+            scheme: HTTPS
           initialDelaySeconds: 60
           periodSeconds: 30
           timeoutSeconds: 10
@@ -84,8 +84,8 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 8000
-            scheme: HTTP
+            port: 8443
+            scheme: HTTPS
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
