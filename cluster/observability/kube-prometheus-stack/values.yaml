@@ -78,7 +78,7 @@ grafana:
       url: http://influxdb-influxdb2.influxdb.svc.cluster.local:8086
       jsonData:
         version: Flux
-        organization: influxdata
+        organization: 0bcf1077828e1514
         defaultBucket: default
         tlsSkipVerify: true
       secureJsonData:
