@@ -72,6 +72,19 @@ grafana:
             url: "$${__value.raw}"
       isDefault: false
       editable: false
+    - name: InfluxDB
+      type: influxdb
+      access: proxy
+      url: http://influxdb-influxdb2.influxdb.svc.cluster.local:8086
+      jsonData:
+        version: Flux
+        organization: influxdata
+        defaultBucket: default
+        tlsSkipVerify: true
+      secureJsonData:
+        token: $__file{/etc/secrets/influxdb-token}
+      isDefault: false
+      editable: false
 
 # Prometheus Configuration
 prometheus:
