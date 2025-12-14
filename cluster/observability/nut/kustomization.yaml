@@ -10,3 +10,4 @@ resources:
   - servicemonitor.yaml
   - telegraf-config.yaml
   - influxdb-init.yaml
+  - grafana-dashboard.yaml
