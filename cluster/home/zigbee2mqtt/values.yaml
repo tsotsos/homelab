@@ -67,10 +67,10 @@ zigbee2mqtt:
     base_topic: zigbee2mqtt
   
   serial:
-    port: tcp://10.0.5.10:6638
-    adapter: zstack  # CC2652P2 uses TI Z-Stack
+    port: tcp://10.0.5.11:6638
+    adapter: ember  # SLZB-MR3 uses EmberZNet
     baudrate: 115200
-    disable_led: false
+    disable_led: true
   
   frontend:
     enabled: true
