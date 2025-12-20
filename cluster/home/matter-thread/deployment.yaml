@@ -6,7 +6,7 @@ metadata:
   namespace: matter-thread
 data:
   otbr-agent: |
-    OTBR_AGENT_OPTS="-I wpan0 -B ens18 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
+    OTBR_AGENT_OPTS="-I wpan0 -B eth0 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
   otbr-web: |
     OTBR_WEB_OPTS="-I wpan0 -d7 -a 0.0.0.0 -p 80"
 ---
