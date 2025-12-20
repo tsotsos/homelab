@@ -5,6 +5,7 @@ namespace: zigbee2mqtt
 
 resources:
   - ns.yaml
+  - backup-cronjob.yaml
 
 helmCharts:
   - name: zigbee2mqtt
