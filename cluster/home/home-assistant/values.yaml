@@ -150,7 +150,7 @@ initContainers:
         find /config -type f -exec chmod 644 {} \;
         echo "Permissions fixed successfully"
     volumeMounts:
-      - name: config
+      - name: home-assistant
         mountPath: /config
     securityContext:
       runAsUser: 0
