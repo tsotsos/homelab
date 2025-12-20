@@ -35,14 +35,10 @@ spec:
             app: zigbee2mqtt-backup
         spec:
           restartPolicy: OnFailure
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            seccompProfile:
-              type: RuntimeDefault
+          serviceAccountName: zigbee2mqtt-backup
           containers:
           - name: backup
-            image: alpine:latest
+            image: bitnami/kubectl:latest
             command:
               - sh
               - -c
@@ -52,64 +48,40 @@ spec:
                 echo "=== Zigbee2MQTT Backup Started ==="
                 date
                 
-                # Install required tools
-                apk add --no-cache tar gzip
-                
                 # Create backup directory with timestamp
                 BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
-                BACKUP_DIR="/backups/zigbee2mqtt-backup-${BACKUP_DATE}"
-                mkdir -p "$BACKUP_DIR"
+                BACKUP_FILE="zigbee2mqtt-backup-${BACKUP_DATE}.tar.gz"
                 
-                echo "Backup directory: $BACKUP_DIR"
-                
-                # Backup critical files
-                echo "Backing up configuration files..."
-                cp -v /data/configuration.yaml "$BACKUP_DIR/" || echo "⚠ configuration.yaml not found"
-                cp -v /data/coordinator_backup.json "$BACKUP_DIR/" || echo "⚠ coordinator_backup.json not found"
-                cp -v /data/database.db "$BACKUP_DIR/" || echo "⚠ database.db not found"
-                cp -v /data/state.json "$BACKUP_DIR/" || echo "⚠ state.json not found"
-                
-                # Backup devices and groups
-                if [ -d /data/devices ]; then
-                  echo "Backing up devices..."
-                  cp -r /data/devices "$BACKUP_DIR/"
-                fi
-                
-                if [ -d /data/groups ]; then
-                  echo "Backing up groups..."
-                  cp -r /data/groups "$BACKUP_DIR/"
-                fi
-                
-                # Create compressed archive
-                echo "Creating compressed archive..."
-                cd /backups
-                tar -czf "zigbee2mqtt-backup-${BACKUP_DATE}.tar.gz" "zigbee2mqtt-backup-${BACKUP_DATE}"
-                
-                # Remove uncompressed backup
-                rm -rf "$BACKUP_DIR"
+                echo "Backing up via kubectl exec..."
+                kubectl exec -n zigbee2mqtt statefulset/zigbee2mqtt -- sh -c "
+                  set -e
+                  cd /app/data
+                  tar -czf /tmp/backup.tar.gz \
+                    configuration.yaml \
+                    coordinator_backup.json \
+                    database.db \
+                    state.json \
+                    devices/ \
+                    groups/ 2>/dev/null || true
+                  cat /tmp/backup.tar.gz
+                  rm /tmp/backup.tar.gz
+                " > /backups/${BACKUP_FILE}
                 
                 # Keep only last 30 backups
                 echo "Cleaning up old backups (keeping last 30)..."
-                ls -t /backups/zigbee2mqtt-backup-*.tar.gz | tail -n +31 | xargs -r rm -v
+                cd /backups
+                ls -t zigbee2mqtt-backup-*.tar.gz 2>/dev/null | tail -n +31 | xargs -r rm -v
                 
                 # Show backup info
                 echo ""
                 echo "✓ Backup completed successfully"
-                echo "Backup size: $(du -h /backups/zigbee2mqtt-backup-${BACKUP_DATE}.tar.gz | cut -f1)"
+                echo "Backup size: $(du -h /backups/${BACKUP_FILE} | cut -f1)"
                 echo ""
                 echo "Available backups:"
-                ls -lh /backups/zigbee2mqtt-backup-*.tar.gz | tail -5
+                ls -lh /backups/zigbee2mqtt-backup-*.tar.gz 2>/dev/null | tail -5 || echo "No backups found"
                 
                 echo "=== Zigbee2MQTT Backup Finished ==="
-            securityContext:
-              allowPrivilegeEscalation: false
-              capabilities:
-                drop:
-                  - ALL
             volumeMounts:
-            - name: data
-              mountPath: /data
-              readOnly: true
             - name: backups
               mountPath: /backups
             resources:
@@ -120,9 +92,42 @@ spec:
                 memory: "256Mi"
                 cpu: "200m"
           volumes:
-          - name: data
-            persistentVolumeClaim:
-              claimName: data-volume-zigbee2mqtt-0
           - name: backups
             persistentVolumeClaim:
               claimName: zigbee2mqtt-backups
+---
+# ServiceAccount for backup job
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zigbee2mqtt-backup
+  namespace: zigbee2mqtt
+---
+# Role to allow exec into zigbee2mqtt pod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: zigbee2mqtt-backup
+  namespace: zigbee2mqtt
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/exec"]
+  verbs: ["get", "list", "create"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["get", "list"]
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zigbee2mqtt-backup
+  namespace: zigbee2mqtt
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: zigbee2mqtt-backup
+subjects:
+- kind: ServiceAccount
+  name: zigbee2mqtt-backup
+  namespace: zigbee2mqtt
