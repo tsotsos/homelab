@@ -75,7 +75,7 @@ spec:
             add:
               - NET_ADMIN
               - NET_RAW
-          privileged: false
+          privileged: true
         
         env:
           # Infrastructure network interface (Kubernetes pod network)
