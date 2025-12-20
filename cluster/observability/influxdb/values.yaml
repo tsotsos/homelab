@@ -37,10 +37,10 @@ resources:
 #               operator: In
 #               values:
 #                 - s01
-            - key: node.kng/workload-infra
-              operator: In
-              values:
-                - "true"
+            # - key: node.kng/workload-infra
+            #   operator: In
+            #   values:
+            #     - "true"
 
 # Service configuration
 service:
