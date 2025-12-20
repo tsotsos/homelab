@@ -6,7 +6,7 @@ metadata:
   namespace: matter-thread
 data:
   otbr-agent: |
-    OTBR_AGENT_OPTS="-I eth0 -B wpan0 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
+    OTBR_AGENT_OPTS="-I wpan0 -B eth0 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,10 +26,8 @@ spec:
         app: otbr
     spec:
       hostNetwork: true
+      hostPID: true
       dnsPolicy: ClusterFirstWithHostNet
-      
-      # Share /dev between containers for PTY access
-      shareProcessNamespace: true
       
       # Schedule in s01 zone (same as SLZB-MR3 device)
       affinity:
