@@ -6,9 +6,9 @@ metadata:
   namespace: matter-thread
 data:
   otbr-agent: |
-    OTBR_AGENT_OPTS="-I wpan0 -B eth0 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
+    OTBR_AGENT_OPTS="-I wpan0 -B ens18 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
   otbr-web: |
-    OTBR_WEB_OPTS="-I wpan0 -d7 -a 0.0.0.0 -p 80"
+    OTBR_WEB_OPTS="-I wpan0 -d7 -a 0.0.0.0 -p 8080"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,6 +27,11 @@ spec:
       labels:
         app: otbr
     spec:
+      # Use host network for mDNS discovery and Thread routing
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      
       # Schedule in s01 zone (same as SLZB-MR3 device)
       affinity:
         nodeAffinity:
@@ -100,7 +105,7 @@ spec:
         
         ports:
           - name: web
-            containerPort: 80
+            containerPort: 8080
             protocol: TCP
           - name: mdns
             containerPort: 5353
