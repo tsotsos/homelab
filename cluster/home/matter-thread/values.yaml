@@ -5,12 +5,10 @@ image:
   pullPolicy: IfNotPresent
 
 service:
-  type: LoadBalancer
+  type: ClusterIP
   port: 8080
-  annotations:
-    kube-vip.io/loadbalancerIPs: "10.0.2.85"
 
-# Disable direct ingress
+# Disable direct ingress - using Authentik proxy
 ingress:
   enabled: false
 
