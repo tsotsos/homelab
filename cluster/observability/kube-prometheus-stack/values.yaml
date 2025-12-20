@@ -93,6 +93,17 @@ prometheus:
   prometheusSpec:
     replicas: 3  # One replica per zone for full redundancy
     
+    # Node affinity - only schedule on storage nodes
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: node.kng/workload-storage
+              operator: In
+              values:
+              - "true"
+    
     # Storage
     storageSpec:
       volumeClaimTemplate:
@@ -134,6 +145,17 @@ alertmanager:
   
   alertmanagerSpec:
     replicas: 3
+    
+    # Node affinity - only schedule on storage nodes
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: node.kng/workload-storage
+              operator: In
+              values:
+              - "true"
     
     # Storage
     storage:
