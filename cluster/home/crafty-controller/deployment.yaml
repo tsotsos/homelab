@@ -19,13 +19,7 @@ spec:
     spec:
       affinity:
         nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: topology.kubernetes.io/zone
-                operator: In
-                values:
-                - s01
+          # Removed s01 zone requirement due to storage issues
               - key: node.kng/workload-apps
                 operator: In
                 values:

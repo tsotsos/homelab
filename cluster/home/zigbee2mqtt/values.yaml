@@ -13,16 +13,16 @@ ingress:
   enabled: false
 
 statefulset:
-  # Ensure pod is scheduled in s01 zone
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: topology.kubernetes.io/zone
-                operator: In
-                values:
-                  - s01
+  # Removed s01 zone requirement due to storage issues
+  # affinity:
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #         - matchExpressions:
+  #             - key: topology.kubernetes.io/zone
+  #               operator: In
+  #               values:
+  #                 - s01
   
   # Disable liveness probe (no enabled flag in this chart, use empty object)
   livenessProbe: {}

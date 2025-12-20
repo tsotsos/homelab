@@ -32,17 +32,6 @@ spec:
       hostPID: true
       dnsPolicy: ClusterFirstWithHostNet
       
-      # Schedule in s01 zone (same as SLZB-MR3 device)
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: topology.kubernetes.io/zone
-                    operator: In
-                    values:
-                      - s01
-      
       containers:
       # Sidecar container to bridge TCP to PTY
       - name: socat-bridge
