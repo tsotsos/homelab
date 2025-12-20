@@ -1,0 +1,27 @@
+---
+# Ingress for Matter-over-Thread with Authentik authentication
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: matter-thread
+  namespace: authentik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    external-dns.alpha.kubernetes.io/hostname: matter.kng.house
+spec:
+  ingressClassName: cilium
+  tls:
+    - hosts:
+        - matter.kng.house
+      secretName: matter-thread-tls
+  rules:
+    - host: matter.kng.house
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ak-outpost-authentik-embedded-outpost
+                port:
+                  number: 9000

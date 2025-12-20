@@ -1,0 +1,137 @@
+---
+# Persistent volume for backups
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: matter-thread-backups
+  namespace: matter-thread
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
+---
+# CronJob to backup Matter-over-Thread configuration
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: matter-thread-backup
+  namespace: matter-thread
+  labels:
+    app: matter-thread-backup
+spec:
+  # Run daily at 3:30 AM (offset from zigbee2mqtt backup)
+  schedule: "30 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: matter-thread-backup
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: matter-thread-backup
+          securityContext:
+            fsGroup: 1000
+            runAsUser: 1000
+            runAsGroup: 1000
+          containers:
+          - name: backup
+            image: bitnami/kubectl:latest
+            command:
+              - sh
+              - -c
+              - |
+                set -e
+                
+                echo "=== Matter-over-Thread Backup Started ==="
+                date
+                
+                # Create backup directory with timestamp
+                BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
+                BACKUP_FILE="matter-thread-backup-${BACKUP_DATE}.tar.gz"
+                
+                echo "Backing up via kubectl exec..."
+                kubectl exec -n matter-thread statefulset/matter-thread -- sh -c "
+                  set -e
+                  cd /app/data
+                  tar -czf /tmp/backup.tar.gz \
+                    configuration.yaml \
+                    coordinator_backup.json \
+                    database.db \
+                    state.json \
+                    devices/ \
+                    groups/ 2>/dev/null || true
+                  cat /tmp/backup.tar.gz
+                  rm /tmp/backup.tar.gz
+                " > /backups/${BACKUP_FILE}
+                
+                # Keep only last 30 backups
+                echo "Cleaning up old backups (keeping last 30)..."
+                cd /backups
+                ls -t matter-thread-backup-*.tar.gz 2>/dev/null | tail -n +31 | xargs -r rm -v
+                
+                # Show backup info
+                echo ""
+                echo "✓ Backup completed successfully"
+                echo "Backup size: $(du -h /backups/${BACKUP_FILE} | cut -f1)"
+                echo ""
+                echo "Available backups:"
+                ls -lh /backups/matter-thread-backup-*.tar.gz 2>/dev/null | tail -5 || echo "No backups found"
+                
+                echo "=== Matter-over-Thread Backup Finished ==="
+            volumeMounts:
+            - name: backups
+              mountPath: /backups
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          volumes:
+          - name: backups
+            persistentVolumeClaim:
+              claimName: matter-thread-backups
+---
+# ServiceAccount for backup job
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: matter-thread-backup
+  namespace: matter-thread
+---
+# Role to allow exec into matter-thread pod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: matter-thread-backup
+  namespace: matter-thread
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/exec"]
+  verbs: ["get", "list", "create"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["get", "list"]
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: matter-thread-backup
+  namespace: matter-thread
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: matter-thread-backup
+subjects:
+- kind: ServiceAccount
+  name: matter-thread-backup
+  namespace: matter-thread

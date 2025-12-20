@@ -9,6 +9,7 @@ resources:
   - ingresses/code-server-ingress.yaml
   - ingresses/longhorn-ingress.yaml
   - ingresses/zigbee2mqtt-ingress.yaml
+  - ingresses/matter-thread-ingress.yaml
   - ingresses/emqx-ingress.yaml
   - ingresses/peanut-ingress.yaml
   - ingresses/crafty-controller-ingress.yaml
