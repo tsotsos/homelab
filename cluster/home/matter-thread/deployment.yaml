@@ -56,6 +56,8 @@ spec:
         securityContext:
           privileged: true
         volumeMounts:
+          - name: host-dev
+            mountPath: /dev
           - name: shared-devices
             mountPath: /shared
         resources:
@@ -112,6 +114,8 @@ spec:
           - name: config
             mountPath: /etc/default/otbr-agent
             subPath: otbr-agent
+          - name: host-dev
+            mountPath: /dev
           - name: shared-devices
             mountPath: /shared
         
@@ -146,6 +150,10 @@ spec:
         - name: config
           configMap:
             name: otbr-config
+        - name: host-dev
+          hostPath:
+            path: /dev
+            type: Directory
         - name: shared-devices
           emptyDir: {}
 ---
