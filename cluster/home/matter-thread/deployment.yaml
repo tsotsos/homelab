@@ -6,7 +6,7 @@ metadata:
   namespace: matter-thread
 data:
   otbr-agent: |
-    OTBR_AGENT_OPTS="-I eth0 -B wpan0 spinel+hdlc+tcp://10.0.5.11:7638?uart-baudrate=460800"
+    OTBR_AGENT_OPTS="-I eth0 -B wpan0 spinel+hdlc+uart:///dev/ttyRCP?uart-baudrate=460800"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -28,6 +28,9 @@ spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       
+      # Share /dev between containers for PTY access
+      shareProcessNamespace: true
+      
       # Schedule in s01 zone (same as SLZB-MR3 device)
       affinity:
         nodeAffinity:
@@ -39,7 +42,46 @@ spec:
                     values:
                       - s01
       
+      # Sidecar container to bridge TCP to PTY
+      initContainers:
+      - name: create-pty
+        image: alpine/socat:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            # Create PTY device and keep it alive
+            exec socat -d -d pty,link=/dev/ttyRCP,rawer,wait-slave tcp:10.0.5.11:7638
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: dev
+            mountPath: /dev
+      
       containers:
+      - name: socat-bridge
+        image: alpine/socat:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            while true; do
+              echo "Starting TCP to PTY bridge..."
+              socat -d -d pty,link=/dev/ttyRCP,rawer tcp:10.0.5.11:7638 || true
+              echo "Bridge disconnected, restarting in 5 seconds..."
+              sleep 5
+            done
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: dev
+            mountPath: /dev
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "64Mi"
+            cpu: "100m"
+      
       - name: otbr
         image: openthread/otbr:latest
         imagePullPolicy: IfNotPresent
@@ -86,6 +128,8 @@ spec:
           - name: config
             mountPath: /etc/default/otbr-agent
             subPath: otbr-agent
+          - name: dev
+            mountPath: /dev
         
         resources:
           requests:
@@ -118,6 +162,8 @@ spec:
         - name: config
           configMap:
             name: otbr-config
+        - name: dev
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
