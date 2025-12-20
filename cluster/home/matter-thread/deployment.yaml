@@ -42,6 +42,18 @@ spec:
               - NET_RAW
           privileged: false
         
+        # Override the default entrypoint to set RCP device from env
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            set -e
+            # Write OTBR configuration
+            cat > /etc/default/otbr-agent << EOF
+            OTBR_AGENT_OPTS="-I ${OT_INFRA_IF} -B ${OT_THREAD_IF} ${OT_RCP_DEVICE}"
+            EOF
+            # Start OTBR services
+            exec /app/script/server
+        
         env:
           # RCP device - TCP connection to SLZB-MR3 CC2674P10 chip
           - name: OT_RCP_DEVICE
