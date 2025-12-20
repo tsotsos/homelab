@@ -5,12 +5,6 @@ namespace: matter-thread
 
 resources:
   - ns.yaml
+  - deployment.yaml
+  - service.yaml
   - backup-cronjob.yaml
-
-helmCharts:
-  - name: zigbee2mqtt
-    repo: https://koenkk.github.io/zigbee2mqtt-chart
-    version: 2.7.1
-    releaseName: matter-thread
-    namespace: matter-thread
-    valuesFile: values.yaml

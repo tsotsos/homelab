@@ -13,7 +13,7 @@ spec:
     requests:
       storage: 5Gi
 ---
-# CronJob to backup Matter-over-Thread configuration
+# CronJob to backup OpenThread Border Router configuration
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -37,9 +37,9 @@ spec:
           restartPolicy: OnFailure
           serviceAccountName: matter-thread-backup
           securityContext:
-            fsGroup: 1000
-            runAsUser: 1000
-            runAsGroup: 1000
+            fsGroup: 0
+            runAsUser: 0
+            runAsGroup: 0
           containers:
           - name: backup
             image: bitnami/kubectl:latest
@@ -49,24 +49,18 @@ spec:
               - |
                 set -e
                 
-                echo "=== Matter-over-Thread Backup Started ==="
+                echo "=== OpenThread Border Router Backup Started ==="
                 date
                 
                 # Create backup directory with timestamp
                 BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
-                BACKUP_FILE="matter-thread-backup-${BACKUP_DATE}.tar.gz"
+                BACKUP_FILE="otbr-backup-${BACKUP_DATE}.tar.gz"
                 
                 echo "Backing up via kubectl exec..."
-                kubectl exec -n matter-thread statefulset/matter-thread -- sh -c "
+                kubectl exec -n matter-thread deployment/otbr -- sh -c "
                   set -e
-                  cd /app/data
-                  tar -czf /tmp/backup.tar.gz \
-                    configuration.yaml \
-                    coordinator_backup.json \
-                    database.db \
-                    state.json \
-                    devices/ \
-                    groups/ 2>/dev/null || true
+                  cd /data
+                  tar -czf /tmp/backup.tar.gz . 2>/dev/null || true
                   cat /tmp/backup.tar.gz
                   rm /tmp/backup.tar.gz
                 " > /backups/${BACKUP_FILE}
@@ -74,7 +68,7 @@ spec:
                 # Keep only last 30 backups
                 echo "Cleaning up old backups (keeping last 30)..."
                 cd /backups
-                ls -t matter-thread-backup-*.tar.gz 2>/dev/null | tail -n +31 | xargs -r rm -v
+                ls -t otbr-backup-*.tar.gz 2>/dev/null | tail -n +31 | xargs -r rm -v
                 
                 # Show backup info
                 echo ""
@@ -82,9 +76,9 @@ spec:
                 echo "Backup size: $(du -h /backups/${BACKUP_FILE} | cut -f1)"
                 echo ""
                 echo "Available backups:"
-                ls -lh /backups/matter-thread-backup-*.tar.gz 2>/dev/null | tail -5 || echo "No backups found"
+                ls -lh /backups/otbr-backup-*.tar.gz 2>/dev/null | tail -5 || echo "No backups found"
                 
-                echo "=== Matter-over-Thread Backup Finished ==="
+                echo "=== OpenThread Border Router Backup Finished ==="
             volumeMounts:
             - name: backups
               mountPath: /backups

@@ -1,0 +1,122 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otbr
+  namespace: matter-thread
+  labels:
+    app: otbr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otbr
+  template:
+    metadata:
+      labels:
+        app: otbr
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      
+      # Schedule in s01 zone (same as SLZB-MR3 device)
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - s01
+      
+      containers:
+      - name: otbr
+        image: openthread/otbr:latest
+        imagePullPolicy: IfNotPresent
+        
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+          privileged: false
+        
+        env:
+          # RCP device - TCP connection to SLZB-MR3 CC2674P10 chip
+          - name: OT_RCP_DEVICE
+            value: "spinel+hdlc+tcp://10.0.5.11:7638?uart-baudrate=460800"
+          
+          # Infrastructure network interface (Kubernetes pod network)
+          - name: OT_INFRA_IF
+            value: "eth0"
+          
+          # Thread network interface
+          - name: OT_THREAD_IF
+            value: "wpan0"
+          
+          # Log level (1-7, where 7 is most verbose)
+          - name: OT_LOG_LEVEL
+            value: "5"
+          
+          # Enable NAT64
+          - name: NAT64
+            value: "1"
+          
+          # Enable DNS64
+          - name: DNS64
+            value: "1"
+        
+        ports:
+          - name: web
+            containerPort: 80
+            protocol: TCP
+          - name: mdns
+            containerPort: 5353
+            protocol: UDP
+        
+        volumeMounts:
+          - name: data
+            mountPath: /data
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+      
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: otbr-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: otbr-data
+  namespace: matter-thread
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,5 +1,5 @@
 ---
-# Ingress for Matter-over-Thread with Authentik authentication
+# Ingress for Matter-over-Thread (OTBR) with Authentik authentication
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
