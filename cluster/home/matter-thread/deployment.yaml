@@ -7,6 +7,8 @@ metadata:
 data:
   otbr-agent: |
     OTBR_AGENT_OPTS="-I wpan0 -B eth0 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
+  otbr-web: |
+    OTBR_WEB_OPTS="-I wpan0 -d7 -a 0.0.0.0 -p 80"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -114,6 +116,9 @@ spec:
           - name: config
             mountPath: /etc/default/otbr-agent
             subPath: otbr-agent
+          - name: config
+            mountPath: /etc/default/otbr-web
+            subPath: otbr-web
           - name: host-dev
             mountPath: /dev
           - name: shared-devices
