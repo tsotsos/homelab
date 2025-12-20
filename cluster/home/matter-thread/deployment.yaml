@@ -6,7 +6,7 @@ metadata:
   namespace: matter-thread
 data:
   otbr-agent: |
-    OTBR_AGENT_OPTS="-I eth0 -B wpan0 spinel+hdlc+uart:///dev/ttyRCP?uart-baudrate=460800"
+    OTBR_AGENT_OPTS="-I eth0 -B wpan0 spinel+hdlc+uart:///shared/ttyRCP?uart-baudrate=460800"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,16 +50,16 @@ spec:
         args:
           - |
             while true; do
-              echo "Starting TCP to PTY bridge at /dev/ttyRCP..."
-              socat -d -d pty,link=/dev/ttyRCP,rawer tcp:10.0.5.11:7638 || true
+              echo "Starting TCP to PTY bridge at /shared/ttyRCP..."
+              socat -d -d pty,link=/shared/ttyRCP,rawer tcp:10.0.5.11:7638 || true
               echo "Bridge disconnected, restarting in 5 seconds..."
               sleep 5
             done
         securityContext:
           privileged: true
         volumeMounts:
-          - name: dev
-            mountPath: /dev
+          - name: shared-devices
+            mountPath: /shared
         resources:
           requests:
             memory: "32Mi"
@@ -114,8 +114,8 @@ spec:
           - name: config
             mountPath: /etc/default/otbr-agent
             subPath: otbr-agent
-          - name: dev
-            mountPath: /dev
+          - name: shared-devices
+            mountPath: /shared
         
         resources:
           requests:
@@ -148,7 +148,7 @@ spec:
         - name: config
           configMap:
             name: otbr-config
-        - name: dev
+        - name: shared-devices
           emptyDir: {}
 ---
 apiVersion: v1
