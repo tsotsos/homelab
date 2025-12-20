@@ -135,6 +135,26 @@ env:
 
 # Init containers to ensure database is ready and configure integrations
 initContainers:
+  - name: fix-permissions
+    image: alpine:latest
+    command:
+      - sh
+      - -c
+      - |
+        echo "Fixing /config permissions for code-server access..."
+        # Change ownership to uid 1000 (coder) but keep files readable by all
+        chown -R 1000:1000 /config
+        # Ensure directories are writable by owner
+        find /config -type d -exec chmod 755 {} \;
+        # Ensure files are writable by owner
+        find /config -type f -exec chmod 644 {} \;
+        echo "Permissions fixed successfully"
+    volumeMounts:
+      - name: config
+        mountPath: /config
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
   - name: install-hacs
     image: alpine:latest
     command:
