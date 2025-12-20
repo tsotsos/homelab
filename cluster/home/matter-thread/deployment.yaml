@@ -1,4 +1,13 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otbr-config
+  namespace: matter-thread
+data:
+  otbr-agent: |
+    OTBR_AGENT_OPTS="-I eth0 -B wpan0 spinel+hdlc+tcp://10.0.5.11:7638?uart-baudrate=460800"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,34 +51,14 @@ spec:
               - NET_RAW
           privileged: false
         
-        # Override the default entrypoint to set RCP device from env
-        command: ["/bin/bash", "-c"]
-        args:
-          - |
-            set -e
-            # Write OTBR configuration
-            cat > /etc/default/otbr-agent << EOF
-            OTBR_AGENT_OPTS="-I ${OT_INFRA_IF} -B ${OT_THREAD_IF} ${OT_RCP_DEVICE}"
-            EOF
-            # Start OTBR services
-            exec /app/script/server
-        
         env:
-          # RCP device - TCP connection to SLZB-MR3 CC2674P10 chip
-          - name: OT_RCP_DEVICE
-            value: "spinel+hdlc+tcp://10.0.5.11:7638?uart-baudrate=460800"
-          
           # Infrastructure network interface (Kubernetes pod network)
-          - name: OT_INFRA_IF
+          - name: INFRA_IF_NAME
             value: "eth0"
           
           # Thread network interface
-          - name: OT_THREAD_IF
+          - name: THREAD_IF_NAME
             value: "wpan0"
-          
-          # Log level (1-7, where 7 is most verbose)
-          - name: OT_LOG_LEVEL
-            value: "5"
           
           # Enable NAT64
           - name: NAT64
@@ -77,6 +66,10 @@ spec:
           
           # Enable DNS64
           - name: DNS64
+            value: "1"
+          
+          # Enable web GUI
+          - name: WEB_GUI
             value: "1"
         
         ports:
@@ -90,6 +83,9 @@ spec:
         volumeMounts:
           - name: data
             mountPath: /data
+          - name: config
+            mountPath: /etc/default/otbr-agent
+            subPath: otbr-agent
         
         resources:
           requests:
@@ -119,6 +115,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: otbr-data
+        - name: config
+          configMap:
+            name: otbr-config
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
