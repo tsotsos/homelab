@@ -37,68 +37,54 @@ echo "Waiting for pod to terminate..."
 kubectl wait --for=delete pod -l app.kubernetes.io/name=zigbee2mqtt -n zigbee2mqtt --timeout=60s || true
 
 echo "Restoring backup..."
-kubectl run -n zigbee2mqtt restore-pod --rm -i --image=alpine --overrides='
-{
-  "spec": {
-    "securityContext": {
-      "runAsNonRoot": true,
-      "runAsUser": 1000,
-      "seccompProfile": {
-        "type": "RuntimeDefault"
+kubectl run -n zigbee2mqtt restore-pod --rm -i --image=alpine --overrides="{
+  \"spec\": {
+    \"securityContext\": {
+      \"runAsNonRoot\": true,
+      \"runAsUser\": 1000,
+      \"seccompProfile\": {
+        \"type\": \"RuntimeDefault\"
       }
     },
-    "containers": [{
-      "name": "restore",
-      "image": "alpine",
-      "command": ["sh", "-c"],
-      "args": ["
-        set -e
-        apk add --no-cache tar gzip
-        echo \"Extracting backup...\"
-        cd /data
-        tar -xzf /backups/'"$BACKUP_FILE"'
-        BACKUP_DIR=\$(tar -tzf /backups/'"$BACKUP_FILE"' | head -1 | cut -f1 -d\"/\")
-        echo \"Restoring files from \$BACKUP_DIR...\"
-        cp -vf \$BACKUP_DIR/* /data/
-        rm -rf \$BACKUP_DIR
-        echo \"✓ Restore completed\"
-        ls -lh /data/
-      "],
-      "securityContext": {
-        "allowPrivilegeEscalation": false,
-        "capabilities": {
-          "drop": ["ALL"]
+    \"containers\": [{
+      \"name\": \"restore\",
+      \"image\": \"alpine\",
+      \"command\": [\"sh\", \"-c\", \"set -e && apk add --no-cache tar gzip && echo 'Extracting backup...' && cd /data && tar -xzf /backups/$BACKUP_FILE && BACKUP_DIR=\$(tar -tzf /backups/$BACKUP_FILE | head -1 | cut -f1 -d'/') && echo 'Restoring files from '\$BACKUP_DIR'...' && cp -vf \$BACKUP_DIR/* /data/ && rm -rf \$BACKUP_DIR && echo '✓ Restore completed' && ls -lh /data/\"],
+      \"securityContext\": {
+        \"allowPrivilegeEscalation\": false,
+        \"capabilities\": {
+          \"drop\": [\"ALL\"]
         }
       },
-      "volumeMounts": [
+      \"volumeMounts\": [
         {
-          "name": "data",
-          "mountPath": "/data"
+          \"name\": \"data\",
+          \"mountPath\": \"/data\"
         },
         {
-          "name": "backups",
-          "mountPath": "/backups",
-          "readOnly": true
+          \"name\": \"backups\",
+          \"mountPath\": \"/backups\",
+          \"readOnly\": true
         }
       ]
     }],
-    "volumes": [
+    \"volumes\": [
       {
-        "name": "data",
-        "persistentVolumeClaim": {
-          "claimName": "data-volume-zigbee2mqtt-0"
+        \"name\": \"data\",
+        \"persistentVolumeClaim\": {
+          \"claimName\": \"data-volume-zigbee2mqtt-0\"
         }
       },
       {
-        "name": "backups",
-        "persistentVolumeClaim": {
-          "claimName": "zigbee2mqtt-backups"
+        \"name\": \"backups\",
+        \"persistentVolumeClaim\": {
+          \"claimName\": \"zigbee2mqtt-backups\"
         }
       }
     ],
-    "restartPolicy": "Never"
+    \"restartPolicy\": \"Never\"
   }
-}'
+}"
 
 echo ""
 echo "Scaling up Zigbee2MQTT..."
