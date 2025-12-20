@@ -42,29 +42,15 @@ spec:
                     values:
                       - s01
       
-      # Sidecar container to bridge TCP to PTY
-      initContainers:
-      - name: create-pty
-        image: alpine/socat:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            # Create PTY device and keep it alive
-            exec socat -d -d pty,link=/dev/ttyRCP,rawer,wait-slave tcp:10.0.5.11:7638
-        securityContext:
-          privileged: true
-        volumeMounts:
-          - name: dev
-            mountPath: /dev
-      
       containers:
+      # Sidecar container to bridge TCP to PTY
       - name: socat-bridge
         image: alpine/socat:latest
         command: ["/bin/sh", "-c"]
         args:
           - |
             while true; do
-              echo "Starting TCP to PTY bridge..."
+              echo "Starting TCP to PTY bridge at /dev/ttyRCP..."
               socat -d -d pty,link=/dev/ttyRCP,rawer tcp:10.0.5.11:7638 || true
               echo "Bridge disconnected, restarting in 5 seconds..."
               sleep 5
