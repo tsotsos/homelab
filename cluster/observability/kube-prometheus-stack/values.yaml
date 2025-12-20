@@ -104,8 +104,8 @@ prometheus:
               storage: 100Gi
     
     # Retention
-    retention: 30d
-    retentionSize: 45GB
+    retention: 15d
+    retentionSize: 25GB
     
     # Resources
     resources:
