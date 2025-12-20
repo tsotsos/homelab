@@ -78,7 +78,7 @@ zigbee2mqtt:
   
   advanced:
     transmit_power: 20
-    channel: 25
+    channel: 11
     log_level: info
     cache_state: true
     adapter_concurrent: null
