@@ -61,9 +61,9 @@ queryScheduler:
 singleBinary:
   replicas: 1  # Multiple replicas require object storage
   
-  # Node selector for infra workloads
+  # Node selector for storage workloads (changed from infra to storage)
   nodeSelector:
-    node.kng/workload-infra: "true"
+    node.kng/workload-storage: "true"
   
   # Persistence with Longhorn
   persistence:
