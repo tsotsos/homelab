@@ -76,7 +76,17 @@ zigbee2mqtt:
     enabled: true
     port: 8080
   
-  availability: true
+availability:
+  enabled: true
+  # Active devices = powered routers (bulbs/plugs/relays)
+  active:
+    timeout: 20
+    # Optional fine-tuning to prevent aggressive ping storms on flaky links:
+    pause_on_backoff_gt: 3
+  # Passive devices = battery devices (sensors/buttons)
+  passive:
+    timeout: 720
+
   advanced:
     transmit_power: 20
     channel: 25
