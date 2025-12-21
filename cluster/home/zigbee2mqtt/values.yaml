@@ -76,6 +76,7 @@ zigbee2mqtt:
     enabled: true
     port: 8080
   
+  availability: true
   advanced:
     transmit_power: 20
     channel: 25
@@ -86,4 +87,4 @@ zigbee2mqtt:
     cache_state: true
     adapter_concurrent: null
     rtscts: false
-
+    last_seen: ISO_8601
