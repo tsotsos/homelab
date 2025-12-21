@@ -13,5 +13,9 @@ spec:
       port: 80
       targetPort: 8080
       protocol: TCP
+    - name: rest-api
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
   selector:
     app: otbr
