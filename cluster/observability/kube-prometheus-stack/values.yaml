@@ -93,6 +93,10 @@ prometheus:
   prometheusSpec:
     replicas: 3  # One replica per zone for full redundancy
     
+    # Reduce scrape frequency to ease control plane load
+    scrapeInterval: 120s  # Default 30s increased to 120s
+    evaluationInterval: 120s  # Match scrape interval
+    
     # Node affinity - only schedule on storage nodes
     affinity:
       nodeAffinity:
