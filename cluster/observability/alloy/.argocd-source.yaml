@@ -1,7 +1,0 @@
-labels:
-  category: observability
-  type: logs
-annotations:
-  argocd.argoproj.io/sync-wave: "6"
-kustomize:
-  enable_helm: true
