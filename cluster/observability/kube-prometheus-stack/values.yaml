@@ -91,11 +91,11 @@ prometheus:
   enabled: true
   
   prometheusSpec:
-    replicas: 3  # One replica per zone for full redundancy
+    replicas: 2  # One replica per zone for full redundancy
     
     # Reduce scrape frequency to ease control plane load
-    scrapeInterval: 120s  # Default 30s increased to 120s
-    evaluationInterval: 120s  # Match scrape interval
+    scrapeInterval: 180s  # Default 30s increased to 120s
+    evaluationInterval: 180s  # Match scrape interval
     
     # Node affinity - only schedule on storage nodes
     affinity:
@@ -119,7 +119,7 @@ prometheus:
               storage: 100Gi
     
     # Retention
-    retention: 15d
+    retention: 5d
     retentionSize: 25GB
     
     # Resources
@@ -148,7 +148,7 @@ alertmanager:
   enabled: true
   
   alertmanagerSpec:
-    replicas: 3
+    replicas: 1  # Single replica due to RWO storage constraint
     
     # Node affinity - only schedule on storage nodes
     affinity:
