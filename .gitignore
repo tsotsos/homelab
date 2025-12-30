@@ -22,6 +22,7 @@ cluster-config.yaml
 talos-config/
 *.talosconfig
 machineconfig-*.yaml
+infra/talos/generated/
 
 # Kubernetes
 k3s.yaml
@@ -95,3 +96,9 @@ target/
 node_modules/
 scripts/.bootstrap-state
 .bootstrap-state
+
+# Talos config patches (ignore specific node configs)
+infra/talos/patches/*
+infra/talos/*.yaml
+infra/talos/kubeconfig
+infra/talos/talosconfig
