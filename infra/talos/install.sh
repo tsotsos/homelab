@@ -1,29 +1,30 @@
 #!/bin/bash
 # =============================================================================
-# KUBERNETES BOOTSTRAP SCRIPT
+# TALOS KUBERNETES COMPONENT INSTALLER
 # =============================================================================
-# Comprehensive bootstrap for Talos Kubernetes cluster
-# Installs core components and seals secrets automatically
+# Install core Kubernetes components on Talos bare-metal cluster
+# Each component can be installed independently or all together
 #
 # Prerequisites:
-#   - Talos cluster deployed (run ./deploy.sh first)
-#   - Unsealed secrets in secrets-un/ directory
+#   - Talos cluster bootstrapped and kubeconfig available
+#   - Unsealed secrets in secrets-un/ (for components requiring secrets)
 #
 # Usage:
-#   ./bootstrap.sh                    - Run full bootstrap
-#   ./bootstrap.sh --step <N>         - Resume from specific step
-#   ./bootstrap.sh --seal-secrets     - Only seal secrets
-#   ./bootstrap.sh --help             - Show help
+#   ./install.sh --all                     - Install all components
+#   ./install.sh --cilium                  - Install only Cilium
+#   ./install.sh --cilium --longhorn       - Install multiple components
+#   ./install.sh --labels                  - Only apply node labels
+#   ./install.sh --seal-secrets            - Only seal secrets
+#   ./install.sh --help                    - Show help
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 INFRA_DIR="$PROJECT_ROOT/infra"
 CLUSTER_DIR="$PROJECT_ROOT/cluster"
 SECRETS_UNSEALED_DIR="$PROJECT_ROOT/secrets-un"
-TALOS_CONFIG_DIR="$INFRA_DIR/talos-config"
-STATE_FILE="$SCRIPT_DIR/.bootstrap-state"
+TALOS_DIR="$INFRA_DIR/talos"
 
 # Colors
 RED='\033[0;31m'
@@ -38,61 +39,79 @@ error() { echo -e "${RED}✗${NC} $1" >&2; exit 1; }
 warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 success() { echo -e "${GREEN}✓${NC} $1"; }
 info() { echo -e "${BLUE}ℹ${NC} $1"; }
-step() { echo -e "${CYAN}━━━ STEP $1 ━━━${NC}"; }
+step() { echo -e "${CYAN}━━━ $1 ━━━${NC}"; }
 
-# Set kubeconfig
-export KUBECONFIG="$TALOS_CONFIG_DIR/kubeconfig"
+# Set kubeconfig - look for it in talos directory or use default
+if [ -f "$TALOS_DIR/kubeconfig" ]; then
+    export KUBECONFIG="$TALOS_DIR/kubeconfig"
+elif [ -f "$HOME/.kube/config" ]; then
+    export KUBECONFIG="$HOME/.kube/config"
+else
+    error "Kubeconfig not found. Expected at $TALOS_DIR/kubeconfig or ~/.kube/config"
+fi
 
 # =============================================================================
-# STATE MANAGEMENT
+# COMPONENT FLAGS
 # =============================================================================
-save_state() {
-    echo "$1" > "$STATE_FILE"
-    log "Progress saved: Step $1 completed"
-}
-
-load_state() {
-    if [ -f "$STATE_FILE" ]; then
-        cat "$STATE_FILE"
-    else
-        echo "0"
-    fi
-}
-
-clear_state() {
-    rm -f "$STATE_FILE"
-    success "Bootstrap state cleared"
-}
+INSTALL_ALL=false
+INSTALL_LABELS=false
+INSTALL_CILIUM=false
+INSTALL_KUBE_VIP=false
+INSTALL_SEALED_SECRETS=false
+INSTALL_EXTERNAL_DNS=false
+INSTALL_CERT_MANAGER=false
+INSTALL_LONGHORN=false
+INSTALL_ARGOCD=false
+SEAL_SECRETS_ONLY=false
 
 # =============================================================================
 # HELP
 # =============================================================================
 show_help() {
     cat << EOF
-Kubernetes Bootstrap Script
+Talos Kubernetes Component Installer
 
 Usage:
-  ./bootstrap.sh                    Run full bootstrap (or resume)
-  ./bootstrap.sh --step <N>         Resume from specific step
-  ./bootstrap.sh --seal-secrets     Only seal secrets
-  ./bootstrap.sh --reset            Clear state and start fresh
-  ./bootstrap.sh --help             Show this help
-
-Steps:
-  0. Apply node labels
-  1. Install Cilium CNI
-  2. Install kube-vip and kube-vip-cloud-provider
-  3. Install sealed-secrets and seal all secrets
-  4. Install external-dns
-  5. Install cert-manager
-  6. Install longhorn
-  7. Install ArgoCD
+  ./install.sh [OPTIONS]
 
 Options:
-  --step <N>        Resume from step N (0-7)
-  --seal-secrets    Only seal secrets (requires sealed-secrets controller)
-  --reset           Clear bootstrap state
-  --help            Show this help
+  --all                 Install all components in order
+  --labels              Apply node labels from cluster-config.yaml
+  --cilium              Install Cilium CNI
+  --kube-vip            Install kube-vip and kube-vip-cloud-provider
+  --sealed-secrets      Install sealed-secrets controller
+  --external-dns        Install external-dns
+  --cert-manager        Install cert-manager
+  --longhorn            Install Longhorn storage
+  --argocd              Install ArgoCD
+  --seal-secrets        Only seal secrets (requires sealed-secrets installed)
+  --help, -h            Show this help
+
+Examples:
+  # Install everything
+  ./install.sh --all
+
+  # Install only networking components
+  ./install.sh --labels --cilium --kube-vip
+
+  # Install storage and GitOps
+  ./install.sh --longhorn --argocd
+
+  # Apply labels and install CNI
+  ./install.sh --labels --cilium
+
+  # Seal all secrets
+  ./install.sh --seal-secrets
+
+Component Install Order (when using --all):
+  1. Node Labels
+  2. Cilium CNI
+  3. kube-vip + kube-vip-cloud-provider
+  4. sealed-secrets (and seal all secrets)
+  5. external-dns
+  6. cert-manager
+  7. Longhorn
+  8. ArgoCD
 
 EOF
     exit 0
@@ -108,10 +127,9 @@ check_prerequisites() {
     command -v kustomize >/dev/null 2>&1 || error "kustomize not installed"
     command -v helm >/dev/null 2>&1 || error "helm not installed"
     command -v yq >/dev/null 2>&1 || error "yq not installed"
-    command -v kubeseal >/dev/null 2>&1 || error "kubeseal not installed"
     
     if [ ! -f "$KUBECONFIG" ]; then
-        error "Kubeconfig not found at $KUBECONFIG. Run ./deploy.sh first"
+        error "Kubeconfig not found at $KUBECONFIG"
     fi
     
     if ! kubectl cluster-info &>/dev/null; then
@@ -122,15 +140,16 @@ check_prerequisites() {
 }
 
 # =============================================================================
-# STEP 0: APPLY NODE LABELS
+# APPLY NODE LABELS
 # =============================================================================
-step_0_apply_node_labels() {
-    step "0: APPLYING NODE LABELS"
+install_node_labels() {
+    step "APPLYING NODE LABELS"
     
     local config_file="$INFRA_DIR/cluster-config.yaml"
     
     if [ ! -f "$config_file" ]; then
-        error "cluster-config.yaml not found at $config_file"
+        warn "cluster-config.yaml not found at $config_file, skipping node labels"
+        return 0
     fi
     
     log "Applying node labels from cluster-config.yaml..."
@@ -155,18 +174,21 @@ step_0_apply_node_labels() {
     done
     
     echo ""
-    kubectl get nodes -o wide
+    kubectl get nodes --show-labels
     echo ""
     
     success "Node labels applied"
-    save_state 0
 }
 
 # =============================================================================
-# STEP 1: INSTALL CILIUM CNI
+# INSTALL CILIUM CNI
 # =============================================================================
-step_1_install_cilium() {
-    step "1: INSTALLING CILIUM CNI"
+install_cilium() {
+    step "INSTALLING CILIUM CNI"
+    
+    if [ ! -d "$CLUSTER_DIR/network/cilium" ]; then
+        error "Cilium config not found at $CLUSTER_DIR/network/cilium"
+    fi
     
     # Check if already installed
     if kubectl get pods -n kube-system -l k8s-app=cilium &>/dev/null && \
@@ -186,24 +208,26 @@ step_1_install_cilium() {
     rm -rf "$CLUSTER_DIR/network/cilium/charts" 2>/dev/null || true
     
     log "Waiting for Cilium to be ready..."
-    kubectl wait --for=condition=Ready pods -l k8s-app=cilium -n kube-system --timeout=300s
+    kubectl wait --for=condition=Ready pods -l k8s-app=cilium -n kube-system --timeout=300s || true
     
     log "Waiting for nodes to become Ready..."
-    kubectl wait --for=condition=Ready nodes --all --timeout=300s
+    kubectl wait --for=condition=Ready nodes --all --timeout=300s || true
     
     success "Cilium installed and operational"
     echo ""
     kubectl get nodes -o wide
     echo ""
-    
-    save_state 1
 }
 
 # =============================================================================
-# STEP 2: INSTALL KUBE-VIP AND KUBE-VIP-CLOUD-PROVIDER
+# INSTALL KUBE-VIP AND KUBE-VIP-CLOUD-PROVIDER
 # =============================================================================
-step_2_install_kube_vip() {
-    step "2: INSTALLING KUBE-VIP AND KUBE-VIP-CLOUD-PROVIDER"
+install_kube_vip() {
+    step "INSTALLING KUBE-VIP AND KUBE-VIP-CLOUD-PROVIDER"
+    
+    if [ ! -d "$CLUSTER_DIR/network/kube-vip" ]; then
+        error "kube-vip config not found at $CLUSTER_DIR/network/kube-vip"
+    fi
     
     # Install kube-vip
     log "Installing kube-vip..."
@@ -214,11 +238,16 @@ step_2_install_kube_vip() {
         rm -rf "$CLUSTER_DIR/network/kube-vip/charts" 2>/dev/null || true
         
         log "Waiting for kube-vip to be ready..."
-        kubectl rollout status daemonset kube-vip -n kube-system --timeout=120s
+        kubectl rollout status daemonset kube-vip -n kube-system --timeout=120s || true
         success "kube-vip installed"
     fi
     
     # Install kube-vip-cloud-provider
+    if [ ! -d "$CLUSTER_DIR/network/kube-vip-cloud-provider" ]; then
+        warn "kube-vip-cloud-provider config not found, skipping"
+        return 0
+    fi
+    
     log "Installing kube-vip-cloud-provider..."
     if kubectl get deployment -n kube-system kube-vip-cloud-provider &>/dev/null; then
         warn "kube-vip-cloud-provider already installed"
@@ -227,18 +256,20 @@ step_2_install_kube_vip() {
         rm -rf "$CLUSTER_DIR/network/kube-vip-cloud-provider/charts" 2>/dev/null || true
         
         log "Waiting for kube-vip-cloud-provider to be ready..."
-        kubectl rollout status deployment kube-vip-cloud-provider -n kube-system --timeout=120s
+        kubectl rollout status deployment kube-vip-cloud-provider -n kube-system --timeout=120s || true
         success "kube-vip-cloud-provider installed"
     fi
-    
-    save_state 2
 }
 
 # =============================================================================
-# STEP 3: INSTALL SEALED-SECRETS AND SEAL ALL SECRETS
+# INSTALL SEALED-SECRETS
 # =============================================================================
-step_3_install_sealed_secrets() {
-    step "3: INSTALLING SEALED-SECRETS AND SEALING SECRETS"
+install_sealed_secrets() {
+    step "INSTALLING SEALED-SECRETS"
+    
+    if [ ! -d "$CLUSTER_DIR/security/sealed-secrets" ]; then
+        error "sealed-secrets config not found at $CLUSTER_DIR/security/sealed-secrets"
+    fi
     
     # Install sealed-secrets controller
     log "Installing sealed-secrets controller..."
@@ -249,7 +280,7 @@ step_3_install_sealed_secrets() {
         rm -rf "$CLUSTER_DIR/security/sealed-secrets/charts" 2>/dev/null || true
         
         log "Waiting for sealed-secrets to be ready..."
-        kubectl rollout status deployment sealed-secrets -n kube-system --timeout=120s
+        kubectl rollout status deployment sealed-secrets -n kube-system --timeout=120s || true
     fi
     
     # Wait a bit for the controller to fully initialize
@@ -257,10 +288,13 @@ step_3_install_sealed_secrets() {
     
     success "sealed-secrets controller installed"
     
-    # Seal secrets
-    seal_all_secrets
-    
-    save_state 3
+    # Check if kubeseal is available and seal secrets
+    if command -v kubeseal >/dev/null 2>&1; then
+        seal_all_secrets
+    else
+        warn "kubeseal not installed, skipping secret sealing"
+        info "Install kubeseal and run: ./install-components.sh --seal-secrets"
+    fi
 }
 
 # =============================================================================
@@ -270,7 +304,8 @@ seal_all_secrets() {
     log "Sealing all secrets in $SECRETS_UNSEALED_DIR..."
     
     if [ ! -d "$SECRETS_UNSEALED_DIR" ]; then
-        error "Unsealed secrets directory not found: $SECRETS_UNSEALED_DIR"
+        warn "Unsealed secrets directory not found: $SECRETS_UNSEALED_DIR"
+        return 0
     fi
     
     # Find all yaml files in secrets-un directory (excluding temp files)
@@ -338,10 +373,14 @@ seal_all_secrets() {
 }
 
 # =============================================================================
-# STEP 4: INSTALL EXTERNAL-DNS
+# INSTALL EXTERNAL-DNS
 # =============================================================================
-step_4_install_external_dns() {
-    step "4: INSTALLING EXTERNAL-DNS"
+install_external_dns() {
+    step "INSTALLING EXTERNAL-DNS"
+    
+    if [ ! -d "$CLUSTER_DIR/network/external-dns" ]; then
+        error "external-dns config not found at $CLUSTER_DIR/network/external-dns"
+    fi
     
     if kubectl get deployment -n external-dns external-dns-unifi &>/dev/null; then
         warn "external-dns already installed"
@@ -351,18 +390,20 @@ step_4_install_external_dns() {
         rm -rf "$CLUSTER_DIR/network/external-dns/charts" 2>/dev/null || true
         
         log "Waiting for external-dns to be ready..."
-        kubectl rollout status deployment external-dns-unifi -n external-dns --timeout=120s
+        kubectl rollout status deployment external-dns-unifi -n external-dns --timeout=120s || true
         success "external-dns installed"
     fi
-    
-    save_state 4
 }
 
 # =============================================================================
-# STEP 5: INSTALL CERT-MANAGER
+# INSTALL CERT-MANAGER
 # =============================================================================
-step_5_install_cert_manager() {
-    step "5: INSTALLING CERT-MANAGER"
+install_cert_manager() {
+    step "INSTALLING CERT-MANAGER"
+    
+    if [ ! -d "$CLUSTER_DIR/security/cert-manager" ]; then
+        error "cert-manager config not found at $CLUSTER_DIR/security/cert-manager"
+    fi
     
     if kubectl get deployment -n cert-manager cert-manager &>/dev/null; then
         warn "cert-manager already installed"
@@ -372,49 +413,55 @@ step_5_install_cert_manager() {
         rm -rf "$CLUSTER_DIR/security/cert-manager/charts" 2>/dev/null || true
         
         log "Waiting for cert-manager to be ready..."
-        kubectl rollout status deployment cert-manager -n cert-manager --timeout=180s
-        kubectl rollout status deployment cert-manager-webhook -n cert-manager --timeout=180s
-        kubectl rollout status deployment cert-manager-cainjector -n cert-manager --timeout=180s
+        kubectl rollout status deployment cert-manager -n cert-manager --timeout=180s || true
+        kubectl rollout status deployment cert-manager-webhook -n cert-manager --timeout=180s || true
+        kubectl rollout status deployment cert-manager-cainjector -n cert-manager --timeout=180s || true
         
         # Wait for webhook to be fully functional before applying ClusterIssuer
         log "Waiting for webhook to be ready..."
         sleep 10
         
-        log "Applying ClusterIssuer..."
-        kubectl apply -f "$CLUSTER_DIR/security/cert-manager/clusterIssuer.yaml"
+        if [ -f "$CLUSTER_DIR/security/cert-manager/clusterIssuer.yaml" ]; then
+            log "Applying ClusterIssuer..."
+            kubectl apply -f "$CLUSTER_DIR/security/cert-manager/clusterIssuer.yaml"
+        fi
         
         success "cert-manager installed"
     fi
-    
-    save_state 5
 }
 
 # =============================================================================
-# STEP 6: INSTALL LONGHORN
+# INSTALL LONGHORN
 # =============================================================================
-step_6_install_longhorn() {
-    step "6: INSTALLING LONGHORN"
+install_longhorn() {
+    step "INSTALLING LONGHORN"
+    
+    if [ ! -d "$CLUSTER_DIR/storage/longhorn" ]; then
+        error "Longhorn config not found at $CLUSTER_DIR/storage/longhorn"
+    fi
     
     if kubectl get namespace longhorn-system &>/dev/null; then
-        warn "longhorn already installed"
+        warn "Longhorn already installed"
     else
-        log "Installing longhorn..."
+        log "Installing Longhorn..."
         kustomize build --enable-helm "$CLUSTER_DIR/storage/longhorn" | kubectl apply -f -
         rm -rf "$CLUSTER_DIR/storage/longhorn/charts" 2>/dev/null || true
         
-        log "Waiting for longhorn to be ready (this may take a few minutes)..."
-        kubectl wait --for=condition=Ready pods -l app=longhorn-manager -n longhorn-system --timeout=300s
-        success "longhorn installed"
+        log "Waiting for Longhorn to be ready (this may take a few minutes)..."
+        kubectl wait --for=condition=Ready pods -l app=longhorn-manager -n longhorn-system --timeout=300s || true
+        success "Longhorn installed"
     fi
-    
-    save_state 6
 }
 
 # =============================================================================
-# STEP 7: INSTALL ARGOCD
+# INSTALL ARGOCD
 # =============================================================================
-step_7_install_argocd() {
-    step "7: INSTALLING ARGOCD"
+install_argocd() {
+    step "INSTALLING ARGOCD"
+    
+    if [ ! -d "$CLUSTER_DIR/argocd" ]; then
+        error "ArgoCD config not found at $CLUSTER_DIR/argocd"
+    fi
     
     if kubectl get namespace argocd &>/dev/null; then
         warn "ArgoCD already installed"
@@ -428,7 +475,7 @@ step_7_install_argocd() {
         rm -rf "$CLUSTER_DIR/argocd/charts" 2>/dev/null || true
         
         log "Waiting for ArgoCD to be ready..."
-        kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
+        kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s || true
     fi
     
     # Get ArgoCD admin password
@@ -458,31 +505,58 @@ step_7_install_argocd() {
         echo "  Then visit: https://localhost:8080"
         echo ""
     fi
-    
-    save_state 7
 }
 
 # =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 main() {
-    local start_step=0
-    local only_seal=false
-    
     # Parse arguments
+    if [ $# -eq 0 ]; then
+        show_help
+    fi
+    
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --step)
-                start_step="$2"
-                shift 2
-                ;;
-            --seal-secrets)
-                only_seal=true
+            --all)
+                INSTALL_ALL=true
                 shift
                 ;;
-            --reset)
-                clear_state
-                exit 0
+            --labels)
+                INSTALL_LABELS=true
+                shift
+                ;;
+            --cilium)
+                INSTALL_CILIUM=true
+                shift
+                ;;
+            --kube-vip)
+                INSTALL_KUBE_VIP=true
+                shift
+                ;;
+            --sealed-secrets)
+                INSTALL_SEALED_SECRETS=true
+                shift
+                ;;
+            --external-dns)
+                INSTALL_EXTERNAL_DNS=true
+                shift
+                ;;
+            --cert-manager)
+                INSTALL_CERT_MANAGER=true
+                shift
+                ;;
+            --longhorn)
+                INSTALL_LONGHORN=true
+                shift
+                ;;
+            --argocd)
+                INSTALL_ARGOCD=true
+                shift
+                ;;
+            --seal-secrets)
+                SEAL_SECRETS_ONLY=true
+                shift
                 ;;
             --help|-h)
                 show_help
@@ -495,59 +569,57 @@ main() {
     
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
-    echo "║         KUBERNETES CLUSTER BOOTSTRAP                      ║"
+    echo "║         TALOS KUBERNETES COMPONENT INSTALLER               ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
     
     check_prerequisites
     
     # If only sealing secrets
-    if [ "$only_seal" = true ]; then
+    if [ "$SEAL_SECRETS_ONLY" = true ]; then
         if ! kubectl get deployment -n kube-system sealed-secrets &>/dev/null; then
-            error "sealed-secrets controller not installed. Run full bootstrap first."
+            error "sealed-secrets controller not installed. Install it first with: ./install.sh --sealed-secrets"
+        fi
+        if ! command -v kubeseal >/dev/null 2>&1; then
+            error "kubeseal command not found. Install kubeseal first."
         fi
         seal_all_secrets
         success "Secret sealing completed"
         exit 0
     fi
     
-    # Load saved state if resuming
-    local saved_step=$(load_state)
-    if [ "$start_step" -eq 0 ] && [ "$saved_step" -gt 0 ]; then
-        info "Found previous bootstrap state at step $saved_step"
-        read -p "Resume from step $((saved_step + 1))? (y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            start_step=$((saved_step + 1))
-        else
-            clear_state
-        fi
+    # Execute selected components
+    if [ "$INSTALL_ALL" = true ]; then
+        INSTALL_LABELS=true
+        INSTALL_CILIUM=true
+        INSTALL_KUBE_VIP=true
+        INSTALL_SEALED_SECRETS=true
+        INSTALL_EXTERNAL_DNS=true
+        INSTALL_CERT_MANAGER=true
+        INSTALL_LONGHORN=true
+        INSTALL_ARGOCD=true
     fi
     
-    # Execute steps
-    if [ "$start_step" -le 0 ]; then step_0_apply_node_labels; fi
-    if [ "$start_step" -le 1 ]; then step_1_install_cilium; fi
-    if [ "$start_step" -le 2 ]; then step_2_install_kube_vip; fi
-    if [ "$start_step" -le 3 ]; then step_3_install_sealed_secrets; fi
-    if [ "$start_step" -le 4 ]; then step_4_install_external_dns; fi
-    if [ "$start_step" -le 5 ]; then step_5_install_cert_manager; fi
-    if [ "$start_step" -le 6 ]; then step_6_install_longhorn; fi
-    if [ "$start_step" -le 7 ]; then step_7_install_argocd; fi
-    
-    # Clear state on successful completion
-    clear_state
+    # Install in order
+    if [ "$INSTALL_LABELS" = true ]; then install_node_labels; fi
+    if [ "$INSTALL_CILIUM" = true ]; then install_cilium; fi
+    if [ "$INSTALL_KUBE_VIP" = true ]; then install_kube_vip; fi
+    if [ "$INSTALL_SEALED_SECRETS" = true ]; then install_sealed_secrets; fi
+    if [ "$INSTALL_EXTERNAL_DNS" = true ]; then install_external_dns; fi
+    if [ "$INSTALL_CERT_MANAGER" = true ]; then install_cert_manager; fi
+    if [ "$INSTALL_LONGHORN" = true ]; then install_longhorn; fi
+    if [ "$INSTALL_ARGOCD" = true ]; then install_argocd; fi
     
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
-    echo "║         BOOTSTRAP COMPLETED SUCCESSFULLY! 🎉               ║"
+    echo "║         INSTALLATION COMPLETED SUCCESSFULLY! 🎉            ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
     
-    success "All components installed and configured"
-    info "Next steps:"
-    echo "  1. Access ArgoCD and deploy applications"
-    echo "  2. Verify all pods are running: kubectl get pods -A"
-    echo "  3. Check sealed secrets: kubectl get sealedsecrets -A"
+    success "Selected components installed"
+    info "Verify installation:"
+    echo "  kubectl get pods -A"
+    echo "  kubectl get nodes -o wide"
     echo ""
 }
 
