@@ -59,7 +59,8 @@ ingressController:
   loadbalancerMode: shared
   service:
     type: LoadBalancer
-  # Disable secret sync - read secrets directly from source namespaces
+  # Enable secret sync to cilium-secrets namespace (default behavior)
   secretsNamespace:
-    create: false
-    sync: false
+    create: true
+    name: cilium-secrets
+    sync: true

@@ -8,6 +8,7 @@ commonAnnotations:
 
 resources:
   - rbac.yaml
+  - secret-sync-rbac.yaml
 
 helmCharts:
   - name: cilium
