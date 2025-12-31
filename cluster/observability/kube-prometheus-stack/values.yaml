@@ -91,28 +91,17 @@ prometheus:
   enabled: true
   
   prometheusSpec:
-    replicas: 2  # One replica per zone for full redundancy
+    replicas: 2
     
     # Reduce scrape frequency to ease control plane load
-    scrapeInterval: 180s  # Default 30s increased to 120s
-    evaluationInterval: 180s  # Match scrape interval
+    scrapeInterval: 180s
+    evaluationInterval: 180s
     
-    # Node affinity - only schedule on storage nodes
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: node.kng/workload-storage
-              operator: In
-              values:
-              - "true"
-    
-    # Storage
+    # Storage - Local NVMe for TSDB performance
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: longhorn
+          storageClassName: local-path-nvme
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:

@@ -61,14 +61,10 @@ queryScheduler:
 singleBinary:
   replicas: 1  # Multiple replicas require object storage
   
-  # Node selector for storage workloads (changed from infra to storage)
-  nodeSelector:
-    node.kng/workload-storage: "true"
-  
-  # Persistence with Longhorn
+  # Persistence with local NVMe for TSDB performance
   persistence:
     enabled: true
-    storageClass: longhorn
+    storageClassName: local-path-nvme
     size: 50Gi
   
   # Resources
@@ -95,11 +91,7 @@ gateway:
               matchLabels:
                 app.kubernetes.io/name: loki
                 app.kubernetes.io/component: gateway
-            topologyKey: topology.kubernetes.io/zone
-  
-  # Node selector
-  nodeSelector:
-    node.kng/workload-infra: "true"
+            topologyKey: kubernetes.io/hostname
   
   # Ingress via Cilium
   ingress:

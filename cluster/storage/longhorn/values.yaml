@@ -13,23 +13,18 @@ preUpgradeChecker:
 # Default settings
 defaultSettings:
   defaultReplicaCount: 2
+  #defaultDataPath: /var/mnt/sata/longhorn  # TODO: Configure SATA mount properly
   #backupTarget: nfs://nas.kng.house:/mnt/backups/longhorn
   
-  # Optimize for your Cilium setup
+  # Optimize for Cilium setup
   guaranteedInstanceManagerCPU: 12
   
-  # HA across physical nodes (zones: s01, s02, s03)
-  # Ensures replicas are distributed across different physical Proxmox hosts
+  # HA across physical nodes (3 bare-metal nodes)
   replicaSoftAntiAffinity: true
-  replicaZoneSoftAntiAffinity: true
   replicaDiskSoftAntiAffinity: true
   
   # Storage optimization
   storageMinimalAvailablePercentage: 10
-  
-# Node selector for storage workloads
-nodeSelector:
-  node.kng/workload-storage: "true"
 
 # Ingress configuration for Cilium Ingress Controller
 # Disabled: Using Authentik proxy ingress (see ingress-auth.yaml)

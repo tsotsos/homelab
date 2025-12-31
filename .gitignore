@@ -102,3 +102,5 @@ infra/talos/patches/*
 infra/talos/*.yaml
 infra/talos/kubeconfig
 infra/talos/talosconfig
+
+deprecated/

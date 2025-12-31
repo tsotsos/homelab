@@ -10,22 +10,13 @@ extraArgs:
   - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
   - --leader-election-namespace=cert-manager
 
-# Certificate management - runs on infrastructure nodes
-nodeSelector:
-  node.kng/workload-infra: "true"
-
 webhook:
-  nodeSelector:
-    node.kng/workload-infra: "true"
   securePort: 10260
 
 cainjector:
   enabled: true
   extraArgs:
     - --leader-election-namespace=cert-manager
-  nodeSelector:
-    node.kng/workload-infra: "true"
 
 startupapicheck:
-  nodeSelector:
-    node.kng/workload-infra: "true"
+  enabled: true

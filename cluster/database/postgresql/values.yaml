@@ -18,22 +18,6 @@ auth:
 
 # Primary configuration
 primary:
-  # Pod Anti-Affinity: Distribute across zones
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/name: postgresql
-                app.kubernetes.io/component: primary
-            topologyKey: topology.kubernetes.io/zone
-  
-  # Node selector for storage nodes
-  nodeSelector:
-    node.kng/workload-storage: "true"
-  
   # Persistence with Longhorn
   persistence:
     enabled: true
@@ -66,9 +50,9 @@ primary:
     min_wal_size = 1GB
     max_wal_size = 4GB
 
-# Read Replicas configuration (3 replicas for full zone coverage)
+# Read Replicas configuration (2 replicas for 3-node cluster)
 readReplicas:
-  replicaCount: 3  # One replica per zone for full redundancy
+  replicaCount: 2  # Total 3 pods (1 primary + 2 replicas) for 3 nodes
   
   # Extended configuration to match primary
   extendedConfiguration: |
@@ -78,7 +62,7 @@ readReplicas:
     work_mem = 4MB
     maintenance_work_mem = 128MB
   
-  # Pod Anti-Affinity: Distribute replicas across zones
+  # Pod Anti-Affinity: Distribute replicas across nodes
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -88,17 +72,7 @@ readReplicas:
               matchLabels:
                 app.kubernetes.io/name: postgresql
                 app.kubernetes.io/component: read
-            topologyKey: topology.kubernetes.io/zone
-        - weight: 50
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/name: postgresql
             topologyKey: kubernetes.io/hostname
-  
-  # Node selector for storage nodes
-  nodeSelector:
-    node.kng/workload-storage: "true"
   
   # Persistence with Longhorn
   persistence:

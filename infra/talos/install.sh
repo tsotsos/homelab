@@ -57,6 +57,7 @@ INSTALL_ALL=false
 INSTALL_LABELS=false
 INSTALL_CILIUM=false
 INSTALL_KUBE_VIP=false
+INSTALL_LOCAL_PATH=false
 INSTALL_SEALED_SECRETS=false
 INSTALL_EXTERNAL_DNS=false
 INSTALL_CERT_MANAGER=false
@@ -79,6 +80,7 @@ Options:
   --labels              Apply node labels from cluster-config.yaml
   --cilium              Install Cilium CNI
   --kube-vip            Install kube-vip and kube-vip-cloud-provider
+  --local-path          Install local-path-provisioner for NVMe storage
   --sealed-secrets      Install sealed-secrets controller
   --external-dns        Install external-dns
   --cert-manager        Install cert-manager
@@ -107,11 +109,12 @@ Component Install Order (when using --all):
   1. Node Labels
   2. Cilium CNI
   3. kube-vip + kube-vip-cloud-provider
-  4. sealed-secrets (and seal all secrets)
-  5. external-dns
-  6. cert-manager
-  7. Longhorn
-  8. ArgoCD
+  4. local-path-provisioner (NVMe storage for TSDB)
+  5. sealed-secrets (and seal all secrets)
+  6. external-dns
+  7. cert-manager
+  8. Longhorn (SATA storage for apps)
+  9. ArgoCD
 
 EOF
     exit 0
@@ -259,6 +262,49 @@ install_kube_vip() {
         kubectl rollout status deployment kube-vip-cloud-provider -n kube-system --timeout=120s || true
         success "kube-vip-cloud-provider installed"
     fi
+}
+
+# =============================================================================
+# INSTALL LOCAL-PATH-PROVISIONER (NVMe Storage for TSDB)
+# =============================================================================
+install_local_path() {
+    step "INSTALLING LOCAL-PATH-PROVISIONER"
+    
+    # Check if already installed
+    if kubectl get storageclass local-path-nvme &>/dev/null; then
+        warn "local-path-nvme StorageClass already exists"
+        return 0
+    fi
+    
+    log "Installing local-path-provisioner..."
+    
+    # Create namespace
+    kubectl create namespace local-path-storage 2>/dev/null || true
+    
+    # Install local-path-provisioner
+    kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.28/deploy/local-path-storage.yaml
+    
+    log "Waiting for local-path-provisioner to be ready..."
+    kubectl wait --for=condition=Ready pods -l app=local-path-provisioner -n local-path-storage --timeout=120s || true
+    
+    # Create custom StorageClass for NVMe (with custom name)
+    log "Creating local-path-nvme StorageClass..."
+    cat <<EOF | kubectl apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path-nvme
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+EOF
+    
+    success "local-path-provisioner installed with local-path-nvme StorageClass"
+    echo ""
+    kubectl get storageclass
+    echo ""
 }
 
 # =============================================================================
@@ -417,9 +463,10 @@ install_cert_manager() {
         kubectl rollout status deployment cert-manager-webhook -n cert-manager --timeout=180s || true
         kubectl rollout status deployment cert-manager-cainjector -n cert-manager --timeout=180s || true
         
-        # Wait for webhook to be fully functional before applying ClusterIssuer
-        log "Waiting for webhook to be ready..."
-        sleep 10
+        # Wait for webhook to be fully functional and CRDs to be ready
+        log "Waiting for cert-manager CRDs and webhook to be ready..."
+        sleep 15
+        kubectl wait --for=condition=Established crd/clusterissuers.cert-manager.io --timeout=60s || true
         
         if [ -f "$CLUSTER_DIR/security/cert-manager/clusterIssuer.yaml" ]; then
             log "Applying ClusterIssuer..."
@@ -534,6 +581,10 @@ main() {
                 INSTALL_KUBE_VIP=true
                 shift
                 ;;
+            --local-path)
+                INSTALL_LOCAL_PATH=true
+                shift
+                ;;
             --sealed-secrets)
                 INSTALL_SEALED_SECRETS=true
                 shift
@@ -593,6 +644,7 @@ main() {
         INSTALL_LABELS=true
         INSTALL_CILIUM=true
         INSTALL_KUBE_VIP=true
+        INSTALL_LOCAL_PATH=true
         INSTALL_SEALED_SECRETS=true
         INSTALL_EXTERNAL_DNS=true
         INSTALL_CERT_MANAGER=true
@@ -604,6 +656,7 @@ main() {
     if [ "$INSTALL_LABELS" = true ]; then install_node_labels; fi
     if [ "$INSTALL_CILIUM" = true ]; then install_cilium; fi
     if [ "$INSTALL_KUBE_VIP" = true ]; then install_kube_vip; fi
+    if [ "$INSTALL_LOCAL_PATH" = true ]; then install_local_path; fi
     if [ "$INSTALL_SEALED_SECRETS" = true ]; then install_sealed_secrets; fi
     if [ "$INSTALL_EXTERNAL_DNS" = true ]; then install_external_dns; fi
     if [ "$INSTALL_CERT_MANAGER" = true ]; then install_cert_manager; fi
