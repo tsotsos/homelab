@@ -1,0 +1,27 @@
+---
+# Role to allow Cilium agent to read secrets in cilium-secrets namespace
+# Required for Envoy SDS (Secret Discovery Service)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cilium-secrets-reader
+  namespace: cilium-secrets
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+---
+# RoleBinding to grant cilium agent the secrets reader role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cilium-secrets-reader
+  namespace: cilium-secrets
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cilium-secrets-reader
+subjects:
+- kind: ServiceAccount
+  name: cilium
+  namespace: kube-system
