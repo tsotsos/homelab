@@ -7,7 +7,6 @@ commonAnnotations:
   argocd.argoproj.io/sync-wave: "-10"
 
 resources:
-  - rbac.yaml
   - secret-sync-rbac.yaml
 
 helmCharts:
