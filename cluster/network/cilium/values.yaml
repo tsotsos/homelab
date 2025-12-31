@@ -49,6 +49,8 @@ envoy:
 # Operator configuration  
 operator:
   replicas: 2
+  prometheus:
+    enabled: true
 
 # Ingress Controller
 ingressController:
@@ -57,3 +59,7 @@ ingressController:
   loadbalancerMode: shared
   service:
     type: LoadBalancer
+  # Disable secret sync - read secrets directly from source namespaces
+  secretsNamespace:
+    create: false
+    sync: false
