@@ -4,8 +4,9 @@
 auth:
   admin:
     username: admin
-    password: admin-user-password
-    token: admin-user-token
+    # Don't set password/token when using existingSecret
+    # password: admin-password
+    # token: admin-token
     org: influxdata
     bucket: default
   # Read admin credentials from secret
