@@ -5,6 +5,7 @@ namespace: monitoring
 
 resources:
   - sealed-secret.yaml
+  - peanut-pvc.yaml
   - deployment.yaml
   - service.yaml
   - servicemonitor.yaml
