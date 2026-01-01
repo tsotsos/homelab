@@ -81,7 +81,7 @@ spec:
         targetRevision: HEAD
         path: '{{path}}'
         kustomize:
-          enableHelm: '{{kustomize.enable_helm}}'
+          enableHelmTemplate: '{{kustomize.enable_helm}}'
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
