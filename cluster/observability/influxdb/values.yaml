@@ -1,15 +1,15 @@
 # InfluxDB v2 Configuration with Longhorn Storage
 
 # Authentication
-auth:
-  admin:
-    username: admin
-    # Don't set password/token when using existingSecret
-    # password: admin-password
-    # token: admin-token
-    org: influxdata
-    bucket: default
-  # Read admin credentials from secret
+adminUser:
+  organization: "influxdata"
+  bucket: "default"
+  user: "admin"
+  retention_policy: "0s"
+  # Leave password and token empty when using existingSecret
+  password: ""
+  token: ""
+  # Use existing secret for admin credentials
   existingSecret: influxdb-auth
 
 # Persistence with Longhorn
