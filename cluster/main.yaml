@@ -45,30 +45,43 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - git:
-        repoURL: https://github.com/tsotsos/homelab
-        revision: HEAD
-        directories:
-          - path: cluster/*/*
-          - path: cluster/network
-            exclude: true
-          - path: cluster/security
-            exclude: true
-          - path: cluster/storage
-            exclude: true
-          - path: cluster/database
-            exclude: true
-          - path: cluster/observability
-            exclude: true
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/tsotsos/homelab
+              revision: HEAD
+              directories:
+                - path: cluster/*/*
+                - path: cluster/network
+                  exclude: true
+                - path: cluster/security
+                  exclude: true
+                - path: cluster/storage
+                  exclude: true
+                - path: cluster/database
+                  exclude: true
+                - path: cluster/observability
+                  exclude: true
+          - git:
+              repoURL: https://github.com/tsotsos/homelab
+              revision: HEAD
+              files:
+                - path: '{{path}}/.argocd-source.yaml'
   template:
     metadata:
       name: '{{path.basename}}'
+      labels:
+        '{{labels}}'
+      annotations:
+        '{{annotations}}'
     spec:
       project: kng-cluster
       source:
         repoURL: https://github.com/tsotsos/homelab
         targetRevision: HEAD
         path: '{{path}}'
+        kustomize:
+          enableHelm: '{{kustomize.enable_helm}}'
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:

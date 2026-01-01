@@ -28,21 +28,6 @@ resources:
     memory: 2Gi
     cpu: 1000m
 
-# Pod affinity - removed s01 zone requirement due to storage issues
-# affinity:
-#   nodeAffinity:
-#     requiredDuringSchedulingIgnoredDuringExecution:
-#       nodeSelectorTerms:
-#         - matchExpressions:
-#             - key: topology.kubernetes.io/zone
-#               operator: In
-#               values:
-#                 - s01
-            # - key: node.kng/workload-infra
-            #   operator: In
-            #   values:
-            #     - "true"
-
 # Service configuration
 service:
   type: ClusterIP
@@ -80,6 +65,6 @@ metrics:
   enabled: true
   serviceMonitor:
     enabled: true
-    namespace: influxdb
+    namespace: observability
     interval: 30s
     scrapeTimeout: 10s

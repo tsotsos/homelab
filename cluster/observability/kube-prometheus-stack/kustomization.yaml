@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: monitoring
+namespace: observability
 
 resources:
   - ns.yaml
@@ -13,6 +13,6 @@ helmCharts:
     repo: https://prometheus-community.github.io/helm-charts
     version: 79.7.1
     releaseName: kube-prometheus-stack
-    namespace: monitoring
+    namespace: observability
     valuesFile: values.yaml
     includeCRDs: false

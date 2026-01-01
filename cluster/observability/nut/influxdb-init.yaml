@@ -4,7 +4,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nut-influxdb-init-script
-  namespace: monitoring
+  namespace: observability
 data:
   init-influxdb.sh: |
     #!/bin/sh
@@ -19,7 +19,7 @@ data:
     echo "Reading configuration..."
     BUCKET="default"
     ORG="influxdata"
-    INFLUX_URL="http://influxdb-influxdb2.influxdb.svc.cluster.local:8086"
+    INFLUX_URL="http://influxdb-influxdb2.observability.svc.cluster.local:8086"
     ADMIN_TOKEN=$(cat /influx-secrets/admin-token)
     
     if [ -z "$ADMIN_TOKEN" ]; then
@@ -90,14 +90,14 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: nut-influxdb-init
-  namespace: monitoring
+  namespace: observability
 ---
-# RBAC: allow nut-influxdb-init to patch secrets in monitoring namespace
+# RBAC: allow nut-influxdb-init to patch secrets in observability namespace
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: nut-influxdb-init-patch
-  namespace: monitoring
+  namespace: observability
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
@@ -108,7 +108,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: nut-influxdb-init-patch
-  namespace: monitoring
+  namespace: observability
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -116,14 +116,14 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: nut-influxdb-init
-  namespace: monitoring
+  namespace: observability
 ---
 # Job to initialize the NUT/Telegraf InfluxDB token
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: nut-influxdb-init
-  namespace: monitoring
+  namespace: observability
 spec:
   ttlSecondsAfterFinished: 300
   backoffLimit: 3
@@ -138,7 +138,7 @@ spec:
             - sh
             - -c
             - |
-              kubectl get secret influxdb-auth -n influxdb -o jsonpath='{.data.admin-user-token}' | base64 -d > /influx-secrets/admin-token
+              kubectl get secret influxdb-auth -n observability -o jsonpath='{.data.admin-token}' | base64 -d > /influx-secrets/admin-token
           volumeMounts:
             - name: influx-secrets
               mountPath: /influx-secrets
@@ -173,7 +173,7 @@ spec:
                 TOKEN_BASE64=$(echo -n "${TOKEN}" | base64 -w0)
                 echo "Base64 length: ${#TOKEN_BASE64}"
                 echo "Patching secret..."
-                kubectl patch secret nut-influxdb-secrets -n monitoring --type='json' -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-nut-token\",\"value\":\"${TOKEN_BASE64}\"}]"
+                kubectl patch secret nut-influxdb-secrets -n observability --type='json' -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-nut-token\",\"value\":\"${TOKEN_BASE64}\"}]"
                 echo "Patch complete"
               fi
           volumeMounts:

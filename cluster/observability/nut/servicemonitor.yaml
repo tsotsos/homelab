@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: nut-server
-  namespace: monitoring
+  namespace: observability
   labels:
     app: nut-server
     release: kube-prometheus-stack

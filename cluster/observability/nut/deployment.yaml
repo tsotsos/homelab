@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nut-server
-  namespace: monitoring
+  namespace: observability
   labels:
     app: nut-server
 spec:
