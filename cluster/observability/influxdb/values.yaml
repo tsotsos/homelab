@@ -6,7 +6,7 @@ auth:
     username: admin
     password: admin-user-password
     token: admin-user-token
-    org: kng
+    org: influxdata
     bucket: default
   # Read admin credentials from secret
   existingSecret: influxdb-auth
