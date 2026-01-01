@@ -89,6 +89,7 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+          - '{{annotations.argocd.argoproj.io/sync-options}}'
       ignoreDifferences:
         - group: apps
           kind: StatefulSet
