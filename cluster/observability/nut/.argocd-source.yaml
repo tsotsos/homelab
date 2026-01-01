@@ -1,0 +1,7 @@
+labels:
+  category: observability
+  type: monitoring
+annotations:
+  argocd.argoproj.io/sync-wave: "4"
+kustomize:
+  enable_helm: true

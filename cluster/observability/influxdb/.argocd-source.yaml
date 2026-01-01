@@ -1,0 +1,7 @@
+labels:
+  category: observability
+  type: database
+annotations:
+  argocd.argoproj.io/sync-wave: "3"
+kustomize:
+  enable_helm: true
