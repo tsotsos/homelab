@@ -138,18 +138,7 @@ alertmanager:
   
   alertmanagerSpec:
     replicas: 1  # Single replica due to RWO storage constraint
-    
-    # Node affinity - only schedule on storage nodes
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: node.kng/workload-storage
-              operator: In
-              values:
-              - "true"
-    
+  
     # Storage
     storage:
       volumeClaimTemplate:
@@ -199,7 +188,7 @@ defaultRules:
     kubeApiserverHistogram: true
     kubeApiserverSlos: true
     kubelet: true
-    kubeProxy: true
+    kubeProxy: false
     kubePrometheusGeneral: true
     kubePrometheusNodeRecording: true
     kubernetesApps: true
