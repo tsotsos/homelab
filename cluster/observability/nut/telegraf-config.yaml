@@ -27,16 +27,19 @@ data:
     [[inputs.prometheus]]
       urls = ["http://127.0.0.1:9199/ups_metrics?ups=ups1"]
       metric_version = 2
+      name_override = "ups_metrics"
 
     # Scrape PDU1 metrics
     [[inputs.prometheus]]
       urls = ["http://127.0.0.1:9199/ups_metrics?ups=pdu1"]
       metric_version = 2
+      name_override = "ups_metrics"
 
     # Scrape PDU2 metrics
     [[inputs.prometheus]]
       urls = ["http://127.0.0.1:9199/ups_metrics?ups=pdu2"]
       metric_version = 2
+      name_override = "ups_metrics"
 
     [[outputs.influxdb_v2]]
       urls = ["http://influxdb-influxdb2.influxdb.svc.cluster.local:8086"]
