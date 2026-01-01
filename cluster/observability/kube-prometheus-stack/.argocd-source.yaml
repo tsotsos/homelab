@@ -3,5 +3,6 @@ labels:
   type: metrics
 annotations:
   argocd.argoproj.io/sync-wave: "4"
+  argocd.argoproj.io/sync-options: ServerSideApply=true
 kustomize:
   enable_helm: true
