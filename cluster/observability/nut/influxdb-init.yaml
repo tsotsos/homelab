@@ -92,13 +92,17 @@ metadata:
   name: nut-influxdb-init
   namespace: observability
 ---
-# RBAC: allow nut-influxdb-init to patch secrets in observability namespace
+# RBAC: allow nut-influxdb-init to read influxdb-auth and patch nut-influxdb-secrets
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: nut-influxdb-init-patch
   namespace: observability
 rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["influxdb-auth"]
+  verbs: ["get"]
 - apiGroups: [""]
   resources: ["secrets"]
   resourceNames: ["nut-influxdb-secrets"]
