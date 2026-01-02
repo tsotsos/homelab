@@ -6,7 +6,6 @@ resources:
   - sealed-secret.yaml
   - db-init-sa.yaml
   - db-init-job.yaml
-  - blueprints-configmap.yaml
   - ingresses/code-server-ingress.yaml
   - ingresses/longhorn-ingress.yaml
   - ingresses/zigbee2mqtt-ingress.yaml
