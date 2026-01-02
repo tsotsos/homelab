@@ -1,0 +1,26 @@
+version: 1
+metadata:
+  name: outpost-configuration
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+
+entries:
+  # Update the embedded outpost to include all applications
+  - model: authentik_outposts.outpost
+    identifiers:
+      name: authentik Embedded Outpost
+    attrs:
+      type: proxy
+      config:
+        log_level: info
+        docker_network: null
+        docker_map_ports: true
+        container_image: null
+        kubernetes_replicas: 1
+        kubernetes_namespace: authentik
+      providers:
+        - !Find [authentik_providers_proxy.proxyprovider, [name, zigbee2mqtt-proxy]]
+        - !Find [authentik_providers_proxy.proxyprovider, [name, emqx-proxy]]
+        - !Find [authentik_providers_proxy.proxyprovider, [name, longhorn-proxy]]
+        - !Find [authentik_providers_proxy.proxyprovider, [name, code-server-proxy]]
+        - !Find [authentik_providers_proxy.proxyprovider, [name, peanut-proxy]]
