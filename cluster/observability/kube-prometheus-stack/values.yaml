@@ -98,7 +98,7 @@ prometheus:
     evaluationInterval: 180s
     
     # Storage - Local NVMe for TSDB performance
-    storageSpec:
+    storage:
       volumeClaimTemplate:
         spec:
           storageClassName: local-path-nvme
@@ -106,6 +106,8 @@ prometheus:
           resources:
             requests:
               storage: 100Gi
+      # Disable subPath to avoid fsGroup permission issues on Talos local storage
+      disableMountSubPath: true
     
     # Retention
     retention: 5d
