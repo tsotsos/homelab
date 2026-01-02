@@ -1,2 +1,4 @@
-category: observability
-sync-wave: "-1"
+labels:
+  category: observability
+annotations:
+  argocd.argoproj.io/sync-wave: "-1"
