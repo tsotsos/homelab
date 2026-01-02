@@ -21,6 +21,7 @@ data:
           name: zigbee2mqtt-proxy
         attrs:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-invalidation-flow]]
           external_host: https://z2m.kng.house
           internal_host: http://zigbee2mqtt.home.svc.cluster.local:8080
           mode: forward_single
@@ -44,6 +45,7 @@ data:
           name: emqx-proxy
         attrs:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-invalidation-flow]]
           external_host: https://emqx.kng.house
           internal_host: http://emqx.home.svc.cluster.local:18083
           mode: forward_single
@@ -67,6 +69,7 @@ data:
           name: longhorn-proxy
         attrs:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-invalidation-flow]]
           internal_host: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
           external_host: https://longhorn.kng.house
           mode: forward_single
@@ -90,6 +93,7 @@ data:
           name: code-server-proxy
         attrs:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-invalidation-flow]]
           external_host: https://code.kng.house
           internal_host: http://code-server.default.svc.cluster.local:8080
           mode: forward_single
@@ -113,6 +117,7 @@ data:
           name: peanut-proxy
         attrs:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-invalidation-flow]]
           internal_host: http://nut-server.observability.svc.cluster.local:8080
           external_host: https://peanut.kng.house
           mode: forward_single
