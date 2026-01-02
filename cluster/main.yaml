@@ -91,6 +91,13 @@ spec:
           - CreateNamespace=true
           - '{{annotations.argocd.argoproj.io/sync-options}}'
       ignoreDifferences:
+        - group: ""
+          kind: Namespace
+          name: kube-system
+          jqPathExpressions:
+            - '.metadata'
+            - '.spec'
+            - '.status'
         - group: apps
           kind: StatefulSet
           jqPathExpressions:
