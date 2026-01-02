@@ -97,6 +97,15 @@ prometheus:
     scrapeInterval: 180s
     evaluationInterval: 180s
     
+    # Fix for local-path-provisioner subPath permissions issue
+    initContainers:
+      - name: fix-permissions
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /prometheus/prometheus-db && chmod 777 /prometheus/prometheus-db']
+        volumeMounts:
+          - name: prometheus-kube-prometheus-stack-prometheus-db
+            mountPath: /prometheus
+    
     # Storage - Local NVMe for TSDB performance
     storageSpec:
       volumeClaimTemplate:
