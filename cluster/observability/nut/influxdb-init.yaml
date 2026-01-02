@@ -124,6 +124,8 @@ kind: Job
 metadata:
   name: nut-influxdb-init
   namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   ttlSecondsAfterFinished: 300
   backoffLimit: 3

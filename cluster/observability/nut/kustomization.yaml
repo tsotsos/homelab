@@ -5,6 +5,7 @@ namespace: observability
 
 resources:
   - sealed-secret.yaml
+  - secret-placeholder.yaml
   - peanut-pvc.yaml
   - deployment.yaml
   - service.yaml
