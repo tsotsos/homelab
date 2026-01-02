@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: kube-prometheus-stack-prometheus
+  namespace: observability
+spec:
+  initContainers:
+    - name: fix-permissions
+      image: busybox:latest
+      command: ['sh', '-c', 'mkdir -p /prometheus/prometheus-db && chown 1000:2000 /prometheus/prometheus-db && chmod 755 /prometheus/prometheus-db']
+      volumeMounts:
+        - name: prometheus-kube-prometheus-stack-prometheus-db
+          mountPath: /prometheus
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
