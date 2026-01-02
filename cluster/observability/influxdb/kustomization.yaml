@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: observability
 
 resources:
-  - ns.yaml
   - sealed-secret.yaml
   - homeassistant-influxdb-rbac.yaml
 
