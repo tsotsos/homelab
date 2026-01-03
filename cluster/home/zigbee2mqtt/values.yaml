@@ -44,49 +44,6 @@ statefulset:
     limits:
       memory: "512Mi"
       cpu: "500m"
-  
-  # Init container to inject secrets into configuration
-  initContainers:
-    - name: config-injector
-      image: python:3.11-alpine
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          apk add --no-cache yq
-          CONFIG_FILE="/data/configuration.yaml"
-          
-          echo "Checking configuration file..."
-          if [ ! -f "$CONFIG_FILE" ]; then
-            echo "Configuration file not found, will be created by main container"
-            exit 0
-          fi
-          
-          echo "Injecting network keys from secret..."
-          yq eval ".advanced.network_key = env(Z2M_NETWORK_KEY)" -i "$CONFIG_FILE"
-          yq eval ".advanced.ext_pan_id = env(Z2M_EXT_PAN_ID)" -i "$CONFIG_FILE"
-          yq eval ".advanced.pan_id = env(Z2M_PAN_ID)" -i "$CONFIG_FILE"
-          
-          echo "Network keys injected successfully"
-          
-      env:
-        - name: Z2M_NETWORK_KEY
-          valueFrom:
-            secretKeyRef:
-              name: zigbee2mqtt-secrets
-              key: network_key
-        - name: Z2M_EXT_PAN_ID
-          valueFrom:
-            secretKeyRef:
-              name: zigbee2mqtt-secrets
-              key: ext_pan_id
-        - name: Z2M_PAN_ID
-          valueFrom:
-            secretKeyRef:
-              name: zigbee2mqtt-secrets
-              key: pan_id
-      volumeMounts:
-        - name: data-volume
-          mountPath: /data
 
 # Zigbee2MQTT configuration
 zigbee2mqtt:
