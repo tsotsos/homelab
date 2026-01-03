@@ -6,6 +6,7 @@ namespace: zigbee2mqtt
 resources:
   - ns.yaml
   - sealed-secret.yaml
+  - configmap.yaml
   - statefulset.yaml
   - service.yaml
   - backup-cronjob.yaml

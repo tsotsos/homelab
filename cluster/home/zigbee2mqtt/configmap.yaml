@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zigbee2mqtt-config
+  namespace: zigbee2mqtt
+data:
+  configuration.yaml: |
+    # Zigbee2MQTT Configuration
+    # Network keys injected via environment variables
+    homeassistant: {}
+    permit_join: false
+    mqtt:
+      server: mqtt://emqx.emqx.svc.cluster.local:1883
+      base_topic: zigbee2mqtt
+    serial:
+      port: tcp://10.0.5.11:6638
+      adapter: ember
+      baudrate: 115200
+      disable_led: false
+    frontend:
+      port: 8080
+    availability:
+      active:
+        timeout: 20
+      passive:
+        timeout: 740
+    advanced:
+      transmit_power: 20
+      channel: 25
+      log_level: info
+      cache_state: true
+      last_seen: ISO_8601
+      rtscts: false
