@@ -42,6 +42,39 @@ spec:
             secretKeyRef:
               name: zigbee2mqtt-config
               key: ext_pan_id
+        # MQTT configuration
+        - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: mqtt_server
+        - name: ZIGBEE2MQTT_CONFIG_MQTT_USER
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: mqtt_user
+        - name: ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: mqtt_password
+        - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: mqtt_base_topic
+        # Serial/Coordinator configuration
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: serial_port
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER
+          value: "ember"
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE
+          value: "115200"
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_DISABLE_LED
+          value: "false"
         securityContext:
           privileged: false
           allowPrivilegeEscalation: false
@@ -60,7 +93,7 @@ spec:
         - name: data
           mountPath: /app/data
         - name: config
-          mountPath: /app/configuration.yaml
+          mountPath: /app/data/configuration.yaml
           subPath: configuration.yaml
       volumes:
       - name: config

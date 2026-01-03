@@ -6,20 +6,16 @@ metadata:
 data:
   configuration.yaml: |
     # Zigbee2MQTT Configuration
-    # Network keys injected via environment variables
-    homeassistant: true
+    # Credentials and network keys injected via environment variables
+    version: 4
+    homeassistant:
+      enabled: true
     permit_join: false
-    mqtt:
-      server: mqtt://emqx.emqx.svc.cluster.local:1883
-      base_topic: zigbee2mqtt
-    serial:
-      port: tcp://10.0.5.11:6638
-      adapter: ember
-      baudrate: 115200
-      disable_led: false
     frontend:
+      enabled: true
       port: 8080
     availability:
+      enabled: true
       active:
         timeout: 20
       passive:
