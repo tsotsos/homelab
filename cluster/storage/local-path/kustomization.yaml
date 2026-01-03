@@ -33,12 +33,4 @@ patches:
           - key: node-role.kubernetes.io/control-plane
             operator: Exists
             effect: NoSchedule
-  # Tell ArgoCD to not sync/manage this namespace resource at all
-  - target:
-      kind: Namespace
-      name: kube-system
-    patch: |-
-      - op: add
-        path: /metadata/annotations/argocd.argoproj.io~1sync-options
-        value: "Skip"
 
