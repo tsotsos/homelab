@@ -7,7 +7,7 @@ data:
   configuration.yaml: |
     # Zigbee2MQTT Configuration
     # Network keys injected via environment variables
-    homeassistant: {}
+    homeassistant: true
     permit_join: false
     mqtt:
       server: mqtt://emqx.emqx.svc.cluster.local:1883
@@ -31,3 +31,5 @@ data:
       cache_state: true
       last_seen: ISO_8601
       rtscts: false
+    # Disable onboarding wizard
+    onboarding: false
