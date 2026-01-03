@@ -44,7 +44,7 @@ spec:
               key: ext_pan_id
         # Base configuration via env vars
         - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
-          value: "true"
+          value: "{}"
         - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
           value: "false"
         - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
