@@ -6,7 +6,8 @@ metadata:
 data:
   configuration.yaml: |
     # Zigbee2MQTT Configuration
-    # Credentials and network keys injected via environment variables
+    # MQTT and serial credentials injected via environment variables
+    # Network keys MUST be in config file (env vars don't work for arrays)
     version: 4
     homeassistant:
       enabled: true
@@ -27,5 +28,9 @@ data:
       cache_state: true
       last_seen: ISO_8601
       rtscts: false
+      # Network keys - from sealed secret, will be injected by init container
+      pan_id: PLACEHOLDER_PAN_ID
+      network_key: PLACEHOLDER_NETWORK_KEY
+      ext_pan_id: PLACEHOLDER_EXT_PAN_ID
     # Disable onboarding wizard
     onboarding: false

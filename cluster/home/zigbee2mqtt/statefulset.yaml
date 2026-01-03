@@ -24,12 +24,31 @@ spec:
         - sh
         - -c
         - |
-          if [ ! -f /app/data/configuration.yaml ]; then
-            echo "Copying initial configuration..."
-            cp /config/configuration.yaml /app/data/configuration.yaml
-          else
-            echo "Configuration already exists, skipping copy"
-          fi
+          echo "Setting up configuration..."
+          cp /config/configuration.yaml /app/data/configuration.yaml
+          
+          # Replace placeholders with actual values from secrets
+          sed -i "s|PLACEHOLDER_PAN_ID|$PAN_ID|g" /app/data/configuration.yaml
+          sed -i "s|PLACEHOLDER_NETWORK_KEY|$NETWORK_KEY|g" /app/data/configuration.yaml
+          sed -i "s|PLACEHOLDER_EXT_PAN_ID|$EXT_PAN_ID|g" /app/data/configuration.yaml
+          
+          echo "Configuration ready"
+        env:
+        - name: PAN_ID
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: pan_id
+        - name: NETWORK_KEY
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: network_key
+        - name: EXT_PAN_ID
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: ext_pan_id
         volumeMounts:
         - name: data
           mountPath: /app/data
@@ -49,23 +68,7 @@ spec:
           containerPort: 8080
           protocol: TCP
         env:
-        # Inject network keys from sealed secret
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID
-          valueFrom:
-            secretKeyRef:
-              name: zigbee2mqtt-config
-              key: pan_id
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY
-          valueFrom:
-            secretKeyRef:
-              name: zigbee2mqtt-config
-              key: network_key
-        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID
-          valueFrom:
-            secretKeyRef:
-              name: zigbee2mqtt-config
-              key: ext_pan_id
-        # MQTT configuration
+        # MQTT configuration from sealed secret
         - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
           valueFrom:
             secretKeyRef:
