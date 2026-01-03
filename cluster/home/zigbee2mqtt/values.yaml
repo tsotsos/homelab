@@ -44,6 +44,24 @@ statefulset:
     limits:
       memory: "512Mi"
       cpu: "500m"
+  
+  # Environment variables from secret
+  env:
+    - name: Z2M_NETWORK_KEY
+      valueFrom:
+        secretKeyRef:
+          name: zigbee2mqtt-secrets
+          key: network_key
+    - name: Z2M_EXT_PAN_ID
+      valueFrom:
+        secretKeyRef:
+          name: zigbee2mqtt-secrets
+          key: ext_pan_id
+    - name: Z2M_PAN_ID
+      valueFrom:
+        secretKeyRef:
+          name: zigbee2mqtt-secrets
+          key: pan_id
 
 # Zigbee2MQTT configuration
 zigbee2mqtt:
@@ -80,11 +98,22 @@ availability:
   advanced:
     transmit_power: 20
     channel: 25
-    pan_id: 0x1a62
-    network_key: [0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0d]
-    ext_pan_id: [0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd]
+    # SECURITY: Keys stored in sealed-secret.yaml - DO NOT commit keys here!
+    # These will be injected at runtime via environment variables
+    # Reference: !env_var Z2M_PAN_ID, !env_var Z2M_NETWORK_KEY, !env_var Z2M_EXT_PAN_ID
+    pan_id: GENERATE
+    network_key: GENERATE
+    ext_pan_id: GENERATE
     log_level: info
     cache_state: true
     adapter_concurrent: null
     rtscts: false
     last_seen: ISO_8601
+    
+    # IMPORTANT: To reset network and change keys safely:
+    # 1. Uncomment the line below and apply
+    # 2. Wait for zigbee2mqtt to reset (check logs)
+    # 3. Comment out force_network_reset again
+    # 4. Update sealed-secret.yaml with NEW keys
+    # 5. Re-pair all devices
+    # force_network_reset: true
