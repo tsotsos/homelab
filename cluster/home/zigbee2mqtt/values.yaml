@@ -130,3 +130,6 @@ availability:
     adapter_concurrent: null
     rtscts: false
     last_seen: ISO_8601
+    
+    # NETWORK RESET - Enable to reset network (WARNING: requires re-pairing ALL devices)
+    # force_network_reset: true
