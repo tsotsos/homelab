@@ -163,9 +163,6 @@ spec:
             - name: influx-secrets
               mountPath: /influx-secrets
               readOnly: true
-            - name: app-secrets
-              mountPath: /app-secrets
-              readOnly: true
             - name: shared
               mountPath: /shared
         - name: token-patcher
@@ -206,6 +203,3 @@ spec:
           emptyDir: {}
         - name: shared
           emptyDir: {}
-        - name: app-secrets
-          secret:
-            secretName: nut-influxdb-secrets
