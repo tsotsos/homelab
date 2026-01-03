@@ -4,5 +4,11 @@ labels:
   critical: "true"
 annotations:
   argocd.argoproj.io/sync-wave: "1"
-kustomize:
-  enable_helm: true
+ignoreDifferences:
+  - group: ""
+    kind: Namespace
+    name: kube-system
+    jqPathExpressions:
+      - '.metadata'
+      - '.spec'
+      - '.status'
