@@ -27,7 +27,7 @@ grafana:
   persistence:
     enabled: true
     storageClassName: longhorn
-    size: 10Gi
+    size: 5Gi
   
   # Authentik OAuth2 integration
   grafana.ini:
@@ -75,7 +75,7 @@ grafana:
     - name: InfluxDB
       type: influxdb
       access: proxy
-      url: http://influxdb-influxdb2.influxdb.svc.cluster.local:8086
+      url: http://influxdb-influxdb2.observability.svc.cluster.local:8086
       jsonData:
         version: Flux
         organization: 0bcf1077828e1514
@@ -91,11 +91,11 @@ prometheus:
   enabled: true
   
   prometheusSpec:
-    replicas: 2
+    replicas: 1
     
-    # Reduce scrape frequency to ease control plane load
-    scrapeInterval: 180s
-    evaluationInterval: 180s
+    # Homelab-optimized scrape frequency
+    scrapeInterval: 300s
+    evaluationInterval: 300s
     
     # Storage - Local NVMe for TSDB performance
     storage:
@@ -105,13 +105,13 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 100Gi
+              storage: 20Gi
       # Disable subPath to avoid fsGroup permission issues on Talos local storage
       disableMountSubPath: true
     
     # Retention
-    retention: 5d
-    retentionSize: 25GB
+    retention: 3d
+    retentionSize: 15GB
     
     # Resources
     resources:
@@ -149,7 +149,7 @@ alertmanager:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 10Gi
+              storage: 2Gi
   
   # Ingress for Alertmanager
   ingress:
@@ -171,35 +171,59 @@ prometheusOperator:
 # Node Exporter
 nodeExporter:
   enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
 
 # Kube State Metrics
 kubeStateMetrics:
   enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Disable unnecessary control plane monitoring for homelab
+kubeEtcd:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeControllerManager:
+  enabled: false
 
 # Default rules
 defaultRules:
   create: true
   rules:
     alertmanager: true
-    etcd: true
+    etcd: false  # Disabled for homelab
     configReloaders: true
     general: true
     k8s: true
     kubeApiserverAvailability: true
-    kubeApiserverBurnrate: true
-    kubeApiserverHistogram: true
-    kubeApiserverSlos: true
+    kubeApiserverBurnrate: false  # Disabled for homelab
+    kubeApiserverHistogram: false  # Disabled for homelab
+    kubeApiserverSlos: false  # Disabled for homelab
     kubelet: true
     kubeProxy: false
     kubePrometheusGeneral: true
     kubePrometheusNodeRecording: true
     kubernetesApps: true
     kubernetesResources: true
-    kubernetesStorage: true
+    kubernetesStorage: false  # Disabled for homelab
     kubernetesSystem: true
-    kubeScheduler: true
+    kubeScheduler: false  # Disabled for homelab
     kubeStateMetrics: true
-    network: true
+    network: false  # Disabled for homelab
     node: true
     nodeExporterAlerting: true
     nodeExporterRecording: true
