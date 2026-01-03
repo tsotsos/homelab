@@ -62,6 +62,10 @@ spec:
         - name: config
           mountPath: /app/configuration.yaml
           subPath: configuration.yaml
+      volumes:
+      - name: config
+        configMap:
+          name: zigbee2mqtt-config
   volumeClaimTemplates:
   - metadata:
       name: data
@@ -71,6 +75,3 @@ spec:
       resources:
         requests:
           storage: 5Gi
-      - name: config
-        configMap:
-          name: zigbee2mqtt-config
