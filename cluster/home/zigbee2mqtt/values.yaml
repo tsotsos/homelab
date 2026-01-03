@@ -132,4 +132,4 @@ availability:
     last_seen: ISO_8601
     
     # NETWORK RESET - Enable to reset network (WARNING: requires re-pairing ALL devices)
-    # force_network_reset: true
+    force_network_reset: true
