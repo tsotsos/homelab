@@ -45,23 +45,48 @@ statefulset:
       memory: "512Mi"
       cpu: "500m"
   
-  # Environment variables from secret
-  env:
-    - name: Z2M_NETWORK_KEY
-      valueFrom:
-        secretKeyRef:
-          name: zigbee2mqtt-secrets
-          key: network_key
-    - name: Z2M_EXT_PAN_ID
-      valueFrom:
-        secretKeyRef:
-          name: zigbee2mqtt-secrets
-          key: ext_pan_id
-    - name: Z2M_PAN_ID
-      valueFrom:
-        secretKeyRef:
-          name: zigbee2mqtt-secrets
-          key: pan_id
+  # Init container to inject secrets into configuration
+  initContainers:
+    - name: config-injector
+      image: python:3.11-alpine
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          apk add --no-cache yq
+          CONFIG_FILE="/data/configuration.yaml"
+          
+          echo "Checking configuration file..."
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "Configuration file not found, will be created by main container"
+            exit 0
+          fi
+          
+          echo "Injecting network keys from secret..."
+          yq eval ".advanced.network_key = env(Z2M_NETWORK_KEY)" -i "$CONFIG_FILE"
+          yq eval ".advanced.ext_pan_id = env(Z2M_EXT_PAN_ID)" -i "$CONFIG_FILE"
+          yq eval ".advanced.pan_id = env(Z2M_PAN_ID)" -i "$CONFIG_FILE"
+          
+          echo "Network keys injected successfully"
+          
+      env:
+        - name: Z2M_NETWORK_KEY
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-secrets
+              key: network_key
+        - name: Z2M_EXT_PAN_ID
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-secrets
+              key: ext_pan_id
+        - name: Z2M_PAN_ID
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-secrets
+              key: pan_id
+      volumeMounts:
+        - name: data-volume
+          mountPath: /data
 
 # Zigbee2MQTT configuration
 zigbee2mqtt:
@@ -98,22 +123,10 @@ availability:
   advanced:
     transmit_power: 20
     channel: 25
-    # SECURITY: Keys stored in sealed-secret.yaml - DO NOT commit keys here!
-    # These will be injected at runtime via environment variables
-    # Reference: !env_var Z2M_PAN_ID, !env_var Z2M_NETWORK_KEY, !env_var Z2M_EXT_PAN_ID
-    pan_id: GENERATE
-    network_key: GENERATE
-    ext_pan_id: GENERATE
+    # Keys injected from sealed-secret via init container
+    # Will be populated at runtime - DO NOT add keys here
     log_level: info
     cache_state: true
     adapter_concurrent: null
     rtscts: false
     last_seen: ISO_8601
-    
-    # IMPORTANT: To reset network and change keys safely:
-    # 1. Uncomment the line below and apply
-    # 2. Wait for zigbee2mqtt to reset (check logs)
-    # 3. Comment out force_network_reset again
-    # 4. Update sealed-secret.yaml with NEW keys
-    # 5. Re-pair all devices
-    # force_network_reset: true
