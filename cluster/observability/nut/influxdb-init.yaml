@@ -107,6 +107,9 @@ rules:
   resources: ["secrets"]
   resourceNames: ["nut-influxdb-secrets"]
   verbs: ["get", "patch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -180,9 +183,16 @@ spec:
                 echo "Token (first 20 chars): ${TOKEN:0:20}..."
                 TOKEN_BASE64=$(echo -n "${TOKEN}" | base64 -w0)
                 echo "Base64 length: ${#TOKEN_BASE64}"
-                echo "Patching secret..."
-                kubectl patch secret nut-influxdb-secrets -n observability --type='json' -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-nut-token\",\"value\":\"${TOKEN_BASE64}\"}]"
-                echo "Patch complete"
+                
+                # Check if secret exists
+                if kubectl get secret nut-influxdb-secrets -n observability >/dev/null 2>&1; then
+                  echo "Patching existing secret..."
+                  kubectl patch secret nut-influxdb-secrets -n observability --type='json' -p="[{\"op\":\"replace\",\"path\":\"/data/influxdb-nut-token\",\"value\":\"${TOKEN_BASE64}\"}]"
+                else
+                  echo "Creating new secret..."
+                  kubectl create secret generic nut-influxdb-secrets -n observability --from-literal=influxdb-nut-token="${TOKEN}"
+                fi
+                echo "Secret updated"
               fi
           volumeMounts:
             - name: shared
