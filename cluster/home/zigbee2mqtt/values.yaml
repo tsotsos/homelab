@@ -80,13 +80,15 @@ zigbee2mqtt:
   advanced:
     transmit_power: 20
     channel: 25
-    # Keys injected from sealed-secret via init container
-    # Will be populated at runtime - DO NOT add keys here
+    # TEMPORARY: Keys for network reset - WILL BE REMOVED after reset completes
+    pan_id: 0xf35a
+    network_key: [0x09, 0xc0, 0x1f, 0x26, 0xd7, 0x59, 0x54, 0x43, 0xb6, 0xe2, 0x53, 0x78, 0xd0, 0xe3, 0x57, 0x34]
+    ext_pan_id: [0xa0, 0x20, 0x41, 0xdc, 0xb3, 0xe6, 0x72, 0xe5]
     log_level: info
     cache_state: true
     adapter_concurrent: null
     rtscts: false
     last_seen: ISO_8601
     
-    # NETWORK RESET - Enable to reset network (WARNING: requires re-pairing ALL devices)
+    # NETWORK RESET - Enabled to force coordinator reset with new keys
     force_network_reset: true
