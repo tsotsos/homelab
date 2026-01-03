@@ -8,12 +8,6 @@ resources:
   - backup-cronjob.yaml
   - sealed-secret.yaml
 
-patches:
-  - path: init-container-patch.yaml
-    target:
-      kind: StatefulSet
-      name: zigbee2mqtt
-
 helmCharts:
   - name: zigbee2mqtt
     repo: https://koenkk.github.io/zigbee2mqtt-chart
