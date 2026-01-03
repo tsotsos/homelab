@@ -13,17 +13,7 @@ ingress:
   enabled: false
 
 statefulset:
-  # Removed s01 zone requirement due to storage issues
-  # affinity:
-  #   nodeAffinity:
-  #     requiredDuringSchedulingIgnoredDuringExecution:
-  #       nodeSelectorTerms:
-  #         - matchExpressions:
-  #             - key: topology.kubernetes.io/zone
-  #               operator: In
-  #               values:
-  #                 - s01
-  
+
   # Disable liveness probe (no enabled flag in this chart, use empty object)
   livenessProbe: {}
   
@@ -85,7 +75,7 @@ availability:
     pause_on_backoff_gt: 3
   # Passive devices = battery devices (sensors/buttons)
   passive:
-    timeout: 720
+    timeout: 740
 
   advanced:
     transmit_power: 20
