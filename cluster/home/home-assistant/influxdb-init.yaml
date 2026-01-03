@@ -178,7 +178,7 @@ spec:
             - -c
             - |
               echo "Fetching InfluxDB admin token..."
-              kubectl get secret influxdb-auth -n influxdb -o jsonpath='{.data.admin-user-token}' | base64 -d > /influx-secrets/admin-token
+              kubectl get secret influxdb-auth -n observability -o jsonpath='{.data.admin-user-token}' | base64 -d > /influx-secrets/admin-token
               echo "✓ Secret fetched"
           volumeMounts:
             - name: influx-secrets
