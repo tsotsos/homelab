@@ -5,13 +5,7 @@ namespace: zigbee2mqtt
 
 resources:
   - ns.yaml
-  - backup-cronjob.yaml
   - sealed-secret.yaml
-
-helmCharts:
-  - name: zigbee2mqtt
-    repo: https://koenkk.github.io/zigbee2mqtt-chart
-    version: 2.7.1
-    releaseName: zigbee2mqtt
-    namespace: zigbee2mqtt
-    valuesFile: values.yaml
+  - statefulset.yaml
+  - service.yaml
+  - backup-cronjob.yaml

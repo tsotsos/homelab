@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zigbee2mqtt
+  namespace: zigbee2mqtt
+spec:
+  serviceName: zigbee2mqtt
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zigbee2mqtt
+  template:
+    metadata:
+      labels:
+        app: zigbee2mqtt
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: zigbee2mqtt
+        image: koenkk/zigbee2mqtt:2.7.2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: web
+          containerPort: 8080
+          protocol: TCP
+        env:
+        # Inject keys from sealed secret
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: pan_id
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: network_key
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID
+          valueFrom:
+            secretKeyRef:
+              name: zigbee2mqtt-config
+              key: ext_pan_id
+        # Base configuration via env vars
+        - name: ZIGBEE2MQTT_CONFIG_HOMEASSISTANT
+          value: "true"
+        - name: ZIGBEE2MQTT_CONFIG_PERMIT_JOIN
+          value: "false"
+        - name: ZIGBEE2MQTT_CONFIG_MQTT_SERVER
+          value: "mqtt://emqx.emqx.svc.cluster.local:1883"
+        - name: ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC
+          value: "zigbee2mqtt"
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_PORT
+          value: "tcp://10.0.5.11:6638"
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER
+          value: "ember"
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE
+          value: "115200"
+        - name: ZIGBEE2MQTT_CONFIG_SERIAL_DISABLE_LED
+          value: "false"
+        - name: ZIGBEE2MQTT_CONFIG_FRONTEND_PORT
+          value: "8080"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_TRANSMIT_POWER
+          value: "20"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_CHANNEL
+          value: "25"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL
+          value: "info"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_CACHE_STATE
+          value: "true"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_LAST_SEEN
+          value: "ISO_8601"
+        - name: ZIGBEE2MQTT_CONFIG_ADVANCED_RTSCTS
+          value: "false"
+        - name: ZIGBEE2MQTT_CONFIG_AVAILABILITY_ACTIVE_TIMEOUT
+          value: "20"
+        - name: ZIGBEE2MQTT_CONFIG_AVAILABILITY_PASSIVE_TIMEOUT
+          value: "740"
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 5Gi

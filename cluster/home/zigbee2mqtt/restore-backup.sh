@@ -34,7 +34,7 @@ echo "Scaling down Zigbee2MQTT..."
 kubectl scale statefulset -n zigbee2mqtt zigbee2mqtt --replicas=0
 
 echo "Waiting for pod to terminate..."
-kubectl wait --for=delete pod -l app.kubernetes.io/name=zigbee2mqtt -n zigbee2mqtt --timeout=60s || true
+kubectl wait --for=delete pod -l app=zigbee2mqtt -n zigbee2mqtt --timeout=60s || true
 
 echo "Restoring backup..."
 kubectl run -n zigbee2mqtt restore-pod --rm -i --image=alpine --overrides="{
@@ -72,7 +72,7 @@ kubectl run -n zigbee2mqtt restore-pod --rm -i --image=alpine --overrides="{
       {
         \"name\": \"data\",
         \"persistentVolumeClaim\": {
-          \"claimName\": \"data-volume-zigbee2mqtt-0\"
+          \"claimName\": \"data-zigbee2mqtt-0\"
         }
       },
       {
