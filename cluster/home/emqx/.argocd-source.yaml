@@ -1,0 +1,7 @@
+labels:
+  category: home
+  type: messaging
+annotations:
+  argocd.argoproj.io/sync-wave: "5"
+kustomize:
+  enable_helm: true

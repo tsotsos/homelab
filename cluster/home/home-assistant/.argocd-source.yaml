@@ -1,0 +1,8 @@
+labels:
+  category: home
+  type: automation
+annotations:
+  argocd.argoproj.io/sync-wave: "7"
+  argocd.argoproj.io/sync-options: "RespectIgnoreDifferences=true"
+kustomize:
+  enable_helm: true
