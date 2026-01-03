@@ -17,6 +17,29 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+      - name: config-setup
+        image: busybox:latest
+        command:
+        - sh
+        - -c
+        - |
+          if [ ! -f /app/data/configuration.yaml ]; then
+            echo "Copying initial configuration..."
+            cp /config/configuration.yaml /app/data/configuration.yaml
+          else
+            echo "Configuration already exists, skipping copy"
+          fi
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: config
+          mountPath: /config
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
       containers:
       - name: zigbee2mqtt
         image: koenkk/zigbee2mqtt:2.7.2
@@ -92,9 +115,6 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /app/data
-        - name: config
-          mountPath: /app/data/configuration.yaml
-          subPath: configuration.yaml
       volumes:
       - name: config
         configMap:
