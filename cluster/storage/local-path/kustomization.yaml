@@ -33,4 +33,16 @@ patches:
           - key: node-role.kubernetes.io/control-plane
             operator: Exists
             effect: NoSchedule
+  # Tell ArgoCD to completely ignore this namespace resource
+  - target:
+      kind: Namespace
+      name: kube-system
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-options: "Prune=false"
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1compare-options
+        value: "IgnoreExtraneous"
 
