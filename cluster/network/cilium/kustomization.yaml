@@ -22,11 +22,12 @@ patches:
   - path: envoy-patch.yaml
     target:
       kind: DaemonSet
-      name: cilium-envoy  # Tell ArgoCD to not sync/manage the kube-system namespace resource
+      name: cilium-envoy
+  # Tell ArgoCD to not sync/manage the kube-system namespace resource
   - target:
       kind: Namespace
       name: kube-system
     patch: |-
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-options
-        value: "Delete=false"
+        value: "Skip"

@@ -12,3 +12,5 @@ ignoreDifferences:
       - '.metadata'
       - '.spec'
       - '.status'
+kustomize:
+  enable_helm: true
