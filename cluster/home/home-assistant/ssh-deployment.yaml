@@ -42,6 +42,10 @@ spec:
             - name: ssh-keys
               mountPath: /ssh-keys
               readOnly: true
+            - name: ssh-config
+              mountPath: /etc/ssh/sshd_config
+              subPath: sshd_config
+              readOnly: true
           resources:
             requests:
               cpu: 50m
@@ -56,3 +60,6 @@ spec:
         - name: ssh-keys
           secret:
             secretName: home-assistant-ssh
+        - name: ssh-config
+          configMap:
+            name: ssh-setup

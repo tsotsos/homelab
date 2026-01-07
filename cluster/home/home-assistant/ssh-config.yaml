@@ -5,32 +5,13 @@ metadata:
   namespace: home-assistant
 data:
   sshd_config: |
-    Port 22
+    Port 2222
     PermitRootLogin no
     PubkeyAuthentication yes
     PasswordAuthentication no
     AllowTcpForwarding yes
+    GatewayPorts no
     X11Forwarding no
+    PrintMotd no
+    AcceptEnv LANG LC_*
     Subsystem sftp /usr/lib/ssh/sftp-server
-  
-  entrypoint.sh: |
-    #!/bin/bash
-    set -e
-    
-    # Create hass user if it doesn't exist
-    if ! id hass >/dev/null 2>&1; then
-      useradd -m -u 1000 -s /bin/bash hass
-    fi
-    
-    # Set up SSH directory
-    mkdir -p /home/hass/.ssh
-    cp /ssh-keys/authorized_keys /home/hass/.ssh/authorized_keys
-    chmod 700 /home/hass/.ssh
-    chmod 600 /home/hass/.ssh/authorized_keys
-    chown -R hass:hass /home/hass/.ssh
-    
-    # Generate host keys if they don't exist
-    ssh-keygen -A
-    
-    # Start sshd in foreground
-    exec /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config
