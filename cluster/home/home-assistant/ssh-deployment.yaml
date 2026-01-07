@@ -29,12 +29,16 @@ spec:
               value: "hass"
             - name: PASSWORD_ACCESS
               value: "false"
+            - name: SUDO_ACCESS
+              value: "false"
+            - name: USER_PASSWORD
+              value: "disabled"
           ports:
             - name: ssh
               containerPort: 2222
           volumeMounts:
-            - name: config
-              mountPath: /config
+            - name: ha-config
+              mountPath: /ha-config
             - name: ssh-keys
               mountPath: /ssh-keys
               readOnly: true
@@ -46,7 +50,7 @@ spec:
               cpu: 200m
               memory: 128Mi
       volumes:
-        - name: config
+        - name: ha-config
           persistentVolumeClaim:
             claimName: home-assistant-home-assistant-0
         - name: ssh-keys
