@@ -8,6 +8,7 @@ resources:
   - secret-patcher-rbac.yaml
   - sealed-secret.yaml
   - sftp-sealed-secret.yaml
+  - ssh-config.yaml
   - sftp-service.yaml
   - backup-pvc.yaml
   - db-init.yaml

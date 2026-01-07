@@ -18,6 +18,10 @@ spec:
             - name: sftp-authorized-keys
               mountPath: /authorized-keys
               readOnly: true
+            - name: ssh-config
+              mountPath: /etc/ssh/sshd_config
+              subPath: sshd_config
+              readOnly: true
           env:
             - name: PUID
               value: "1000"
@@ -46,3 +50,6 @@ spec:
         - name: sftp-authorized-keys
           secret:
             secretName: home-assistant-sftp
+        - name: ssh-config
+          configMap:
+            name: ssh-config
