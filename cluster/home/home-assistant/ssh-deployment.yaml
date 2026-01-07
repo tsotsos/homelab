@@ -15,22 +15,22 @@ spec:
     spec:
       initContainers:
         - name: install-openssh
-          image: alpine:3.19
-          command: ["/bin/sh", "-c"]
+          image: debian:12-slim
+          command: ["/bin/bash", "-c"]
           args:
             - |
-              apk add --no-cache openssh-server
+              apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
               cp -r /etc/ssh /ssh-install/
           volumeMounts:
             - name: ssh-install
               mountPath: /ssh-install
       containers:
         - name: ssh
-          image: alpine:3.19
-          command: ["/bin/sh", "-c"]
+          image: debian:12-slim
+          command: ["/bin/bash", "-c"]
           args:
             - |
-              apk add --no-cache openssh-server
+              apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
               /scripts/entrypoint.sh
           ports:
             - name: ssh
