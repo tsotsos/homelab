@@ -9,6 +9,7 @@ resources:
   - sealed-secret.yaml
   - sftp-sealed-secret.yaml
   - ssh-config.yaml
+  - ssh-deployment.yaml
   - sftp-service.yaml
   - backup-pvc.yaml
   - db-init.yaml
@@ -24,10 +25,6 @@ helmCharts:
 
 patches:
   - path: argocd-ignore-patch.yaml
-    target:
-      kind: StatefulSet
-      name: home-assistant
-  - path: sftp-sidecar-patch.yaml
     target:
       kind: StatefulSet
       name: home-assistant

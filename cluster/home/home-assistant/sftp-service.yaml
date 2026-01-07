@@ -9,9 +9,9 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - name: sftp
+    - name: ssh
       port: 22
       targetPort: 32222
       protocol: TCP
   selector:
-    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/name: home-assistant-ssh
