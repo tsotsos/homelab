@@ -57,7 +57,7 @@ spec:
       volumes:
         - name: config
           persistentVolumeClaim:
-            claimName: home-assistant
+            claimName: home-assistant-home-assistant-0
         - name: authorized-keys
           secret:
             secretName: home-assistant-sftp
