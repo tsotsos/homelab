@@ -61,13 +61,13 @@ spec:
               cpu: 200m
               memory: 128Mi
       volumes:
+        - name: ssh-install
+          emptyDir: {}
         - name: config
           persistentVolumeClaim:
             claimName: home-assistant-home-assistant-0
         - name: ssh-keys
-          secretssh-install
-          emptyDir: {}
-        - name: :
+          secret:
             secretName: home-assistant-ssh
         - name: ssh-config
           configMap:
