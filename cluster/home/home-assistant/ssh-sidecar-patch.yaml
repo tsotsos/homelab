@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: home-assistant
+  namespace: home-assistant
+spec:
+  template:
+    spec:
+      containers:
+      - name: ssh-sidecar
+        image: ubuntu:22.04
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update && apt-get install -y --no-install-recommends openssh-server && rm -rf /var/lib/apt/lists/*
+            mkdir -p /run/sshd
+            useradd -m -u 1000 -s /bin/bash hass
+            chown -R hass:hass /home/hass
+            mkdir -p /home/hass/.ssh
+            cp /ssh-keys/authorized_keys /home/hass/.ssh/authorized_keys
+            chmod 700 /home/hass/.ssh
+            chmod 600 /home/hass/.ssh/authorized_keys
+            chown -R hass:hass /home/hass/.ssh
+            /usr/sbin/sshd -D -e -p 2222
+        ports:
+          - name: ssh
+            containerPort: 2222
+        volumeMounts:
+          - name: config
+            mountPath: /home/hass/config
+          - name: ssh-keys
+            mountPath: /ssh-keys
+            readOnly: true
+          - name: ssh-config
+            mountPath: /etc/ssh/sshd_config.d/vscode.conf
+            subPath: sshd_config
+            readOnly: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      volumes:
+      - name: ssh-keys
+        secret:
+          secretName: home-assistant-ssh
+      - name: ssh-config
+        configMap:
+          name: ssh-setup

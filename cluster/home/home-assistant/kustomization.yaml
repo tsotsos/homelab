@@ -7,6 +7,9 @@ resources:
   - ns.yaml
   - secret-patcher-rbac.yaml
   - sealed-secret.yaml
+  - ssh-sealed-secret.yaml
+  - ssh-config.yaml
+  - ssh-service.yaml
   - backup-pvc.yaml
   - db-init.yaml
   - influxdb-init.yaml
@@ -21,6 +24,10 @@ helmCharts:
 
 patches:
   - path: argocd-ignore-patch.yaml
+    target:
+      kind: StatefulSet
+      name: home-assistant
+  - path: ssh-sidecar-patch.yaml
     target:
       kind: StatefulSet
       name: home-assistant
