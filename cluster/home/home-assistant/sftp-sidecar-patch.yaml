@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: home-assistant
+spec:
+  template:
+    spec:
+      containers:
+        - name: sftp
+          image: atmoz/sftp:alpine
+          args:
+            - hass:1000:1000:config
+          ports:
+            - name: sftp
+              containerPort: 22
+              protocol: TCP
+          volumeMounts:
+            - name: home-assistant
+              mountPath: /home/hass/config
+            - name: sftp-authorized-keys
+              mountPath: /home/hass/.ssh/keys
+              readOnly: true
+          env:
+            - name: SFTP_USERS
+              value: "hass:1000:1000:config"
+          securityContext:
+            runAsNonRoot: false
+            capabilities:
+              add:
+                - SYS_CHROOT
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: sftp-authorized-keys
+          secret:
+            secretName: home-assistant-sftp

@@ -26,3 +26,7 @@ patches:
     target:
       kind: StatefulSet
       name: home-assistant
+  - path: sftp-sidecar-patch.yaml
+    target:
+      kind: StatefulSet
+      name: home-assistant
