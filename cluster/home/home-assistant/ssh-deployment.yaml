@@ -23,6 +23,7 @@ spec:
               apt-get update && apt-get install -y openssh-server sudo && rm -rf /var/lib/apt/lists/*
               mkdir -p /run/sshd
               useradd -m -u 1000 -s /bin/bash hass
+              chown -R hass:hass /home/hass
               mkdir -p /home/hass/.ssh
               cp /ssh-keys/authorized_keys /home/hass/.ssh/authorized_keys
               chmod 700 /home/hass/.ssh
