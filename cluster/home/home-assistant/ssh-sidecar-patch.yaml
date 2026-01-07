@@ -27,7 +27,7 @@ spec:
           - name: ssh
             containerPort: 2222
         volumeMounts:
-          - name: config
+          - name: home-assistant
             mountPath: /home/hass/config
           - name: ssh-keys
             mountPath: /ssh-keys
