@@ -9,7 +9,7 @@ spec:
         - name: sftp
           image: atmoz/sftp:alpine
           args:
-            - hass:1000:1000:config
+            - hass::1000:1000:config
           ports:
             - name: sftp
               containerPort: 22
@@ -20,9 +20,6 @@ spec:
             - name: sftp-authorized-keys
               mountPath: /home/hass/.ssh/keys
               readOnly: true
-          env:
-            - name: SFTP_USERS
-              value: "hass:1000:1000:config"
           securityContext:
             runAsNonRoot: false
             capabilities:
