@@ -59,6 +59,9 @@ additionalVolumes:
   - name: secrets
     secret:
       secretName: home-assistant-secrets
+  - name: sftp-authorized-keys
+    secret:
+      secretName: home-assistant-sftp
 
 # Additional volume mounts
 additionalVolumeMounts:
@@ -67,6 +70,39 @@ additionalVolumeMounts:
   - name: secrets
     mountPath: /secrets
     readOnly: true
+
+# Sidecar containers
+extraContainers:
+  # SFTP server for remote config editing from VS Code
+  - name: sftp
+    image: atmoz/sftp:alpine
+    args:
+      - hass:1000:1000:config  # username:uid:gid:home_directory
+    ports:
+      - name: sftp
+        containerPort: 22
+        protocol: TCP
+    volumeMounts:
+      - name: home-assistant
+        mountPath: /home/hass/config
+      - name: sftp-authorized-keys
+        mountPath: /home/hass/.ssh/keys
+        readOnly: true
+    env:
+      - name: SFTP_USERS
+        value: "hass:1000:1000:config"
+    securityContext:
+      runAsNonRoot: false
+      capabilities:
+        add:
+          - SYS_CHROOT
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
 
 # Resources
 resources:
