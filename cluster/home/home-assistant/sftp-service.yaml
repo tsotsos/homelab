@@ -11,7 +11,7 @@ spec:
   ports:
     - name: sftp
       port: 22
-      targetPort: 2222
+      targetPort: 32222
       protocol: TCP
   selector:
     app.kubernetes.io/name: home-assistant

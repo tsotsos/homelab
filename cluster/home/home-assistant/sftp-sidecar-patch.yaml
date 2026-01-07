@@ -11,6 +11,7 @@ spec:
           ports:
             - name: sftp
               containerPort: 2222
+              hostPort: 32222
               protocol: TCP
           volumeMounts:
             - name: home-assistant
