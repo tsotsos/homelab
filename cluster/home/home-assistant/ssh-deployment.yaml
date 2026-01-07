@@ -15,35 +15,31 @@ spec:
     spec:
       containers:
         - name: ssh
-          image: lscr.io/linuxserver/openssh-server:latest
-          env:
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
-            - name: TZ
-              value: "Europe/Athens"
-            - name: PUBLIC_KEY_FILE
-              value: "/ssh-keys/authorized_keys"
-            - name: USER_NAME
-              value: "hass"
-            - name: PASSWORD_ACCESS
-              value: "false"
-            - name: SUDO_ACCESS
-              value: "false"
-            - name: USER_PASSWORD
-              value: "disabled"
+          image: ubuntu:22.04
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update && apt-get install -y openssh-server sudo && rm -rf /var/lib/apt/lists/*
+              mkdir -p /run/sshd
+              useradd -m -u 1000 -s /bin/bash hass
+              mkdir -p /home/hass/.ssh
+              cp /ssh-keys/authorized_keys /home/hass/.ssh/authorized_keys
+              chmod 700 /home/hass/.ssh
+              chmod 600 /home/hass/.ssh/authorized_keys
+              chown -R hass:hass /home/hass/.ssh
+              exec /usr/sbin/sshd -D -e
           ports:
             - name: ssh
-              containerPort: 2222
+              containerPort: 22
           volumeMounts:
             - name: ha-config
-              mountPath: /ha-config
+              mountPath: /home/hass/config
             - name: ssh-keys
               mountPath: /ssh-keys
               readOnly: true
             - name: ssh-config
-              mountPath: /etc/ssh/sshd_config
+              mountPath: /etc/ssh/sshd_config.d/vscode.conf
               subPath: sshd_config
               readOnly: true
           resources:

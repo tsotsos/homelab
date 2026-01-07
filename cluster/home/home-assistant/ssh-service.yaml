@@ -8,6 +8,6 @@ spec:
   ports:
     - name: ssh
       port: 22
-      targetPort: 2222
+      targetPort: 22
   selector:
     app: home-assistant-ssh

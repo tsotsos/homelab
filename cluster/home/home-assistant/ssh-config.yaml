@@ -5,13 +5,6 @@ metadata:
   namespace: home-assistant
 data:
   sshd_config: |
-    Port 2222
-    PermitRootLogin no
-    PubkeyAuthentication yes
-    PasswordAuthentication no
     AllowTcpForwarding yes
-    GatewayPorts no
-    X11Forwarding no
-    PrintMotd no
-    AcceptEnv LANG LC_*
-    Subsystem sftp /usr/lib/ssh/sftp-server
+    PasswordAuthentication no
+    PubkeyAuthentication yes
