@@ -30,6 +30,7 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
+              export DEBIAN_FRONTEND=noninteractive
               apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
               /scripts/entrypoint.sh
           ports:
