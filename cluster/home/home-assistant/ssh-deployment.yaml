@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant-ssh
+  namespace: home-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: home-assistant-ssh
+  template:
+    metadata:
+      labels:
+        app: home-assistant-ssh
+    spec:
+      containers:
+        - name: ssh
+          image: alpine:3.19
+          command: ["/bin/sh", "/scripts/entrypoint.sh"]
+          ports:
+            - name: ssh
+              containerPort: 22
+          volumeMounts:
+            - name: config
+              mountPath: /home/hass/config
+            - name: ssh-keys
+              mountPath: /ssh-keys
+              readOnly: true
+            - name: ssh-config
+              mountPath: /etc/ssh/sshd_config
+              subPath: sshd_config
+              readOnly: true
+            - name: ssh-config
+              mountPath: /scripts
+              readOnly: true
+          securityContext:
+            runAsUser: 0
+            capabilities:
+              add:
+                - SYS_CHROOT
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "apk add --no-cache openssh-server"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: home-assistant-home-assistant-0
+        - name: ssh-keys
+          secret:
+            secretName: home-assistant-ssh
+        - name: ssh-config
+          configMap:
+            name: ssh-setup
+            defaultMode: 0755

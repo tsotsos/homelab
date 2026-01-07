@@ -7,6 +7,10 @@ resources:
   - ns.yaml
   - secret-patcher-rbac.yaml
   - sealed-secret.yaml
+  - ssh-sealed-secret.yaml
+  - ssh-config.yaml
+  - ssh-deployment.yaml
+  - ssh-service.yaml
   - backup-pvc.yaml
   - db-init.yaml
   - influxdb-init.yaml
