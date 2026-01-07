@@ -20,6 +20,7 @@ data:
     # Create hass user if it doesn't exist
     if ! id hass >/dev/null 2>&1; then
       adduser -D -u 1000 hass
+      passwd -u hass  # Unlock the account for SSH key auth
     fi
     
     # Set up SSH directory
