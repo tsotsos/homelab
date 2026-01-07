@@ -3,7 +3,7 @@
 # Image configuration
 image:
   repository: ghcr.io/home-assistant/home-assistant
-  tag: "2025.12.0"  # Updated to match chart version
+  tag: "2025.12.5"  # Updated to match chart version
   pullPolicy: IfNotPresent
 
 # Deployment strategy
@@ -74,8 +74,8 @@ resources:
     cpu: 500m
     memory: 512Mi
   limits:
-    cpu: 2000m
-    memory: 2Gi
+    cpu: 3000m
+    memory: 3Gi
 
 # Probes
 probes:
@@ -137,12 +137,10 @@ initContainers:
       - sh
       - -c
       - |
-        echo "Fixing /config permissions for code-server access..."
-        # Change ownership to uid 1000 (coder) but keep files readable by all
+        echo "Fixing /config permissions..."
+        # Ensure proper ownership and permissions for Home Assistant
         chown -R 1000:1000 /config
-        # Ensure directories are writable by owner
         find /config -type d -exec chmod 755 {} \;
-        # Ensure files are writable by owner
         find /config -type f -exec chmod 644 {} \;
         echo "Permissions fixed successfully"
     volumeMounts:
@@ -245,8 +243,8 @@ initContainers:
         # PostgreSQL database configuration
         db_url: !env_var POSTGRES_URL
         auto_purge: true
-        purge_keep_days: 30
-        commit_interval: 1
+        purge_keep_days: 2
+        commit_interval: 5
         EOF
           chmod 666 /config/recorder.yaml
         else
@@ -256,7 +254,7 @@ initContainers:
         if [ ! -f /config/influxdb.yaml ]; then
           echo "Creating influxdb.yaml..."
           cat > /config/influxdb.yaml << 'EOF'
-        # InfluxDB configuration for long-term metrics storage
+        # InfluxDB configuration for trial with 2 lights only
         api_version: 2
         ssl: false
         host: influxdb-influxdb2.observability.svc.cluster.local
@@ -269,25 +267,18 @@ initContainers:
         tags_attributes:
           - friendly_name
         default_measurement: units
-        exclude:
-          entities:
-            - zone.home
-          domains:
-            - persistent_notification
-            - person
+        # Only include 2 specific lights for trial
         include:
-          domains:
-            - sensor
-            - binary_sensor
-            - light
-            - switch
+          entities:
+            - light.george_s_office_ceiling_lights
+            - light.basement_hall_ceiling_lights
         EOF
           chmod 666 /config/influxdb.yaml
         else
           echo "✓ influxdb.yaml already exists, skipping"
         fi
         
-        # Ensure existing files are writable by Code Server
+        # Ensure existing files are writable
         echo "Setting permissions on configuration files..."
         for file in /config/http.yaml /config/recorder.yaml /config/influxdb.yaml /config/configuration.yaml; do
           if [ -f "$file" ]; then
@@ -345,8 +336,8 @@ metrics:
   enabled: true
   serviceMonitor:
     enabled: true
-    interval: 30s
-    scrapeTimeout: 10s
+    interval: 300s  # Match Prometheus scrape interval
+    scrapeTimeout: 30s
 
 # Pod annotations for backup scheduling
 podAnnotations:
@@ -363,27 +354,3 @@ affinity:
             matchLabels:
               app.kubernetes.io/name: home-assistant
           topologyKey: kubernetes.io/hostname
-
-# Addons configuration
-addons:
-  # Code Server (VS Code in browser for config editing)
-  codeserver:
-    enabled: true
-    image:
-      repository: ghcr.io/coder/code-server
-      tag: "4.105.1"
-      pullPolicy: IfNotPresent
-    auth:
-      enabled: false  # Auth handled by Authentik
-    service:
-      type: ClusterIP
-      port: 12321
-    ingress:
-      enabled: false  # Access via Authentik proxy only for security
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
