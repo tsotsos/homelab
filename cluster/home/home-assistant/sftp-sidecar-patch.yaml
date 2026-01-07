@@ -7,24 +7,34 @@ spec:
     spec:
       containers:
         - name: sftp
-          image: atmoz/sftp:alpine
-          args:
-            - hass::1000:1000:config
+          image: lscr.io/linuxserver/openssh-server:latest
           ports:
             - name: sftp
-              containerPort: 22
+              containerPort: 2222
               protocol: TCP
           volumeMounts:
             - name: home-assistant
-              mountPath: /home/hass/config
+              mountPath: /config
             - name: sftp-authorized-keys
-              mountPath: /home/hass/.ssh/keys
+              mountPath: /authorized-keys
               readOnly: true
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Athens"
+            - name: PUBLIC_KEY_FILE
+              value: "/authorized-keys/authorized_keys"
+            - name: USER_NAME
+              value: "hass"
+            - name: PASSWORD_ACCESS
+              value: "false"
+            - name: SUDO_ACCESS
+              value: "false"
           securityContext:
             runAsNonRoot: false
-            capabilities:
-              add:
-                - SYS_CHROOT
           resources:
             requests:
               cpu: 50m
