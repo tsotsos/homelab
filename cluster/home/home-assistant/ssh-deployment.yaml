@@ -13,47 +13,31 @@ spec:
       labels:
         app: home-assistant-ssh
     spec:
-      initContainers:
-        - name: install-openssh
-          image: debian:12-slim
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
-              cp -r /etc/ssh /ssh-install/
-          volumeMounts:
-            - name: ssh-install
-              mountPath: /ssh-install
       containers:
         - name: ssh
-          image: debian:12-slim
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              export DEBIAN_FRONTEND=noninteractive
-              apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
-              /scripts/entrypoint.sh
+          image: lscr.io/linuxserver/openssh-server:latest
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Athens"
+            - name: PUBLIC_KEY_FILE
+              value: "/ssh-keys/authorized_keys"
+            - name: USER_NAME
+              value: "hass"
+            - name: PASSWORD_ACCESS
+              value: "false"
           ports:
             - name: ssh
-              containerPort: 22
+              containerPort: 2222
           volumeMounts:
             - name: config
-              mountPath: /home/hass/config
+              mountPath: /config
             - name: ssh-keys
               mountPath: /ssh-keys
               readOnly: true
-            - name: ssh-config
-              mountPath: /etc/ssh/sshd_config
-              subPath: sshd_config
-              readOnly: true
-            - name: ssh-config
-              mountPath: /scripts
-              readOnly: true
-          securityContext:
-            runAsUser: 0
-            capabilities:
-              add:
-                - SYS_CHROOT
           resources:
             requests:
               cpu: 50m
@@ -62,15 +46,9 @@ spec:
               cpu: 200m
               memory: 128Mi
       volumes:
-        - name: ssh-install
-          emptyDir: {}
         - name: config
           persistentVolumeClaim:
             claimName: home-assistant-home-assistant-0
         - name: ssh-keys
           secret:
             secretName: home-assistant-ssh
-        - name: ssh-config
-          configMap:
-            name: ssh-setup
-            defaultMode: 0755
