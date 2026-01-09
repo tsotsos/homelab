@@ -47,13 +47,11 @@ spec:
         - name: OTBR_MDNS
           value: "avahi"
         securityContext:
-          allowPrivilegeEscalation: false
+          privileged: true
           capabilities:
             add:
             - NET_ADMIN
             - NET_RAW
-            drop:
-            - ALL
         livenessProbe:
           httpGet:
             path: /
