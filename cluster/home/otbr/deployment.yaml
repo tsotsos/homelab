@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otbr
+  namespace: otbr
+  labels:
+    app: otbr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: otbr
+  template:
+    metadata:
+      labels:
+        app: otbr
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      hostNetwork: true  # Required for mDNS/Avahi
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: otbr
+        image: openthread/otbr:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
+        env:
+        # Radio URL for SLZB-MR3 connection
+        - name: OTBR_RADIO_URL
+          valueFrom:
+            secretKeyRef:
+              name: otbr-config
+              key: radio_url
+        # Backbone interface (for Thread border router)
+        - name: OTBR_BACKBONE_INTERFACE
+          value: "eth0"
+        # Enable web server
+        - name: OTBR_WEB_PORT
+          value: "80"
+        # Enable mDNS
+        - name: OTBR_MDNS
+          value: "avahi"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+            - NET_ADMIN
+            - NET_RAW
+            drop:
+            - ALL
+        livenessProbe:
+          httpGet:
+            path: /
+            port: web
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: web
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
