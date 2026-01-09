@@ -46,6 +46,11 @@ spec:
         # Enable mDNS
         - name: OTBR_MDNS
           value: "avahi"
+        # Disable Docker/NAT mode (we're in Kubernetes with Cilium)
+        - name: DOCKER
+          value: "0"
+        - name: NAT64
+          value: "0"
         securityContext:
           privileged: true
           capabilities:
