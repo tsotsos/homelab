@@ -25,7 +25,24 @@ spec:
         - -c
         - |
           echo "Setting up configuration..."
-          cp /config/configuration.yaml /app/data/configuration.yaml
+          # Only copy if config doesn't exist (first time) or if explicitly requested
+          if [ ! -f /app/data/configuration.yaml ]; then
+            echo "First time setup - copying base configuration"
+            cp /config/configuration.yaml /app/data/configuration.yaml
+          else
+            echo "Config exists - preserving devices section, updating base config only"
+            # Extract devices section if it exists
+            if grep -q "^devices:" /app/data/configuration.yaml; then
+              sed -n '/^devices:/,$p' /app/data/configuration.yaml > /tmp/devices_section.yaml
+            fi
+            # Copy base config
+            cp /config/configuration.yaml /app/data/configuration.yaml
+            # Re-append devices section if we saved one
+            if [ -f /tmp/devices_section.yaml ]; then
+              cat /tmp/devices_section.yaml >> /app/data/configuration.yaml
+              echo "Preserved existing device friendly names"
+            fi
+          fi
           
           # Replace placeholders with actual values from secrets
           sed -i "s|PLACEHOLDER_PAN_ID|$PAN_ID|g" /app/data/configuration.yaml
